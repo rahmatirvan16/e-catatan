@@ -1,0 +1,1290 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Modul Arsitektur Kode &amp; Otorisasi &mdash; Laravel</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --sidebar-w: 260px;
+      --toc-w: 220px;
+      --accent: #0d6efd;
+      --accent-light: #e7f1ff;
+      --text: #212529;
+      --muted: #6c757d;
+      --border: #dee2e6;
+      --code-bg: #f8f9fa;
+      --code-border: #e9ecef;
+      --sidebar-bg: #f8f9fa;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 15px;
+      line-height: 1.7;
+      color: var(--text);
+      background: #fff;
+    }
+
+    /* TOP BAR */
+    .topbar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      height: 56px;
+      background: #fff;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; padding: 0 24px;
+      gap: 16px;
+    }
+    .topbar-brand {
+      font-weight: 700; font-size: 17px; color: var(--accent);
+      text-decoration: none;
+    }
+    .topbar-version {
+      background: var(--accent-light); color: var(--accent);
+      font-size: 11px; font-weight: 600; padding: 2px 8px;
+      border-radius: 20px;
+    }
+    .topbar-subtitle {
+      color: var(--muted); font-size: 13px; margin-left: auto;
+    }
+    /* LARAVEL NAV BAR + SUB NAVBAR (dropdown by Fokus Utama) */
+    .laravel-nav { position: relative; margin-left: 24px; }
+    .laravel-nav-trigger {
+      display: flex; align-items: center; gap: 6px;
+      background: none; border: 1px solid var(--border); border-radius: 6px;
+      padding: 6px 14px; font-size: 13px; font-weight: 600;
+      color: var(--text); cursor: pointer; font-family: inherit;
+    }
+    .laravel-nav-trigger:hover { background: var(--accent-light); color: var(--accent); border-color: var(--accent); }
+    .laravel-nav.open .laravel-nav-trigger { background: var(--accent-light); color: var(--accent); border-color: var(--accent); }
+    .laravel-nav-trigger .caret { font-size: 10px; transition: transform .15s; }
+    .laravel-nav.open .laravel-nav-trigger .caret { transform: rotate(180deg); }
+    .laravel-nav-menu {
+      display: none;
+      position: absolute; top: calc(100% + 8px); left: 0;
+      width: 360px; max-height: 75vh; overflow-y: auto;
+      background: #fff; border: 1px solid var(--border); border-radius: 10px;
+      box-shadow: 0 12px 32px rgba(0,0,0,.14);
+      padding: 8px; z-index: 200;
+    }
+    .laravel-nav.open .laravel-nav-menu { display: block; }
+    .laravel-nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 12px; border-radius: 8px;
+      text-decoration: none; color: var(--text); font-size: 13px;
+    }
+    .laravel-nav-item:hover { background: var(--accent-light); }
+    .laravel-nav-item.active { background: var(--accent-light); color: var(--accent); font-weight: 600; }
+    .laravel-nav-item .lni-week {
+      flex-shrink: 0; width: 34px; font-size: 11px; font-weight: 700; color: var(--muted);
+    }
+    .laravel-nav-item.active .lni-week { color: var(--accent); }
+    .laravel-nav-item .lni-title { flex: 1; }
+    .laravel-nav-item .lni-soon {
+      flex-shrink: 0; font-size: 10px; font-weight: 700; text-transform: uppercase;
+      background: #e9ecef; color: #495057; padding: 2px 6px; border-radius: 20px;
+    }
+
+    /* LAYOUT */
+    .layout {
+      display: flex;
+      padding-top: 56px;
+      min-height: 100vh;
+    }
+
+    /* LEFT SIDEBAR */
+    .sidebar {
+      width: var(--sidebar-w);
+      flex-shrink: 0;
+      position: fixed;
+      top: 56px; bottom: 0; left: 0;
+      overflow-y: auto;
+      background: var(--sidebar-bg);
+      border-right: 1px solid var(--border);
+      padding: 20px 0 40px;
+    }
+    .sidebar::-webkit-scrollbar { width: 4px; }
+    .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    .nav-group { margin-bottom: 4px; }
+    .nav-group-title {
+      display: flex; align-items: center; gap: 8px;
+      padding: 6px 20px;
+      font-size: 12px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .06em;
+      color: var(--text);
+      cursor: pointer;
+      user-select: none;
+    }
+    .nav-group-title .arrow {
+      display: inline-block; transition: transform .2s;
+      font-size: 10px; color: var(--muted);
+    }
+    .nav-group.open .arrow { transform: rotate(90deg); }
+    .nav-group-items { display: none; }
+    .nav-group.open .nav-group-items { display: block; }
+
+    .nav-link {
+      display: block;
+      padding: 5px 20px 5px 36px;
+      font-size: 14px; color: var(--muted);
+      text-decoration: none;
+      border-left: 3px solid transparent;
+      transition: color .15s, border-color .15s, background .15s;
+    }
+    .nav-link:hover { color: var(--accent); background: var(--accent-light); }
+    .nav-link.active {
+      color: var(--accent); font-weight: 600;
+      border-left-color: var(--accent);
+      background: var(--accent-light);
+    }
+
+    /* MAIN CONTENT */
+    .main {
+      margin-left: var(--sidebar-w);
+      margin-right: var(--toc-w);
+      flex: 1;
+      min-width: 0;
+    }
+    .main-inner {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 48px 56px;
+    }
+
+    /* MOBILE MENU TOGGLE */
+    .menu-toggle {
+      display: none;
+      align-items: center; justify-content: center;
+      width: 32px; height: 32px; flex-shrink: 0;
+      border: 1px solid var(--border); border-radius: 6px;
+      background: none; cursor: pointer; font-size: 16px;
+      color: var(--text);
+    }
+    .menu-toggle:hover { background: var(--accent-light); color: var(--accent); border-color: var(--accent); }
+    .sidebar-overlay {
+      display: none;
+      position: fixed; inset: 56px 0 0 0;
+      background: rgba(0,0,0,.35);
+      z-index: 95;
+    }
+    .sidebar-overlay.show { display: block; }
+
+    /* TABLES THAT OVERFLOW SCROLL INSTEAD OF BREAKING LAYOUT */
+    .table-scroll { overflow-x: auto; margin: 16px 0; -webkit-overflow-scrolling: touch; }
+    .table-scroll table { margin: 0; }
+
+    /* RESPONSIVE */
+    @media (max-width: 1300px) {
+      .toc { display: none; }
+      .main { margin-right: 0; }
+    }
+    @media (max-width: 900px) {
+      .menu-toggle { display: inline-flex; }
+      .topbar-subtitle { display: none; }
+      .sidebar {
+        transform: translateX(-100%);
+        transition: transform .2s ease;
+        z-index: 96;
+        box-shadow: 4px 0 24px rgba(0,0,0,.15);
+      }
+      .sidebar.open { transform: translateX(0); }
+      .main { margin-left: 0; }
+      .main-inner { padding: 32px 24px; }
+      .laravel-nav-menu { width: min(360px, 88vw); }
+    }
+    @media (max-width: 560px) {
+      .topbar { padding: 0 14px; gap: 10px; }
+      .topbar-brand { font-size: 15px; }
+      .topbar-version { display: none; }
+      .page-title { font-size: 28px; }
+      .page-lead { font-size: 15px; padding-bottom: 24px; margin-bottom: 28px; }
+      .main-inner { padding: 24px 16px; }
+      h2 { font-size: 21px; }
+    }
+
+    /* RIGHT TOC */
+    .toc {
+      width: var(--toc-w);
+      flex-shrink: 0;
+      position: fixed;
+      top: 56px; bottom: 0; right: 0;
+      overflow-y: auto;
+      padding: 24px 16px;
+      border-left: 1px solid var(--border);
+    }
+    .toc-title {
+      font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .06em;
+      color: var(--muted); margin-bottom: 12px;
+    }
+    .toc a {
+      display: block; font-size: 13px; color: var(--muted);
+      text-decoration: none; padding: 3px 0 3px 8px;
+      border-left: 2px solid transparent;
+      transition: color .15s, border-color .15s;
+    }
+    .toc a:hover, .toc a.active {
+      color: var(--accent); border-left-color: var(--accent);
+    }
+    .toc a.sub { padding-left: 20px; font-size: 12px; }
+
+    /* CONTENT TYPOGRAPHY */
+    .page-title {
+      font-size: 40px; font-weight: 700;
+      margin-bottom: 12px; line-height: 1.2;
+    }
+    .page-lead {
+      font-size: 18px; color: var(--muted);
+      margin-bottom: 40px; border-bottom: 1px solid var(--border);
+      padding-bottom: 32px;
+    }
+    .section { margin-bottom: 56px; }
+    h2 {
+      font-size: 26px; font-weight: 700;
+      margin-bottom: 16px; padding-top: 8px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 8px;
+    }
+    h3 {
+      font-size: 18px; font-weight: 600;
+      margin: 24px 0 10px;
+    }
+    h4 {
+      font-size: 15px; font-weight: 600;
+      margin: 18px 0 8px; color: var(--text);
+    }
+    p { margin-bottom: 14px; }
+    ul, ol { padding-left: 24px; margin-bottom: 14px; }
+    li { margin-bottom: 6px; }
+    strong { font-weight: 600; }
+
+    /* CODE */
+    code {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      font-size: 13px;
+      background: var(--code-bg);
+      border: 1px solid var(--code-border);
+      padding: 1px 5px; border-radius: 4px;
+      color: #d63384;
+    }
+    pre {
+      background: #1e1e2e;
+      border-radius: 8px;
+      padding: 20px 24px;
+      overflow-x: auto;
+      margin: 16px 0 20px;
+      position: relative;
+    }
+    pre code {
+      background: none; border: none; padding: 0;
+      color: #cdd6f4; font-size: 13px; line-height: 1.65;
+    }
+    .pre-label {
+      font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .06em;
+      color: #6c757d; margin-bottom: 6px;
+    }
+
+    /* COPY BUTTON */
+    .copy-btn {
+      position: absolute; top: 10px; right: 10px;
+      display: flex; align-items: center; gap: 5px;
+      background: rgba(255,255,255,.08);
+      color: #cdd6f4;
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 6px;
+      font-family: inherit; font-size: 11px; font-weight: 600;
+      padding: 4px 9px;
+      cursor: pointer;
+      opacity: .55;
+      transition: opacity .15s, background .15s;
+    }
+    pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
+    .copy-btn:hover { background: rgba(255,255,255,.2); }
+    .copy-btn.copied {
+      opacity: 1; background: #198754; border-color: #198754; color: #fff;
+    }
+    @media (max-width: 900px) { .copy-btn { opacity: .8; } }
+    @media print { .copy-btn { display: none; } }
+
+    .kw  { color: #cba6f7; }
+    .fn  { color: #89b4fa; }
+    .str { color: #a6e3a1; }
+    .cm  { color: #6c7086; }
+    .cl  { color: #fab387; }
+    .nb  { color: #89dceb; }
+    .op  { color: #89dceb; }
+
+    /* BADGES / CALLOUTS */
+    .badge {
+      display: inline-block; font-size: 11px; font-weight: 700;
+      padding: 2px 8px; border-radius: 4px;
+      text-transform: uppercase; letter-spacing: .04em;
+    }
+    .badge-blue  { background: #cfe2ff; color: #084298; }
+    .badge-green { background: #d1e7dd; color: #0a3622; }
+    .badge-red   { background: #f8d7da; color: #842029; }
+    .badge-yellow{ background: #fff3cd; color: #664d03; }
+    .badge-purple{ background: #e8d5fb; color: #5e2d91; }
+    .badge-orange{ background: #ffe5d0; color: #8a3800; }
+
+    .callout {
+      border-left: 4px solid var(--accent);
+      background: var(--accent-light);
+      padding: 14px 18px; border-radius: 0 6px 6px 0;
+      margin: 16px 0;
+    }
+    .callout.warning { border-left-color: #ffc107; background: #fff3cd; }
+    .callout.danger  { border-left-color: #dc3545; background: #f8d7da; }
+    .callout.success { border-left-color: #198754; background: #d1e7dd; }
+    .callout-title { font-weight: 700; margin-bottom: 4px; font-size: 13px; }
+
+    /* TABLE */
+    table {
+      width: 100%; border-collapse: collapse;
+      margin: 16px 0; font-size: 14px;
+    }
+    th {
+      background: var(--code-bg); font-weight: 600;
+      padding: 10px 14px; border: 1px solid var(--border);
+      text-align: left;
+    }
+    td { padding: 9px 14px; border: 1px solid var(--border); }
+    tr:nth-child(even) td { background: #fafafa; }
+
+    /* STEP LIST */
+    .step-list { list-style: none; padding: 0; }
+    .step-list li { display: flex; gap: 16px; margin-bottom: 20px; }
+    .step-num {
+      flex-shrink: 0;
+      width: 28px; height: 28px;
+      background: var(--accent); color: #fff;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700; margin-top: 2px;
+    }
+    .step-body h4 { margin-top: 0; }
+
+    /* DIVIDER */
+    .divider { border: none; border-top: 2px solid var(--border); margin: 56px 0; }
+
+    /* PRINT */
+    @media print {
+      .topbar, .sidebar, .toc { display: none; }
+      .main { margin: 0; }
+      .main-inner { padding: 24px 32px; max-width: 100%; }
+      pre { background: #f8f9fa !important; }
+      pre code { color: #212529 !important; }
+      .kw,.fn,.str,.cm,.cl,.nb,.op { color: #212529 !important; }
+      h2 { page-break-before: always; }
+      .section:first-of-type h2 { page-break-before: avoid; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<header class="topbar">
+  <button class="menu-toggle" id="menuToggle" aria-label="Buka menu">&#9776;</button>
+  <a class="topbar-brand" href="index.html">Laravel Docs</a>
+  <span class="topbar-version">v12.x</span>
+  <div class="laravel-nav" id="laravelNav">
+    <button class="laravel-nav-trigger" type="button">Laravel <span class="caret">&#9662;</span></button>
+    <div class="laravel-nav-menu">
+      <a class="laravel-nav-item" href="modul-rest-api-sanctum.html"><span class="lni-week">M1</span><span class="lni-title">Core Laravel &amp; Database</span></a>
+      <a class="laravel-nav-item active" href="modul-arsitektur-otorisasi.html"><span class="lni-week">M2</span><span class="lni-title">Arsitektur Kode &amp; Otorisasi</span></a>
+      <a class="laravel-nav-item" href="modul-optimasi.html"><span class="lni-week">M3</span><span class="lni-title">Testing &amp; Optimasi</span></a>
+      <a class="laravel-nav-item" href="modul-observability.html"><span class="lni-week">M4</span><span class="lni-title">Observability</span></a>
+      <a class="laravel-nav-item" href="modul-api-design-realtime.html"><span class="lni-week">M5</span><span class="lni-title">API Design &amp; Real-time</span></a>
+      <a class="laravel-nav-item" href="modul-security-deepdive.html"><span class="lni-week">M6</span><span class="lni-title">Security Deep-dive</span></a>
+      <a class="laravel-nav-item" href="modul-capstone-ecommerce.html"><span class="lni-week">M7</span><span class="lni-title">Capstone Project: E-commerce</span></a>
+      <a class="laravel-nav-item" href="modul-containerization-deployment.html"><span class="lni-week">M8</span><span class="lni-title">Containerization &amp; Deployment</span></a>
+      <a class="laravel-nav-item" href="modul-cloud-infrastructure.html"><span class="lni-week">M9</span><span class="lni-title">Cloud &amp; Infrastructure</span></a>
+      <a class="laravel-nav-item" href="modul-skala-besar.html"><span class="lni-week">M10</span><span class="lni-title">Skala Besar</span></a>
+      <a class="laravel-nav-item" href="modul-system-design.html"><span class="lni-week">M11</span><span class="lni-title">System Design</span></a>
+    </div>
+  </div>
+  <span class="topbar-subtitle">Repository/Service, Middleware, Spatie Permission, Rate Limiting &mdash; Modul Belajar</span>
+</header>
+
+<div class="layout">
+
+  <!-- LEFT SIDEBAR -->
+  <nav class="sidebar">
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Repository &amp; Service</div>
+      <div class="nav-group-items">
+        <a class="nav-link active" href="#repo-intro">Kenapa Repository Pattern</a>
+        <a class="nav-link" href="#repo-interface">Interface &amp; Repository</a>
+        <a class="nav-link" href="#repo-service">Service Layer</a>
+        <a class="nav-link" href="#repo-controller">Refactor Controller</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Middleware &amp; Validation</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#middleware-custom">Custom Middleware</a>
+        <a class="nav-link" href="#middleware-validation">Form Request Validation</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Roles &amp; Permission</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#spatie-install">Install Spatie Permission</a>
+        <a class="nav-link" href="#spatie-setup">Setup Roles &amp; Permissions</a>
+        <a class="nav-link" href="#spatie-middleware">Middleware Otorisasi</a>
+        <a class="nav-link" href="#spatie-check">Cek Permission di Kode</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Rate Limiting</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#rate-default">Throttle Bawaan</a>
+        <a class="nav-link" href="#rate-custom">Custom Rate Limiter</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Ringkasan</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#ringkasan">Ringkasan Minggu 2</a>
+      </div>
+    </div>
+
+  </nav>
+
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- MAIN CONTENT -->
+  <main class="main">
+   <div class="main-inner">
+
+    <!-- ========== REPOSITORY & SERVICE ========== -->
+    <div class="section" id="repo-intro">
+      <h1 class="page-title">Arsitektur Kode &amp; Otorisasi</h1>
+      <p class="page-lead">
+        Lanjutan dari project <code>laravel-crud-app</code> di Minggu 1. Kali ini fokus
+        merapikan arsitektur kode dengan Repository/Service Pattern, menambah lapisan
+        Middleware &amp; Validation, mengatur hak akses dengan Spatie Roles &amp; Permission,
+        dan melindungi API dengan Rate Limiting.
+      </p>
+
+      <h2>Kenapa Butuh Repository Pattern?</h2>
+      <p>
+        Di Minggu 1, controller memanggil Eloquent langsung: <code>Produk::all()</code>,
+        <code>Produk::create()</code>, dst. Untuk aplikasi kecil ini tidak masalah, tapi
+        seiring project membesar, muncul beberapa keluhan umum:
+      </p>
+      <ul>
+        <li>Logic query tersebar di banyak controller &mdash; sulit dicari &amp; diubah konsisten</li>
+        <li>Sulit di-<em>unit test</em> karena controller terikat langsung ke database</li>
+        <li>Kalau suatu saat sumber data berubah (misal pindah ke API eksternal atau cache), harus ubah banyak tempat</li>
+      </ul>
+      <p>
+        <strong>Repository Pattern</strong> menaruh semua query database di balik sebuah
+        <em>interface</em>. Controller/Service hanya bicara dengan interface itu, tidak peduli
+        implementasinya Eloquent, query builder, atau sumber lain.
+      </p>
+
+      <table>
+        <thead><tr><th>Aspek</th><th>Tanpa Repository</th><th>Dengan Repository</th></tr></thead>
+        <tbody>
+          <tr><td>Query tersebar</td><td>Ya, di banyak controller</td><td>Terpusat di satu class repository</td></tr>
+          <tr><td>Testing</td><td>Sulit &mdash; butuh database asli</td><td>Mudah &mdash; repository bisa di-<em>mock</em></td></tr>
+          <tr><td>Ganti sumber data</td><td>Ubah semua controller terkait</td><td>Cukup ubah satu implementasi</td></tr>
+          <tr><td>Kompleksitas awal</td><td>Rendah</td><td>Sedikit lebih tinggi (butuh interface + binding)</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout">
+        <div class="callout-title">Alur Arsitektur Baru</div>
+        <code>Controller &rarr; Service (business logic) &rarr; Repository Interface &rarr; Eloquent Repository &rarr; Database</code>
+      </div>
+    </div>
+
+    <!-- INTERFACE & REPOSITORY -->
+    <div class="section" id="repo-interface">
+      <h2>Interface &amp; Repository</h2>
+
+      <h3>Langkah 1 &mdash; Buat Interface</h3>
+      <div class="pre-label">app/Repositories/ProdukRepositoryInterface.php</div>
+      <pre><code><span class="op">&lt;?php</span>
+
+<span class="kw">namespace</span> App\Repositories;
+
+<span class="kw">use</span> App\Models\Produk;
+<span class="kw">use</span> Illuminate\Database\Eloquent\Collection;
+
+<span class="kw">interface</span> <span class="cl">ProdukRepositoryInterface</span>
+{
+    <span class="kw">public function</span> <span class="fn">all</span>(): Collection;
+    <span class="kw">public function</span> <span class="fn">find</span>(<span class="kw">int</span> $id): ?Produk;
+    <span class="kw">public function</span> <span class="fn">create</span>(<span class="kw">array</span> $data): Produk;
+    <span class="kw">public function</span> <span class="fn">update</span>(Produk $produk, <span class="kw">array</span> $data): Produk;
+    <span class="kw">public function</span> <span class="fn">delete</span>(Produk $produk): <span class="kw">bool</span>;
+}</code></pre>
+
+      <h3>Langkah 2 &mdash; Implementasi Eloquent</h3>
+      <div class="pre-label">Terminal</div>
+      <pre><code><span class="fn">mkdir</span> -p app/Repositories</code></pre>
+      <div class="pre-label">app/Repositories/EloquentProdukRepository.php</div>
+      <pre><code><span class="op">&lt;?php</span>
+
+<span class="kw">namespace</span> App\Repositories;
+
+<span class="kw">use</span> App\Models\Produk;
+<span class="kw">use</span> Illuminate\Database\Eloquent\Collection;
+
+<span class="kw">class</span> <span class="cl">EloquentProdukRepository</span> <span class="kw">implements</span> <span class="cl">ProdukRepositoryInterface</span>
+{
+    <span class="kw">public function</span> <span class="fn">all</span>(): Collection
+    {
+        <span class="kw">return</span> <span class="cl">Produk</span>::<span class="fn">with</span>(<span class="str">'kategori'</span>)-&gt;<span class="fn">latest</span>()-&gt;<span class="fn">get</span>();
+    }
+
+    <span class="kw">public function</span> <span class="fn">find</span>(<span class="kw">int</span> $id): ?Produk
+    {
+        <span class="kw">return</span> <span class="cl">Produk</span>::<span class="fn">find</span>($id);
+    }
+
+    <span class="kw">public function</span> <span class="fn">create</span>(<span class="kw">array</span> $data): Produk
+    {
+        <span class="kw">return</span> <span class="cl">Produk</span>::<span class="fn">create</span>($data);
+    }
+
+    <span class="kw">public function</span> <span class="fn">update</span>(Produk $produk, <span class="kw">array</span> $data): Produk
+    {
+        $produk-&gt;<span class="fn">update</span>($data);
+        <span class="kw">return</span> $produk;
+    }
+
+    <span class="kw">public function</span> <span class="fn">delete</span>(Produk $produk): <span class="kw">bool</span>
+    {
+        <span class="kw">return</span> $produk-&gt;<span class="fn">delete</span>();
+    }
+}</code></pre>
+
+      <h3>Langkah 3 &mdash; Bind Interface ke Implementasi</h3>
+      <p>Laravel perlu tahu implementasi mana yang dipakai setiap kali ada yang minta
+        <code>ProdukRepositoryInterface</code>. Daftarkan di service container.</p>
+      <div class="pre-label">app/Providers/AppServiceProvider.php</div>
+      <pre><code><span class="kw">use</span> App\Repositories\ProdukRepositoryInterface;
+<span class="kw">use</span> App\Repositories\EloquentProdukRepository;
+
+<span class="kw">public function</span> <span class="fn">register</span>(): <span class="kw">void</span>
+{
+    $this-&gt;app-&gt;<span class="fn">bind</span>(
+        ProdukRepositoryInterface::class,
+        EloquentProdukRepository::class
+    );
+}</code></pre>
+      <div class="callout success">
+        <div class="callout-title">Keuntungan Binding Ini</div>
+        Kalau nanti butuh ganti implementasi (misal <code>CachedProdukRepository</code> yang
+        membungkus Redis cache), cukup ubah baris <code>bind()</code> ini &mdash; tidak perlu
+        sentuh Controller atau Service sama sekali.
+      </div>
+    </div>
+
+    <!-- SERVICE LAYER -->
+    <div class="section" id="repo-service">
+      <h2>Service Layer</h2>
+      <p>
+        <strong>Service</strong> menyimpan business logic &mdash; aturan bisnis yang lebih dari
+        sekadar simpan/ambil data. Repository hanya urusan data, Service yang mengatur
+        "aturannya".
+      </p>
+      <div class="pre-label">app/Services/ProdukService.php</div>
+      <pre><code><span class="op">&lt;?php</span>
+
+<span class="kw">namespace</span> App\Services;
+
+<span class="kw">use</span> App\Models\Produk;
+<span class="kw">use</span> App\Repositories\ProdukRepositoryInterface;
+<span class="kw">use</span> Illuminate\Validation\ValidationException;
+
+<span class="kw">class</span> <span class="cl">ProdukService</span>
+{
+    <span class="kw">public function</span> <span class="fn">__construct</span>(
+        <span class="kw">private readonly</span> ProdukRepositoryInterface $produkRepository
+    ) {}
+
+    <span class="kw">public function</span> <span class="fn">getAll</span>()
+    {
+        <span class="kw">return</span> $this-&gt;produkRepository-&gt;<span class="fn">all</span>();
+    }
+
+    <span class="kw">public function</span> <span class="fn">store</span>(<span class="kw">array</span> $data): Produk
+    {
+        <span class="cm">// business rule: stok awal tidak boleh melebihi batas gudang</span>
+        <span class="kw">if</span> ($data[<span class="str">'stok'</span>] &gt; <span class="nb">10000</span>) {
+            <span class="kw">throw</span> ValidationException::<span class="fn">withMessages</span>([
+                <span class="str">'stok'</span> =&gt; <span class="str">'Stok awal melebihi kapasitas gudang.'</span>,
+            ]);
+        }
+
+        <span class="kw">return</span> $this-&gt;produkRepository-&gt;<span class="fn">create</span>($data);
+    }
+
+    <span class="kw">public function</span> <span class="fn">update</span>(Produk $produk, <span class="kw">array</span> $data): Produk
+    {
+        <span class="kw">return</span> $this-&gt;produkRepository-&gt;<span class="fn">update</span>($produk, $data);
+    }
+
+    <span class="kw">public function</span> <span class="fn">destroy</span>(Produk $produk): <span class="kw">bool</span>
+    {
+        <span class="kw">return</span> $this-&gt;produkRepository-&gt;<span class="fn">delete</span>($produk);
+    }
+}</code></pre>
+      <div class="callout">
+        <div class="callout-title">Kenapa Bukan Langsung di Repository?</div>
+        Repository harusnya hanya urusan <em>penyimpanan data</em> (CRUD murni). Aturan bisnis
+        seperti validasi kapasitas gudang, hitung diskon, atau kirim notifikasi setelah produk
+        dibuat, tempatnya di Service &mdash; supaya repository tetap bisa dipakai ulang di
+        konteks lain tanpa terikat satu aturan bisnis tertentu.
+      </div>
+    </div>
+
+    <!-- REFACTOR CONTROLLER -->
+    <div class="section" id="repo-controller">
+      <h2>Refactor Controller Jadi Tipis</h2>
+      <p>Controller sekarang hanya menerima request, memanggil service, dan mengembalikan
+        response &mdash; tidak ada lagi logic bisnis atau query di dalamnya.</p>
+      <div class="pre-label">app/Http/Controllers/Api/ProdukApiController.php</div>
+      <pre><code><span class="op">&lt;?php</span>
+
+<span class="kw">namespace</span> App\Http\Controllers\Api;
+
+<span class="kw">use</span> App\Http\Controllers\Controller;
+<span class="kw">use</span> App\Http\Requests\StoreProdukRequest;
+<span class="kw">use</span> App\Http\Requests\UpdateProdukRequest;
+<span class="kw">use</span> App\Models\Produk;
+<span class="kw">use</span> App\Services\ProdukService;
+
+<span class="kw">class</span> <span class="cl">ProdukApiController</span> <span class="kw">extends</span> <span class="cl">Controller</span>
+{
+    <span class="kw">public function</span> <span class="fn">__construct</span>(
+        <span class="kw">private readonly</span> ProdukService $produkService
+    ) {}
+
+    <span class="kw">public function</span> <span class="fn">index</span>()
+    {
+        <span class="kw">return</span> <span class="fn">response</span>()-&gt;<span class="fn">json</span>([
+            <span class="str">'success'</span> =&gt; <span class="kw">true</span>,
+            <span class="str">'data'</span>    =&gt; $this-&gt;produkService-&gt;<span class="fn">getAll</span>(),
+        ]);
+    }
+
+    <span class="kw">public function</span> <span class="fn">store</span>(StoreProdukRequest $request)
+    {
+        $produk = $this-&gt;produkService-&gt;<span class="fn">store</span>($request-&gt;<span class="fn">validated</span>());
+
+        <span class="kw">return</span> <span class="fn">response</span>()-&gt;<span class="fn">json</span>([<span class="str">'success'</span> =&gt; <span class="kw">true</span>, <span class="str">'data'</span> =&gt; $produk], <span class="nb">201</span>);
+    }
+
+    <span class="kw">public function</span> <span class="fn">update</span>(UpdateProdukRequest $request, Produk $produk)
+    {
+        $produk = $this-&gt;produkService-&gt;<span class="fn">update</span>($produk, $request-&gt;<span class="fn">validated</span>());
+
+        <span class="kw">return</span> <span class="fn">response</span>()-&gt;<span class="fn">json</span>([<span class="str">'success'</span> =&gt; <span class="kw">true</span>, <span class="str">'data'</span> =&gt; $produk]);
+    }
+
+    <span class="kw">public function</span> <span class="fn">destroy</span>(Produk $produk)
+    {
+        $this-&gt;produkService-&gt;<span class="fn">destroy</span>($produk);
+
+        <span class="kw">return</span> <span class="fn">response</span>()-&gt;<span class="fn">json</span>([<span class="str">'success'</span> =&gt; <span class="kw">true</span>]);
+    }
+}</code></pre>
+      <div class="callout success">
+        <div class="callout-title">Laravel Otomatis Suntik Dependency</div>
+        Karena <code>ProdukRepositoryInterface</code> sudah di-<code>bind()</code> ke
+        <code>EloquentProdukRepository</code>, dan <code>ProdukService</code> butuh interface itu
+        di constructor-nya, Laravel otomatis merangkai semuanya (Service &rarr; Repository &rarr;
+        Controller) tanpa kode tambahan &mdash; ini disebut <strong>Dependency Injection</strong>.
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- ========== MIDDLEWARE & VALIDATION ========== -->
+    <div class="section" id="middleware-custom">
+      <h2>Custom Middleware</h2>
+      <p>
+        Middleware menyaring request sebelum sampai ke controller. Laravel sudah punya
+        middleware bawaan (<code>auth:sanctum</code>, <code>throttle</code>), tapi kita juga
+        bisa buat middleware sendiri untuk aturan khusus aplikasi.
+      </p>
+
+      <h3>Contoh Kasus &mdash; Blokir User yang Di-nonaktifkan</h3>
+      <div class="pre-label">Terminal</div>
+      <pre><code>php artisan make:middleware EnsureUserIsActive</code></pre>
+      <div class="pre-label">app/Http/Middleware/EnsureUserIsActive.php</div>
+      <pre><code><span class="op">&lt;?php</span>
+
+<span class="kw">namespace</span> App\Http\Middleware;
+
+<span class="kw">use</span> Closure;
+<span class="kw">use</span> Illuminate\Http\Request;
+
+<span class="kw">class</span> <span class="cl">EnsureUserIsActive</span>
+{
+    <span class="kw">public function</span> <span class="fn">handle</span>(Request $request, Closure $next)
+    {
+        <span class="kw">if</span> ($request-&gt;<span class="fn">user</span>()?-&gt;status === <span class="str">'nonaktif'</span>) {
+            <span class="kw">return</span> <span class="fn">response</span>()-&gt;<span class="fn">json</span>([
+                <span class="str">'success'</span> =&gt; <span class="kw">false</span>,
+                <span class="str">'message'</span> =&gt; <span class="str">'Akun kamu dinonaktifkan, hubungi admin.'</span>,
+            ], <span class="nb">403</span>);
+        }
+
+        <span class="kw">return</span> $next($request);
+    }
+}</code></pre>
+
+      <h3>Daftarkan Alias Middleware</h3>
+      <div class="pre-label">bootstrap/app.php</div>
+      <pre><code><span class="kw">use</span> App\Http\Middleware\EnsureUserIsActive;
+
+-&gt;<span class="fn">withMiddleware</span>(<span class="kw">function</span> (Middleware $middleware) {
+    $middleware-&gt;<span class="fn">statefulApi</span>();
+    $middleware-&gt;<span class="fn">alias</span>([
+        <span class="str">'active'</span> =&gt; EnsureUserIsActive::class,
+    ]);
+})</code></pre>
+
+      <h3>Pakai di Routes</h3>
+      <div class="pre-label">routes/api.php</div>
+      <pre><code><span class="cl">Route</span>::<span class="fn">middleware</span>([<span class="str">'auth:sanctum'</span>, <span class="str">'active'</span>])-&gt;<span class="fn">group</span>(<span class="kw">function</span> () {
+    <span class="cl">Route</span>::<span class="fn">apiResource</span>(<span class="str">'produk'</span>, ProdukApiController::class);
+});</code></pre>
+    </div>
+
+    <!-- FORM REQUEST VALIDATION -->
+    <div class="section" id="middleware-validation">
+      <h2>Form Request Validation</h2>
+      <p>
+        Di Minggu 1, validasi ditulis langsung di controller dengan <code>$request-&gt;validate()</code>.
+        Cara ini cepat tapi bikin controller gemuk. <strong>Form Request</strong> memindahkan
+        aturan validasi ke class terpisah.
+      </p>
+
+      <div class="pre-label">Terminal</div>
+      <pre><code>php artisan make:request StoreProdukRequest
+php artisan make:request UpdateProdukRequest</code></pre>
+
+      <div class="pre-label">app/Http/Requests/StoreProdukRequest.php</div>
+      <pre><code><span class="op">&lt;?php</span>
+
+<span class="kw">namespace</span> App\Http\Requests;
+
+<span class="kw">use</span> Illuminate\Foundation\Http\FormRequest;
+
+<span class="kw">class</span> <span class="cl">StoreProdukRequest</span> <span class="kw">extends</span> <span class="cl">FormRequest</span>
+{
+    <span class="kw">public function</span> <span class="fn">authorize</span>(): <span class="kw">bool</span>
+    {
+        <span class="kw">return</span> $this-&gt;<span class="fn">user</span>() !== <span class="kw">null</span>;
+    }
+
+    <span class="kw">public function</span> <span class="fn">rules</span>(): <span class="kw">array</span>
+    {
+        <span class="kw">return</span> [
+            <span class="str">'nama_produk'</span> =&gt; <span class="str">'required|string|max:255'</span>,
+            <span class="str">'harga'</span>       =&gt; <span class="str">'required|numeric|min:1'</span>,
+            <span class="str">'stok'</span>        =&gt; <span class="str">'required|integer|min:0'</span>,
+            <span class="str">'deskripsi'</span>   =&gt; <span class="str">'nullable|string|max:500'</span>,
+            <span class="str">'kategori_id'</span> =&gt; <span class="str">'nullable|exists:kategoris,id'</span>,
+        ];
+    }
+
+    <span class="kw">public function</span> <span class="fn">messages</span>(): <span class="kw">array</span>
+    {
+        <span class="kw">return</span> [
+            <span class="str">'nama_produk.required'</span> =&gt; <span class="str">'Nama produk wajib diisi.'</span>,
+            <span class="str">'harga.min'</span>            =&gt; <span class="str">'Harga minimal Rp1.'</span>,
+        ];
+    }
+}</code></pre>
+
+      <p>Controller tinggal type-hint class ini &mdash; validasi otomatis jalan sebelum method
+        controller dieksekusi, dan gagal validasi otomatis mengembalikan <code>422</code>
+        dengan detail error di <code>response()-&gt;json()</code>.</p>
+      <div class="pre-label">Controller (cuplikan)</div>
+      <pre><code><span class="kw">public function</span> <span class="fn">store</span>(StoreProdukRequest $request)
+{
+    <span class="cm">// $request->validated() sudah pasti data yang lolos aturan di atas</span>
+    $produk = $this-&gt;produkService-&gt;<span class="fn">store</span>($request-&gt;<span class="fn">validated</span>());
+    <span class="kw">return</span> <span class="fn">response</span>()-&gt;<span class="fn">json</span>([<span class="str">'success'</span> =&gt; <span class="kw">true</span>, <span class="str">'data'</span> =&gt; $produk], <span class="nb">201</span>);
+}</code></pre>
+
+      <table>
+        <thead><tr><th>Aspek</th><th>Validasi di Controller</th><th>Form Request</th></tr></thead>
+        <tbody>
+          <tr><td>Controller</td><td>Gemuk, campur validasi &amp; logic</td><td>Tipis, hanya panggil service</td></tr>
+          <tr><td>Reuse aturan</td><td>Copy-paste antar method</td><td>Satu class, dipakai ulang</td></tr>
+          <tr><td>Custom pesan error</td><td>Manual di setiap tempat</td><td>Terpusat di <code>messages()</code></td></tr>
+          <tr><td>Cek otorisasi</td><td>Manual <code>if</code></td><td>Method <code>authorize()</code> bawaan</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- ========== ROLES & PERMISSION ========== -->
+    <div class="section" id="spatie-install">
+      <h2>Install Spatie Laravel-Permission</h2>
+      <p>
+        <strong>spatie/laravel-permission</strong> adalah package paling populer untuk mengatur
+        <em>roles</em> (peran, misal admin/staff) dan <em>permissions</em> (izin granular,
+        misal <code>produk.delete</code>) di Laravel.
+      </p>
+
+      <h3>Langkah 1 &mdash; Install via Composer</h3>
+      <div class="pre-label">Terminal</div>
+      <pre><code>composer require spatie/laravel-permission</code></pre>
+
+      <h3>Langkah 2 &mdash; Publish Migration &amp; Config</h3>
+      <div class="pre-label">Terminal</div>
+      <pre><code>php artisan vendor:publish --provider="Spatie\Permission\PermissionServiceProvider"
+php artisan migrate</code></pre>
+      <p>Ini membuat tabel <code>roles</code>, <code>permissions</code>,
+        <code>model_has_roles</code>, <code>model_has_permissions</code>, dan
+        <code>role_has_permissions</code>.</p>
+
+      <h3>Langkah 3 &mdash; Tambahkan Trait ke Model User</h3>
+      <div class="pre-label">app/Models/User.php</div>
+      <pre><code><span class="kw">use</span> Spatie\Permission\Traits\HasRoles;   <span class="cm">// tambahkan ini</span>
+<span class="kw">use</span> Laravel\Sanctum\HasApiTokens;
+
+<span class="kw">class</span> <span class="cl">User</span> <span class="kw">extends</span> Authenticatable
+{
+    <span class="kw">use</span> HasApiTokens, HasRoles;   <span class="cm">// tambahkan HasRoles</span>
+
+    <span class="kw">protected</span> $fillable = [<span class="str">'name'</span>, <span class="str">'email'</span>, <span class="str">'password'</span>];
+}</code></pre>
+    </div>
+
+    <!-- SETUP ROLES & PERMISSIONS -->
+    <div class="section" id="spatie-setup">
+      <h2>Setup Roles &amp; Permissions</h2>
+
+      <h3>Buat Seeder</h3>
+      <div class="pre-label">Terminal</div>
+      <pre><code>php artisan make:seeder RolePermissionSeeder</code></pre>
+      <div class="pre-label">database/seeders/RolePermissionSeeder.php</div>
+      <pre><code><span class="op">&lt;?php</span>
+
+<span class="kw">namespace</span> Database\Seeders;
+
+<span class="kw">use</span> Illuminate\Database\Seeder;
+<span class="kw">use</span> Spatie\Permission\Models\Permission;
+<span class="kw">use</span> Spatie\Permission\Models\Role;
+
+<span class="kw">class</span> <span class="cl">RolePermissionSeeder</span> <span class="kw">extends</span> Seeder
+{
+    <span class="kw">public function</span> <span class="fn">run</span>(): <span class="kw">void</span>
+    {
+        <span class="cm">// Buat permission granular</span>
+        $permissions = [
+            <span class="str">'produk.view'</span>, <span class="str">'produk.create'</span>, <span class="str">'produk.update'</span>, <span class="str">'produk.delete'</span>,
+        ];
+        <span class="kw">foreach</span> ($permissions <span class="kw">as</span> $permission) {
+            Permission::<span class="fn">firstOrCreate</span>([<span class="str">'name'</span> =&gt; $permission]);
+        }
+
+        <span class="cm">// Buat role dan tempel permission-nya</span>
+        $admin = Role::<span class="fn">firstOrCreate</span>([<span class="str">'name'</span> =&gt; <span class="str">'admin'</span>]);
+        $admin-&gt;<span class="fn">givePermissionTo</span>($permissions);   <span class="cm">// admin dapat semua izin</span>
+
+        $staff = Role::<span class="fn">firstOrCreate</span>([<span class="str">'name'</span> =&gt; <span class="str">'staff'</span>]);
+        $staff-&gt;<span class="fn">givePermissionTo</span>([<span class="str">'produk.view'</span>, <span class="str">'produk.create'</span>, <span class="str">'produk.update'</span>]);
+        <span class="cm">// staff tidak boleh hapus produk</span>
+    }
+}</code></pre>
+
+      <div class="pre-label">Terminal</div>
+      <pre><code>php artisan db:seed --class=RolePermissionSeeder</code></pre>
+
+      <h3>Assign Role ke User</h3>
+      <div class="pre-label">Tinker</div>
+      <pre><code>php artisan tinker
+<span class="cm">&gt;&gt;&gt;</span> $user = <span class="cl">User</span>::<span class="fn">find</span>(<span class="nb">1</span>);
+<span class="cm">&gt;&gt;&gt;</span> $user-&gt;<span class="fn">assignRole</span>(<span class="str">'admin'</span>);
+<span class="cm">&gt;&gt;&gt;</span> $user-&gt;<span class="fn">getRoleNames</span>();   <span class="cm">// ["admin"]</span>
+<span class="cm">&gt;&gt;&gt;</span> $user-&gt;<span class="fn">getAllPermissions</span>()-&gt;<span class="fn">pluck</span>(<span class="str">'name'</span>);</code></pre>
+
+      <table>
+        <thead><tr><th>Konsep</th><th>Contoh</th><th>Fungsi</th></tr></thead>
+        <tbody>
+          <tr><td>Role</td><td><code>admin</code>, <code>staff</code></td><td>Kelompok besar hak akses (peran)</td></tr>
+          <tr><td>Permission</td><td><code>produk.delete</code></td><td>Izin granular untuk satu aksi spesifik</td></tr>
+          <tr><td>Role &rarr; Permission</td><td><code>$role-&gt;givePermissionTo(...)</code></td><td>Satu role bisa punya banyak permission</td></tr>
+          <tr><td>User &rarr; Role</td><td><code>$user-&gt;assignRole(...)</code></td><td>Satu user bisa punya banyak role</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- MIDDLEWARE OTORISASI -->
+    <div class="section" id="spatie-middleware">
+      <h2>Middleware Otorisasi di Routes</h2>
+
+      <h3>Daftarkan Middleware Spatie</h3>
+      <div class="pre-label">bootstrap/app.php</div>
+      <pre><code><span class="kw">use</span> Spatie\Permission\Middleware\RoleMiddleware;
+<span class="kw">use</span> Spatie\Permission\Middleware\PermissionMiddleware;
+
+-&gt;<span class="fn">withMiddleware</span>(<span class="kw">function</span> (Middleware $middleware) {
+    $middleware-&gt;<span class="fn">statefulApi</span>();
+    $middleware-&gt;<span class="fn">alias</span>([
+        <span class="str">'active'</span>     =&gt; \App\Http\Middleware\EnsureUserIsActive::class,
+        <span class="str">'role'</span>       =&gt; RoleMiddleware::class,
+        <span class="str">'permission'</span> =&gt; PermissionMiddleware::class,
+    ]);
+})</code></pre>
+
+      <h3>Terapkan di Routes</h3>
+      <div class="pre-label">routes/api.php</div>
+      <pre><code><span class="cm">// Hanya admin yang boleh hapus produk</span>
+<span class="cl">Route</span>::<span class="fn">middleware</span>([<span class="str">'auth:sanctum'</span>, <span class="str">'role:admin'</span>])-&gt;<span class="fn">group</span>(<span class="kw">function</span> () {
+    <span class="cl">Route</span>::<span class="fn">delete</span>(<span class="str">'/produk/{produk}'</span>, [ProdukApiController::class, <span class="str">'destroy'</span>]);
+});
+
+<span class="cm">// Butuh permission spesifik, boleh dari role manapun yang punya izin itu</span>
+<span class="cl">Route</span>::<span class="fn">middleware</span>([<span class="str">'auth:sanctum'</span>, <span class="str">'permission:produk.update'</span>])-&gt;<span class="fn">group</span>(<span class="kw">function</span> () {
+    <span class="cl">Route</span>::<span class="fn">put</span>(<span class="str">'/produk/{produk}'</span>, [ProdukApiController::class, <span class="str">'update'</span>]);
+});</code></pre>
+
+      <div class="callout warning">
+        <div class="callout-title">Response Kalau Ditolak</div>
+        Kalau user tidak punya role/permission yang sesuai, Spatie melempar
+        <code>403 Forbidden</code> otomatis &mdash; tidak perlu cek manual di controller.
+      </div>
+    </div>
+
+    <!-- CEK PERMISSION DI KODE -->
+    <div class="section" id="spatie-check">
+      <h2>Cek Permission di Dalam Kode</h2>
+      <p>Selain lewat middleware di routes, kamu juga bisa cek role/permission langsung
+        di controller atau Blade untuk kasus yang lebih kondisional.</p>
+
+      <h3>Di Controller</h3>
+      <pre><code><span class="kw">public function</span> <span class="fn">destroy</span>(Produk $produk)
+{
+    <span class="kw">if</span> (! $request-&gt;<span class="fn">user</span>()-&gt;<span class="fn">can</span>(<span class="str">'produk.delete'</span>)) {
+        <span class="fn">abort</span>(<span class="nb">403</span>, <span class="str">'Kamu tidak punya izin menghapus produk.'</span>);
+    }
+
+    $this-&gt;produkService-&gt;<span class="fn">destroy</span>($produk);
+    <span class="kw">return</span> <span class="fn">response</span>()-&gt;<span class="fn">json</span>([<span class="str">'success'</span> =&gt; <span class="kw">true</span>]);
+}</code></pre>
+
+      <h3>Di Blade (kalau ada tampilan web)</h3>
+      <pre><code>@can(<span class="str">'produk.delete'</span>)
+  &lt;button class="btn btn-danger"&gt;Hapus&lt;/button&gt;
+@endcan
+
+@role(<span class="str">'admin'</span>)
+  &lt;a href="/admin/laporan"&gt;Laporan Admin&lt;/a&gt;
+@endrole</code></pre>
+
+      <table>
+        <thead><tr><th>Method</th><th>Fungsi</th></tr></thead>
+        <tbody>
+          <tr><td><code>$user-&gt;hasRole('admin')</code></td><td>Cek apakah user punya role tertentu</td></tr>
+          <tr><td><code>$user-&gt;can('produk.delete')</code></td><td>Cek permission (native Laravel <code>Gate</code>, didukung Spatie)</td></tr>
+          <tr><td><code>$user-&gt;hasPermissionTo('produk.delete')</code></td><td>Sama seperti <code>can()</code>, versi Spatie</td></tr>
+          <tr><td><code>@can(...) / @endcan</code></td><td>Directive Blade untuk sembunyikan elemen UI</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- ========== RATE LIMITING ========== -->
+    <div class="section" id="rate-default">
+      <h2>Rate Limiting &mdash; Throttle Bawaan</h2>
+      <p>
+        <strong>Rate limiting</strong> membatasi berapa kali satu user/IP boleh memanggil
+        endpoint dalam periode waktu tertentu &mdash; mencegah abuse dan brute-force.
+      </p>
+
+      <h3>Middleware <code>throttle</code> Bawaan Laravel</h3>
+      <p>Grup route <code>api</code> di Laravel 12 secara default sudah dibungkus
+        <code>throttle:api</code> (60 request/menit per user atau IP).</p>
+      <div class="pre-label">routes/api.php</div>
+      <pre><code><span class="cm">// Custom limit langsung di route: 5 percobaan login per menit</span>
+<span class="cl">Route</span>::<span class="fn">post</span>(<span class="str">'/login'</span>, [AuthController::class, <span class="str">'login'</span>])
+    -&gt;<span class="fn">middleware</span>(<span class="str">'throttle:5,1'</span>);   <span class="cm">// 5 request per 1 menit</span></code></pre>
+
+      <h3>Response Saat Limit Tercapai</h3>
+      <div class="pre-label">HTTP 429 Too Many Requests</div>
+      <pre><code>{
+  <span class="str">"message"</span>: <span class="str">"Too Many Attempts."</span>
+}</code></pre>
+      <p>Header response juga menyertakan <code>X-RateLimit-Limit</code>,
+        <code>X-RateLimit-Remaining</code>, dan <code>Retry-After</code> supaya client tahu
+        kapan boleh mencoba lagi.</p>
+
+      <div class="callout warning">
+        <div class="callout-title">Kenapa Endpoint Login Perlu Limit Ketat?</div>
+        Tanpa rate limit, penyerang bisa mencoba ribuan kombinasi password per detik
+        (brute-force). Limit 5 percobaan/menit membuat serangan seperti ini jadi sangat lambat
+        dan tidak praktis.
+      </div>
+    </div>
+
+    <!-- CUSTOM RATE LIMITER -->
+    <div class="section" id="rate-custom">
+      <h2>Custom Rate Limiter</h2>
+      <p>
+        Untuk aturan yang lebih fleksibel (misal limit berbeda untuk user premium vs biasa),
+        definisikan rate limiter sendiri lewat <code>RateLimiter::for()</code>.
+      </p>
+      <div class="pre-label">app/Providers/AppServiceProvider.php</div>
+      <pre><code><span class="kw">use</span> Illuminate\Cache\RateLimiting\Limit;
+<span class="kw">use</span> Illuminate\Support\Facades\RateLimiter;
+<span class="kw">use</span> Illuminate\Http\Request;
+
+<span class="kw">public function</span> <span class="fn">boot</span>(): <span class="kw">void</span>
+{
+    <span class="cl">RateLimiter</span>::<span class="fn">for</span>(<span class="str">'produk-api'</span>, <span class="kw">function</span> (Request $request) {
+        $user = $request-&gt;<span class="fn">user</span>();
+
+        <span class="cm">// user dengan role "admin" dapat kuota lebih besar</span>
+        <span class="kw">if</span> ($user?-&gt;<span class="fn">hasRole</span>(<span class="str">'admin'</span>)) {
+            <span class="kw">return</span> Limit::<span class="fn">perMinute</span>(<span class="nb">120</span>)-&gt;<span class="fn">by</span>($user-&gt;id);
+        }
+
+        <span class="kw">return</span> Limit::<span class="fn">perMinute</span>(<span class="nb">30</span>)-&gt;<span class="fn">by</span>($user?-&gt;id ?: $request-&gt;<span class="fn">ip</span>());
+    });
+}</code></pre>
+
+      <div class="pre-label">routes/api.php</div>
+      <pre><code><span class="cl">Route</span>::<span class="fn">middleware</span>([<span class="str">'auth:sanctum'</span>, <span class="str">'throttle:produk-api'</span>])-&gt;<span class="fn">group</span>(<span class="kw">function</span> () {
+    <span class="cl">Route</span>::<span class="fn">apiResource</span>(<span class="str">'produk'</span>, ProdukApiController::class);
+});</code></pre>
+
+      <table>
+        <thead><tr><th>Method</th><th>Fungsi</th></tr></thead>
+        <tbody>
+          <tr><td><code>Limit::perMinute($n)</code></td><td>Batas per menit</td></tr>
+          <tr><td><code>Limit::perHour($n)</code></td><td>Batas per jam</td></tr>
+          <tr><td><code>-&gt;by($key)</code></td><td>Kunci pembatas &mdash; per user ID, per IP, atau kombinasi</td></tr>
+          <tr><td><code>Limit::none()</code></td><td>Tanpa batas (misal untuk role tertentu)</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout success">
+        <div class="callout-title">Kombinasi dengan Otorisasi</div>
+        Rate limiter custom di atas menunjukkan bagaimana Middleware, Spatie Roles, dan Rate
+        Limiting bisa saling melengkapi &mdash; satu function bisa mengecek role user untuk
+        menentukan kuota rate limit yang berbeda.
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- RINGKASAN -->
+    <div class="section" id="ringkasan">
+      <h2>Ringkasan Minggu 2</h2>
+      <p>Empat pilar arsitektur &amp; otorisasi yang sudah dipelajari:</p>
+      <ul class="step-list">
+        <li>
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <h4>Repository &amp; Service Pattern</h4>
+            <p>Pisahkan query database (Repository) dari business logic (Service), controller
+              jadi tipis dan mudah diuji lewat Dependency Injection.</p>
+          </div>
+        </li>
+        <li>
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <h4>Middleware &amp; Form Request</h4>
+            <p>Custom middleware untuk aturan akses lintas-route, Form Request untuk memindahkan
+              validasi keluar dari controller.</p>
+          </div>
+        </li>
+        <li>
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <h4>Spatie Roles &amp; Permission</h4>
+            <p>Atur hak akses dengan role (admin/staff) dan permission granular
+              (<code>produk.delete</code>), diterapkan lewat middleware <code>role:</code> /
+              <code>permission:</code> atau dicek manual dengan <code>can()</code>.</p>
+          </div>
+        </li>
+        <li>
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <h4>Rate Limiting</h4>
+            <p>Lindungi endpoint sensitif (login) dengan throttle ketat, dan buat rate limiter
+              custom yang kuotanya bisa berbeda tergantung role user.</p>
+          </div>
+        </li>
+      </ul>
+
+      <div class="callout success">
+        <div class="callout-title">Selamat! Minggu 2 Selesai</div>
+        Project <code>laravel-crud-app</code> sekarang punya arsitektur yang lebih rapi dan
+        sistem otorisasi yang jelas. Lanjut ke
+        <a href="modul-optimasi.html"><strong>Minggu 3</strong></a> untuk belajar Redis, Laravel
+        Horizon, dan testing dengan Pest/PHPUnit &mdash; atau kembali ke
+        <a href="modul-rest-api-sanctum.html">Minggu 1</a> kalau ada dasar yang perlu diulang.
+        Lihat <a href="index.html">roadmap lengkap</a> untuk minggu-minggu berikutnya.
+      </div>
+    </div>
+
+   </div>
+  </main>
+
+  <!-- RIGHT TOC -->
+  <aside class="toc">
+    <div class="toc-title">Daftar Isi</div>
+
+    <a href="#repo-intro">Repository &amp; Service</a>
+    <a class="sub" href="#repo-intro">Kenapa Repository Pattern</a>
+    <a class="sub" href="#repo-interface">Interface &amp; Repository</a>
+    <a class="sub" href="#repo-service">Service Layer</a>
+    <a class="sub" href="#repo-controller">Refactor Controller</a>
+
+    <a href="#middleware-custom" style="margin-top:12px;display:block">Middleware &amp; Validation</a>
+    <a class="sub" href="#middleware-custom">Custom Middleware</a>
+    <a class="sub" href="#middleware-validation">Form Request</a>
+
+    <a href="#spatie-install" style="margin-top:12px;display:block">Roles &amp; Permission</a>
+    <a class="sub" href="#spatie-install">Install Spatie</a>
+    <a class="sub" href="#spatie-setup">Setup Roles</a>
+    <a class="sub" href="#spatie-middleware">Middleware Otorisasi</a>
+    <a class="sub" href="#spatie-check">Cek di Kode</a>
+
+    <a href="#rate-default" style="margin-top:12px;display:block">Rate Limiting</a>
+    <a class="sub" href="#rate-default">Throttle Bawaan</a>
+    <a class="sub" href="#rate-custom">Custom Rate Limiter</a>
+
+    <a href="#ringkasan" style="margin-top:12px;display:block">Ringkasan</a>
+  </aside>
+
+</div>
+
+<script>
+  // Sidebar accordion
+  document.querySelectorAll('.nav-group-title').forEach(title => {
+    title.addEventListener('click', () => {
+      title.parentElement.classList.toggle('open');
+    });
+  });
+
+  // Laravel nav bar — sub navbar (dropdown) toggle
+  document.querySelectorAll('.laravel-nav-trigger').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      btn.closest('.laravel-nav').classList.toggle('open');
+    });
+  });
+  document.addEventListener('click', (e) => {
+    document.querySelectorAll('.laravel-nav.open').forEach(nav => {
+      if (!nav.contains(e.target)) nav.classList.remove('open');
+    });
+  });
+
+  // Mobile sidebar toggle
+  const sidebarEl = document.querySelector('.sidebar');
+  const overlayEl = document.getElementById('sidebarOverlay');
+  const menuToggleBtn = document.getElementById('menuToggle');
+  function closeSidebar() {
+    sidebarEl.classList.remove('open');
+    overlayEl.classList.remove('show');
+  }
+  if (menuToggleBtn) {
+    menuToggleBtn.addEventListener('click', () => {
+      sidebarEl.classList.toggle('open');
+      overlayEl.classList.toggle('show');
+    });
+  }
+  if (overlayEl) overlayEl.addEventListener('click', closeSidebar);
+  document.querySelectorAll('.sidebar a').forEach(a => a.addEventListener('click', closeSidebar));
+
+  // Wrap tables so they scroll horizontally instead of breaking layout on small screens
+  document.querySelectorAll('.main table').forEach(t => {
+    if (t.closest('.table-scroll')) return;
+    const wrap = document.createElement('div');
+    wrap.className = 'table-scroll';
+    t.parentNode.insertBefore(wrap, t);
+    wrap.appendChild(t);
+  });
+
+  // Copy button on every code block
+  function copyText(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+      return navigator.clipboard.writeText(text);
+    }
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); } catch (err) {}
+    document.body.removeChild(ta);
+    return Promise.resolve();
+  }
+  document.querySelectorAll('pre').forEach(pre => {
+    const codeEl = pre.querySelector('code');
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'copy-btn';
+    btn.textContent = 'Copy';
+    btn.setAttribute('aria-label', 'Salin kode');
+    btn.addEventListener('click', () => {
+      const text = (codeEl ? codeEl.textContent : pre.textContent).trim();
+      copyText(text).then(() => {
+        btn.textContent = 'Copied!';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = 'Copy';
+          btn.classList.remove('copied');
+        }, 1500);
+      });
+    });
+    pre.appendChild(btn);
+  });
+
+  // Scroll spy for sidebar + TOC
+  const sections = document.querySelectorAll('.section[id]');
+  const navLinks = document.querySelectorAll('.nav-link');
+  const tocLinks = document.querySelectorAll('.toc a');
+
+  function setActive(links, id) {
+    links.forEach(l => {
+      l.classList.toggle('active', l.getAttribute('href') === '#' + id);
+    });
+  }
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        setActive(navLinks, entry.target.id);
+        setActive(tocLinks, entry.target.id);
+        const activeLink = document.querySelector('.nav-link.active');
+        if (activeLink) {
+          const group = activeLink.closest('.nav-group');
+          if (group) group.classList.add('open');
+        }
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+
+  sections.forEach(s => observer.observe(s));
+</script>
+
+</body>
+</html>

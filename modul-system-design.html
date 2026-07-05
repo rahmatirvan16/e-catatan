@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Modul System Design &mdash; Laravel</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --sidebar-w: 260px;
+      --toc-w: 220px;
+      --accent: #0d6efd;
+      --accent-light: #e7f1ff;
+      --text: #212529;
+      --muted: #6c757d;
+      --border: #dee2e6;
+      --code-bg: #f8f9fa;
+      --code-border: #e9ecef;
+      --sidebar-bg: #f8f9fa;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 15px;
+      line-height: 1.7;
+      color: var(--text);
+      background: #fff;
+    }
+
+    /* TOP BAR */
+    .topbar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      height: 56px;
+      background: #fff;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; padding: 0 24px;
+      gap: 16px;
+    }
+    .topbar-brand {
+      font-weight: 700; font-size: 17px; color: var(--accent);
+      text-decoration: none;
+    }
+    .topbar-version {
+      background: var(--accent-light); color: var(--accent);
+      font-size: 11px; font-weight: 600; padding: 2px 8px;
+      border-radius: 20px;
+    }
+    .topbar-subtitle {
+      color: var(--muted); font-size: 13px; margin-left: auto;
+    }
+    /* LARAVEL NAV BAR + SUB NAVBAR (dropdown by Fokus Utama) */
+    .laravel-nav { position: relative; margin-left: 24px; }
+    .laravel-nav-trigger {
+      display: flex; align-items: center; gap: 6px;
+      background: none; border: 1px solid var(--border); border-radius: 6px;
+      padding: 6px 14px; font-size: 13px; font-weight: 600;
+      color: var(--text); cursor: pointer; font-family: inherit;
+    }
+    .laravel-nav-trigger:hover { background: var(--accent-light); color: var(--accent); border-color: var(--accent); }
+    .laravel-nav.open .laravel-nav-trigger { background: var(--accent-light); color: var(--accent); border-color: var(--accent); }
+    .laravel-nav-trigger .caret { font-size: 10px; transition: transform .15s; }
+    .laravel-nav.open .laravel-nav-trigger .caret { transform: rotate(180deg); }
+    .laravel-nav-menu {
+      display: none;
+      position: absolute; top: calc(100% + 8px); left: 0;
+      width: 360px; max-height: 75vh; overflow-y: auto;
+      background: #fff; border: 1px solid var(--border); border-radius: 10px;
+      box-shadow: 0 12px 32px rgba(0,0,0,.14);
+      padding: 8px; z-index: 200;
+    }
+    .laravel-nav.open .laravel-nav-menu { display: block; }
+    .laravel-nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 12px; border-radius: 8px;
+      text-decoration: none; color: var(--text); font-size: 13px;
+    }
+    .laravel-nav-item:hover { background: var(--accent-light); }
+    .laravel-nav-item.active { background: var(--accent-light); color: var(--accent); font-weight: 600; }
+    .laravel-nav-item .lni-week {
+      flex-shrink: 0; width: 34px; font-size: 11px; font-weight: 700; color: var(--muted);
+    }
+    .laravel-nav-item.active .lni-week { color: var(--accent); }
+    .laravel-nav-item .lni-title { flex: 1; }
+    .laravel-nav-item .lni-soon {
+      flex-shrink: 0; font-size: 10px; font-weight: 700; text-transform: uppercase;
+      background: #e9ecef; color: #495057; padding: 2px 6px; border-radius: 20px;
+    }
+
+    /* LAYOUT */
+    .layout {
+      display: flex;
+      padding-top: 56px;
+      min-height: 100vh;
+    }
+
+    /* LEFT SIDEBAR */
+    .sidebar {
+      width: var(--sidebar-w);
+      flex-shrink: 0;
+      position: fixed;
+      top: 56px; bottom: 0; left: 0;
+      overflow-y: auto;
+      background: var(--sidebar-bg);
+      border-right: 1px solid var(--border);
+      padding: 20px 0 40px;
+    }
+    .sidebar::-webkit-scrollbar { width: 4px; }
+    .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    .nav-group { margin-bottom: 4px; }
+    .nav-group-title {
+      display: flex; align-items: center; gap: 8px;
+      padding: 6px 20px;
+      font-size: 12px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .06em;
+      color: var(--text);
+      cursor: pointer;
+      user-select: none;
+    }
+    .nav-group-title .arrow {
+      display: inline-block; transition: transform .2s;
+      font-size: 10px; color: var(--muted);
+    }
+    .nav-group.open .arrow { transform: rotate(90deg); }
+    .nav-group-items { display: none; }
+    .nav-group.open .nav-group-items { display: block; }
+
+    .nav-link {
+      display: block;
+      padding: 5px 20px 5px 36px;
+      font-size: 14px; color: var(--muted);
+      text-decoration: none;
+      border-left: 3px solid transparent;
+      transition: color .15s, border-color .15s, background .15s;
+    }
+    .nav-link:hover { color: var(--accent); background: var(--accent-light); }
+    .nav-link.active {
+      color: var(--accent); font-weight: 600;
+      border-left-color: var(--accent);
+      background: var(--accent-light);
+    }
+
+    /* MAIN CONTENT */
+    .main {
+      margin-left: var(--sidebar-w);
+      margin-right: var(--toc-w);
+      flex: 1;
+      min-width: 0;
+    }
+    .main-inner {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 48px 56px;
+    }
+
+    /* MOBILE MENU TOGGLE */
+    .menu-toggle {
+      display: none;
+      align-items: center; justify-content: center;
+      width: 32px; height: 32px; flex-shrink: 0;
+      border: 1px solid var(--border); border-radius: 6px;
+      background: none; cursor: pointer; font-size: 16px;
+      color: var(--text);
+    }
+    .menu-toggle:hover { background: var(--accent-light); color: var(--accent); border-color: var(--accent); }
+    .sidebar-overlay {
+      display: none;
+      position: fixed; inset: 56px 0 0 0;
+      background: rgba(0,0,0,.35);
+      z-index: 95;
+    }
+    .sidebar-overlay.show { display: block; }
+
+    /* TABLES THAT OVERFLOW SCROLL INSTEAD OF BREAKING LAYOUT */
+    .table-scroll { overflow-x: auto; margin: 16px 0; -webkit-overflow-scrolling: touch; }
+    .table-scroll table { margin: 0; }
+
+    /* RESPONSIVE */
+    @media (max-width: 1300px) {
+      .toc { display: none; }
+      .main { margin-right: 0; }
+    }
+    @media (max-width: 900px) {
+      .menu-toggle { display: inline-flex; }
+      .topbar-subtitle { display: none; }
+      .sidebar {
+        transform: translateX(-100%);
+        transition: transform .2s ease;
+        z-index: 96;
+        box-shadow: 4px 0 24px rgba(0,0,0,.15);
+      }
+      .sidebar.open { transform: translateX(0); }
+      .main { margin-left: 0; }
+      .main-inner { padding: 32px 24px; }
+      .laravel-nav-menu { width: min(360px, 88vw); }
+    }
+    @media (max-width: 560px) {
+      .topbar { padding: 0 14px; gap: 10px; }
+      .topbar-brand { font-size: 15px; }
+      .topbar-version { display: none; }
+      .page-title { font-size: 28px; }
+      .page-lead { font-size: 15px; padding-bottom: 24px; margin-bottom: 28px; }
+      .main-inner { padding: 24px 16px; }
+      h2 { font-size: 21px; }
+    }
+
+    /* RIGHT TOC */
+    .toc {
+      width: var(--toc-w);
+      flex-shrink: 0;
+      position: fixed;
+      top: 56px; bottom: 0; right: 0;
+      overflow-y: auto;
+      padding: 24px 16px;
+      border-left: 1px solid var(--border);
+    }
+    .toc-title {
+      font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .06em;
+      color: var(--muted); margin-bottom: 12px;
+    }
+    .toc a {
+      display: block; font-size: 13px; color: var(--muted);
+      text-decoration: none; padding: 3px 0 3px 8px;
+      border-left: 2px solid transparent;
+      transition: color .15s, border-color .15s;
+    }
+    .toc a:hover, .toc a.active {
+      color: var(--accent); border-left-color: var(--accent);
+    }
+    .toc a.sub { padding-left: 20px; font-size: 12px; }
+
+    /* CONTENT TYPOGRAPHY */
+    .page-title {
+      font-size: 40px; font-weight: 700;
+      margin-bottom: 12px; line-height: 1.2;
+    }
+    .page-lead {
+      font-size: 18px; color: var(--muted);
+      margin-bottom: 40px; border-bottom: 1px solid var(--border);
+      padding-bottom: 32px;
+    }
+    .section { margin-bottom: 56px; }
+    h2 {
+      font-size: 26px; font-weight: 700;
+      margin-bottom: 16px; padding-top: 8px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 8px;
+    }
+    h3 {
+      font-size: 18px; font-weight: 600;
+      margin: 24px 0 10px;
+    }
+    h4 {
+      font-size: 15px; font-weight: 600;
+      margin: 18px 0 8px; color: var(--text);
+    }
+    p { margin-bottom: 14px; }
+    ul, ol { padding-left: 24px; margin-bottom: 14px; }
+    li { margin-bottom: 6px; }
+    strong { font-weight: 600; }
+
+    /* CODE */
+    code {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      font-size: 13px;
+      background: var(--code-bg);
+      border: 1px solid var(--code-border);
+      padding: 1px 5px; border-radius: 4px;
+      color: #d63384;
+    }
+    pre {
+      background: #1e1e2e;
+      border-radius: 8px;
+      padding: 20px 24px;
+      overflow-x: auto;
+      margin: 16px 0 20px;
+      position: relative;
+    }
+    pre code {
+      background: none; border: none; padding: 0;
+      color: #cdd6f4; font-size: 13px; line-height: 1.65;
+    }
+    .pre-label {
+      font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .06em;
+      color: #6c757d; margin-bottom: 6px;
+    }
+
+    /* COPY BUTTON */
+    .copy-btn {
+      position: absolute; top: 10px; right: 10px;
+      display: flex; align-items: center; gap: 5px;
+      background: rgba(255,255,255,.08);
+      color: #cdd6f4;
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 6px;
+      font-family: inherit; font-size: 11px; font-weight: 600;
+      padding: 4px 9px;
+      cursor: pointer;
+      opacity: .55;
+      transition: opacity .15s, background .15s;
+    }
+    pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
+    .copy-btn:hover { background: rgba(255,255,255,.2); }
+    .copy-btn.copied {
+      opacity: 1; background: #198754; border-color: #198754; color: #fff;
+    }
+    @media (max-width: 900px) { .copy-btn { opacity: .8; } }
+    @media print { .copy-btn { display: none; } }
+
+    .kw  { color: #cba6f7; }
+    .fn  { color: #89b4fa; }
+    .str { color: #a6e3a1; }
+    .cm  { color: #6c7086; }
+    .cl  { color: #fab387; }
+    .nb  { color: #89dceb; }
+    .op  { color: #89dceb; }
+
+    /* BADGES / CALLOUTS */
+    .badge {
+      display: inline-block; font-size: 11px; font-weight: 700;
+      padding: 2px 8px; border-radius: 4px;
+      text-transform: uppercase; letter-spacing: .04em;
+    }
+    .badge-blue  { background: #cfe2ff; color: #084298; }
+    .badge-green { background: #d1e7dd; color: #0a3622; }
+    .badge-red   { background: #f8d7da; color: #842029; }
+    .badge-yellow{ background: #fff3cd; color: #664d03; }
+    .badge-purple{ background: #e8d5fb; color: #5e2d91; }
+    .badge-orange{ background: #ffe5d0; color: #8a3800; }
+
+    .callout {
+      border-left: 4px solid var(--accent);
+      background: var(--accent-light);
+      padding: 14px 18px; border-radius: 0 6px 6px 0;
+      margin: 16px 0;
+    }
+    .callout.warning { border-left-color: #ffc107; background: #fff3cd; }
+    .callout.danger  { border-left-color: #dc3545; background: #f8d7da; }
+    .callout.success { border-left-color: #198754; background: #d1e7dd; }
+    .callout-title { font-weight: 700; margin-bottom: 4px; font-size: 13px; }
+
+    /* TABLE */
+    table {
+      width: 100%; border-collapse: collapse;
+      margin: 16px 0; font-size: 14px;
+    }
+    th {
+      background: var(--code-bg); font-weight: 600;
+      padding: 10px 14px; border: 1px solid var(--border);
+      text-align: left;
+    }
+    td { padding: 9px 14px; border: 1px solid var(--border); }
+    tr:nth-child(even) td { background: #fafafa; }
+
+    /* STEP LIST */
+    .step-list { list-style: none; padding: 0; }
+    .step-list li { display: flex; gap: 16px; margin-bottom: 20px; }
+    .step-num {
+      flex-shrink: 0;
+      width: 28px; height: 28px;
+      background: var(--accent); color: #fff;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700; margin-top: 2px;
+    }
+    .step-body h4 { margin-top: 0; }
+
+    /* DIVIDER */
+    .divider { border: none; border-top: 2px solid var(--border); margin: 56px 0; }
+
+    /* PRINT */
+    @media print {
+      .topbar, .sidebar, .toc { display: none; }
+      .main { margin: 0; }
+      .main-inner { padding: 24px 32px; max-width: 100%; }
+      pre { background: #f8f9fa !important; }
+      pre code { color: #212529 !important; }
+      .kw,.fn,.str,.cm,.cl,.nb,.op { color: #212529 !important; }
+      h2 { page-break-before: always; }
+      .section:first-of-type h2 { page-break-before: avoid; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<header class="topbar">
+  <button class="menu-toggle" id="menuToggle" aria-label="Buka menu">&#9776;</button>
+  <a class="topbar-brand" href="index.html">Laravel Docs</a>
+  <span class="topbar-version">v12.x</span>
+  <div class="laravel-nav" id="laravelNav">
+    <button class="laravel-nav-trigger" type="button">Laravel <span class="caret">&#9662;</span></button>
+    <div class="laravel-nav-menu">
+      <a class="laravel-nav-item" href="modul-rest-api-sanctum.html"><span class="lni-week">M1</span><span class="lni-title">Core Laravel &amp; Database</span></a>
+      <a class="laravel-nav-item" href="modul-arsitektur-otorisasi.html"><span class="lni-week">M2</span><span class="lni-title">Arsitektur Kode &amp; Otorisasi</span></a>
+      <a class="laravel-nav-item" href="modul-optimasi.html"><span class="lni-week">M3</span><span class="lni-title">Testing &amp; Optimasi</span></a>
+      <a class="laravel-nav-item" href="modul-observability.html"><span class="lni-week">M4</span><span class="lni-title">Observability</span></a>
+      <a class="laravel-nav-item" href="modul-api-design-realtime.html"><span class="lni-week">M5</span><span class="lni-title">API Design &amp; Real-time</span></a>
+      <a class="laravel-nav-item" href="modul-security-deepdive.html"><span class="lni-week">M6</span><span class="lni-title">Security Deep-dive</span></a>
+      <a class="laravel-nav-item" href="modul-capstone-ecommerce.html"><span class="lni-week">M7</span><span class="lni-title">Capstone Project: E-commerce</span></a>
+      <a class="laravel-nav-item" href="modul-containerization-deployment.html"><span class="lni-week">M8</span><span class="lni-title">Containerization &amp; Deployment</span></a>
+      <a class="laravel-nav-item" href="modul-cloud-infrastructure.html"><span class="lni-week">M9</span><span class="lni-title">Cloud &amp; Infrastructure</span></a>
+      <a class="laravel-nav-item" href="modul-skala-besar.html"><span class="lni-week">M10</span><span class="lni-title">Skala Besar</span></a>
+      <a class="laravel-nav-item active" href="modul-system-design.html"><span class="lni-week">M11</span><span class="lni-title">System Design</span></a>
+    </div>
+  </div>
+  <span class="topbar-subtitle">Sharding, Load Balancing, CAP Theorem &mdash; Modul Belajar (Terakhir)</span>
+</header>
+
+<div class="layout">
+
+  <!-- LEFT SIDEBAR -->
+  <nav class="sidebar">
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Database Replication</div>
+      <div class="nav-group-items">
+        <a class="nav-link active" href="#replication-intro">Konsep Primary-Replica</a>
+        <a class="nav-link" href="#replication-laravel">Read/Write Splitting di Laravel</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Database Sharding</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#sharding-intro">Konsep Sharding</a>
+        <a class="nav-link" href="#sharding-implementation">Implementasi Routing Shard</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Load Balancing</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#lb-intro">Algoritma Load Balancing</a>
+        <a class="nav-link" href="#lb-nginx">Nginx sebagai Load Balancer</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Distributed Systems</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#cap-intro">CAP Theorem</a>
+        <a class="nav-link" href="#cap-tradeoffs">Trade-off di Dunia Nyata</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Penutup</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#ringkasan">Ringkasan Minggu 11</a>
+        <a class="nav-link" href="#roadmap-selesai">Roadmap Selesai!</a>
+      </div>
+    </div>
+
+  </nav>
+
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- MAIN CONTENT -->
+  <main class="main">
+   <div class="main-inner">
+
+    <!-- ========== DATABASE REPLICATION ========== -->
+    <div class="section" id="replication-intro">
+      <h1 class="page-title">System Design</h1>
+      <p class="page-lead">
+        Modul terakhir roadmap ini &mdash; lebih konseptual dibanding minggu-minggu
+        sebelumnya, tapi konsep-konsep ini yang sering ditanyakan di wawancara level
+        senior/staff engineer. Tujuannya bukan menghafal, tapi memahami <em>trade-off</em> di
+        balik setiap keputusan arsitektur skala besar.
+      </p>
+
+      <h2>Konsep Primary-Replica (Master-Slave) Replication</h2>
+      <p>
+        Satu database <strong>Primary</strong> menerima semua tulisan (write), lalu
+        menyalin datanya ke satu atau lebih <strong>Replica</strong> yang hanya melayani
+        bacaan (read). Ini memungkinkan skala baca jauh lebih tinggi tanpa membebani
+        satu database saja.
+      </p>
+      <pre><code>                 ┌──────────┐
+   WRITE ────────▶│ Primary  │
+                 └────┬─────┘
+                      │ replikasi data
+          ┌───────────┼───────────┐
+          ▼           ▼           ▼
+     ┌─────────┐ ┌─────────┐ ┌─────────┐
+     │Replica 1│ │Replica 2│ │Replica 3│ ◀── READ (banyak query SELECT)
+     └─────────┘ └─────────┘ └─────────┘</code></pre>
+      <table>
+        <thead><tr><th>Aspek</th><th>Tanpa Replication</th><th>Dengan Replication</th></tr></thead>
+        <tbody>
+          <tr><td>Kapasitas baca</td><td>Terbatas satu server</td><td>Bertambah linear dengan jumlah replica</td></tr>
+          <tr><td>Konsistensi data</td><td>Selalu terbaru (real-time)</td><td>Ada <em>replication lag</em> beberapa milidetik-detik</td></tr>
+          <tr><td>Ketahanan</td><td>Satu titik kegagalan</td><td>Replica bisa dipromosikan jadi Primary jika Primary mati</td></tr>
+        </tbody>
+      </table>
+      <div class="callout warning">
+        <div class="callout-title">Replication Lag Itu Nyata</div>
+        Kalau user baru saja checkout (write ke Primary) lalu langsung refresh halaman order
+        (read dari Replica), ada kemungkinan kecil order belum sempat ter-replikasi &mdash;
+        user melihat data lama sesaat. Ini trade-off yang harus disadari, bukan bug.
+      </div>
+    </div>
+
+    <!-- READ/WRITE SPLITTING -->
+    <div class="section" id="replication-laravel">
+      <h2>Read/Write Splitting di Laravel</h2>
+      <p>Laravel sudah mendukung konfigurasi Primary-Replica secara native &mdash; tidak perlu
+        package tambahan.</p>
+      <div class="pre-label">config/database.php</div>
+      <pre><code><span class="str">'mysql'</span> => [
+    <span class="str">'read'</span> => [
+        <span class="str">'host'</span> => [
+            <span class="str">'192.168.1.10'</span>,   <span class="cm">// Replica 1</span>
+            <span class="str">'192.168.1.11'</span>,   <span class="cm">// Replica 2</span>
+        ],
+    ],
+    <span class="str">'write'</span> => [
+        <span class="str">'host'</span> => [<span class="str">'192.168.1.1'</span>],   <span class="cm">// Primary</span>
+    ],
+    <span class="str">'sticky'</span>   => <span class="kw">true</span>,
+    <span class="str">'driver'</span>   => <span class="str">'mysql'</span>,
+    <span class="str">'database'</span> => env(<span class="str">'DB_DATABASE'</span>),
+    <span class="str">'username'</span> => env(<span class="str">'DB_USERNAME'</span>),
+    <span class="str">'password'</span> => env(<span class="str">'DB_PASSWORD'</span>),
+],</code></pre>
+      <p>Setelah dikonfigurasi, semua kode yang sudah ada sejak Minggu 1 <strong>tidak perlu
+        diubah sama sekali</strong> &mdash; Laravel otomatis mengarahkan query
+        <code>SELECT</code> ke Replica dan <code>INSERT/UPDATE/DELETE</code> ke Primary.</p>
+      <div class="callout success">
+        <div class="callout-title">Apa Itu <code>'sticky' => true</code>?</div>
+        Dalam satu request yang sama, kalau sudah ada operasi <em>write</em>, query
+        <em>read</em> berikutnya di request itu juga diarahkan ke Primary &mdash; menghindari
+        kasus "baru saja create data, langsung dibaca lagi tapi belum ter-replikasi".
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- ========== SHARDING ========== -->
+    <div class="section" id="sharding-intro">
+      <h2>Konsep Database Sharding</h2>
+      <p>
+        Replication menyalin <em>seluruh</em> data ke banyak server (bagus untuk scale baca).
+        <strong>Sharding</strong> berbeda: data <em>dipecah</em> (horizontal partitioning)
+        menjadi bagian-bagian, tiap bagian disimpan di server terpisah &mdash; untuk scale
+        baca <strong>dan</strong> tulis sekaligus.
+      </p>
+      <pre><code>Replication:                      Sharding:
+  Server A: semua data              Server A: user_id 1-1.000.000
+  Server B: semua data (copy)       Server B: user_id 1.000.001-2.000.000
+  Server C: semua data (copy)       Server C: user_id 2.000.001-3.000.000</code></pre>
+      <table>
+        <thead><tr><th>Strategi Shard Key</th><th>Contoh</th><th>Risiko</th></tr></thead>
+        <tbody>
+          <tr><td>Range-based</td><td>ID 1&ndash;1jt di shard A, 1jt+ di shard B</td><td>Shard baru selalu jadi "hot spot" untuk data baru</td></tr>
+          <tr><td>Hash-based</td><td><code>hash(user_id) % jumlah_shard</code></td><td>Data tersebar rata, tapi query rentang jadi sulit</td></tr>
+          <tr><td>Directory-based</td><td>Tabel lookup terpisah: user_id &rarr; shard mana</td><td>Lookup table sendiri jadi titik kegagalan</td></tr>
+        </tbody>
+      </table>
+      <div class="callout danger">
+        <div class="callout-title">Sharding Itu Keputusan Berat</div>
+        JOIN antar shard tidak mungkin dilakukan di level database &mdash; harus digabung di
+        level aplikasi. Sharding baru dipertimbangkan kalau satu server database sudah benar-
+        benar mentok meski sudah dioptimasi (indexing, caching Redis, read replica).
+      </div>
+    </div>
+
+    <!-- IMPLEMENTASI SHARDING -->
+    <div class="section" id="sharding-implementation">
+      <h2>Implementasi Sederhana Routing Shard</h2>
+      <div class="pre-label">app/Services/ShardRouter.php</div>
+      <pre><code><span class="kw">class</span> <span class="cl">ShardRouter</span>
+{
+    <span class="kw">private const</span> TOTAL_SHARDS = <span class="nb">4</span>;
+
+    <span class="kw">public function</span> <span class="fn">connectionFor</span>(<span class="kw">int</span> $userId): <span class="kw">string</span>
+    {
+        $shardIndex = $userId % <span class="kw">self</span>::TOTAL_SHARDS;
+        <span class="kw">return</span> <span class="str">"mysql_shard_{$shardIndex}"</span>;   <span class="cm">// sesuai nama koneksi di config/database.php</span>
+    }
+}</code></pre>
+      <div class="pre-label">Penggunaan</div>
+      <pre><code>$connection = $shardRouter-&gt;<span class="fn">connectionFor</span>($user-&gt;id);
+
+$order = Order::<span class="fn">on</span>($connection)-&gt;<span class="fn">find</span>($orderId);</code></pre>
+      <div class="callout">
+        <div class="callout-title">Konteksnya untuk <code>laravel-crud-app</code></div>
+        Sharding baru relevan kalau <code>laravel-crud-app</code> sudah punya jutaan order dan
+        satu database MySQL (bahkan dengan replica) sudah tidak sanggup. Untuk skala sebagian
+        besar bisnis, indexing (Minggu 1) + Redis cache (Minggu 3) + read replica di atas
+        sudah lebih dari cukup.
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- ========== LOAD BALANCING ========== -->
+    <div class="section" id="lb-intro">
+      <h2>Algoritma Load Balancing</h2>
+      <p>
+        Sejak Kubernetes (Minggu 10) menjalankan banyak Pod <code>laravel-crud-app</code>
+        sekaligus, dibutuhkan <strong>load balancer</strong> untuk menyebar trafik masuk secara
+        merata ke semua instance.
+      </p>
+      <table>
+        <thead><tr><th>Algoritma</th><th>Cara Kerja</th><th>Cocok Untuk</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Round Robin</strong></td><td>Bergiliran ke tiap server secara berurutan</td><td>Semua server punya kapasitas setara</td></tr>
+          <tr><td><strong>Least Connections</strong></td><td>Kirim ke server dengan koneksi aktif paling sedikit</td><td>Request dengan durasi bervariasi (ada yang lama, ada yang cepat)</td></tr>
+          <tr><td><strong>IP Hash</strong></td><td>Client yang sama selalu diarahkan ke server yang sama</td><td>Perlu sticky session (jarang dibutuhkan kalau session di Redis)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- NGINX LOAD BALANCER -->
+    <div class="section" id="lb-nginx">
+      <h2>Nginx sebagai Load Balancer</h2>
+      <p>Nginx (dipasang di Minggu 9) tidak hanya jadi web server &mdash; bisa juga berperan
+        sebagai load balancer di depan beberapa instance aplikasi.</p>
+      <div class="pre-label">/etc/nginx/nginx.conf</div>
+      <pre><code><span class="kw">upstream</span> laravel_backend {
+    <span class="kw">least_conn</span>;   <span class="cm"># algoritma least connections</span>
+
+    <span class="kw">server</span> 10.0.0.1:9000;
+    <span class="kw">server</span> 10.0.0.2:9000;
+    <span class="kw">server</span> 10.0.0.3:9000;
+}
+
+<span class="kw">server</span> {
+    <span class="kw">listen</span> 80;
+
+    <span class="kw">location</span> / {
+        <span class="kw">proxy_pass</span> http://laravel_backend;
+        <span class="kw">proxy_set_header</span> Host $host;
+        <span class="kw">proxy_set_header</span> X-Real-IP $remote_addr;
+    }
+}</code></pre>
+
+      <h3>Health Check</h3>
+      <p>Load balancer harus tahu instance mana yang sehat, supaya tidak mengirim trafik ke
+        server yang sedang bermasalah.</p>
+      <pre><code><span class="cm"># Endpoint health check bawaan Laravel (bootstrap/app.php: health: '/up')</span>
+curl http://10.0.0.1:9000/up
+<span class="cm"># 200 OK → server sehat, tetap masuk daftar upstream
+# timeout/500 → load balancer berhenti kirim trafik ke server ini</span></code></pre>
+      <div class="callout success">
+        <div class="callout-title">Kubernetes Sudah Punya Load Balancer Bawaan</div>
+        Kalau sudah pakai Kubernetes Service <code>type: LoadBalancer</code> (Minggu 10),
+        load balancing antar Pod sudah otomatis ditangani. Konfigurasi Nginx manual di atas
+        lebih relevan untuk setup tanpa Kubernetes (langsung di beberapa EC2/VM).
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- ========== CAP THEOREM ========== -->
+    <div class="section" id="cap-intro">
+      <h2>Distributed Systems &amp; CAP Theorem</h2>
+      <p>
+        Setiap sistem terdistribusi (data tersebar di banyak server, seperti sejak
+        Replication &amp; Sharding di atas) hanya bisa menjamin <strong>dua dari tiga</strong>
+        properti berikut secara bersamaan &mdash; ini yang disebut <strong>CAP Theorem</strong>.
+      </p>
+      <table>
+        <thead><tr><th>Huruf</th><th>Properti</th><th>Arti</th></tr></thead>
+        <tbody>
+          <tr><td><strong>C</strong></td><td>Consistency</td><td>Semua node selalu punya data yang sama persis, kapan saja dibaca</td></tr>
+          <tr><td><strong>A</strong></td><td>Availability</td><td>Setiap request selalu dapat respons (tidak error), meski ada node yang down</td></tr>
+          <tr><td><strong>P</strong></td><td>Partition Tolerance</td><td>Sistem tetap jalan meski koneksi antar node terputus (network partition)</td></tr>
+        </tbody>
+      </table>
+      <div class="callout warning">
+        <div class="callout-title">Partition Tolerance Sebenarnya Wajib</div>
+        Di sistem terdistribusi nyata, jaringan <em>pasti</em> pernah bermasalah &mdash; jadi
+        "P" bukan pilihan, melainkan kenyataan yang harus dihadapi. Pilihan sesungguhnya
+        adalah antara <strong>C</strong> dan <strong>A</strong> saat partition terjadi.
+      </div>
+    </div>
+
+    <!-- TRADE-OFF -->
+    <div class="section" id="cap-tradeoffs">
+      <h2>Trade-off CAP di Dunia Nyata</h2>
+      <table>
+        <thead><tr><th>Pilihan</th><th>Saat Network Partition</th><th>Contoh Sistem</th></tr></thead>
+        <tbody>
+          <tr><td><strong>CP</strong> (Consistency + Partition Tolerance)</td><td>Sebagian node menolak request demi data tetap konsisten</td><td>MySQL/PostgreSQL dengan replikasi sinkron, sebagian besar RDBMS</td></tr>
+          <tr><td><strong>AP</strong> (Availability + Partition Tolerance)</td><td>Semua node tetap merespons, meski datanya mungkin belum sinkron</td><td>DynamoDB, Cassandra, DNS</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Kaitan dengan Modul-modul Sebelumnya</h3>
+      <ul>
+        <li><strong>Redis cache (Minggu 3)</strong> &mdash; memilih <em>Availability</em>: data cache boleh sedikit stale demi respons cepat</li>
+        <li><strong>Message broker (Minggu 10)</strong> &mdash; eventual consistency adalah konsekuensi memilih <em>Availability</em> di atas <em>Consistency</em> yang ketat</li>
+        <li><strong>Database Primary-Replica</strong> &mdash; replication lag adalah harga yang dibayar untuk <em>Availability</em>/skala baca lebih tinggi</li>
+        <li><strong>Payment/Order (Minggu 7)</strong> &mdash; sengaja pakai <code>DB::transaction()</code> untuk menjamin <em>Consistency</em> ketat, karena data uang tidak boleh eventual consistency</li>
+      </ul>
+      <div class="callout success">
+        <div class="callout-title">Tidak Ada Jawaban "Benar" Universal</div>
+        CAP Theorem bukan soal mencari sistem yang "sempurna" &mdash; soal <strong>sadar
+        trade-off</strong> apa yang diambil untuk kebutuhan bisnis tertentu. Data pembayaran
+        butuh Consistency ketat; data rekomendasi produk bisa toleran terhadap sedikit
+        inkonsistensi demi Availability yang lebih tinggi.
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- RINGKASAN -->
+    <div class="section" id="ringkasan">
+      <h2>Ringkasan Minggu 11</h2>
+      <ul class="step-list">
+        <li>
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <h4>Database Replication</h4>
+            <p>Primary menerima write, Replica melayani read &mdash; Laravel mendukung
+              read/write splitting secara native lewat konfigurasi <code>database.php</code>.</p>
+          </div>
+        </li>
+        <li>
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <h4>Database Sharding</h4>
+            <p>Memecah data ke banyak server berdasarkan shard key &mdash; keputusan berat
+              yang baru relevan saat replication &amp; caching sudah tidak cukup.</p>
+          </div>
+        </li>
+        <li>
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <h4>Load Balancing</h4>
+            <p>Menyebar trafik ke banyak instance aplikasi dengan algoritma round robin/least
+              connections, dilengkapi health check.</p>
+          </div>
+        </li>
+        <li>
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <h4>CAP Theorem</h4>
+            <p>Consistency, Availability, Partition Tolerance &mdash; pilih trade-off sesuai
+              kebutuhan tiap bagian sistem, bukan satu jawaban untuk semua kasus.</p>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+    <!-- ROADMAP SELESAI -->
+    <div class="section" id="roadmap-selesai">
+      <h2>&#127881; Roadmap 11 Minggu Selesai!</h2>
+      <p>Dari <code>php artisan serve</code> pertama di Minggu 1 sampai memahami CAP Theorem
+        di Minggu 11 &mdash; berikut perjalanan lengkapnya:</p>
+      <table>
+        <thead><tr><th>Minggu</th><th>Fokus</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>Instalasi, Eloquent, Query Optimization, REST API, JWT</td></tr>
+          <tr><td>2</td><td>Repository/Service Pattern, Spatie Roles, Rate Limiting</td></tr>
+          <tr><td>3</td><td>Redis, Laravel Horizon, Pest/PHPUnit</td></tr>
+          <tr><td>4</td><td>Telescope, Logging, Sentry</td></tr>
+          <tr><td>5</td><td>API Versioning, OpenAPI/Swagger, Laravel Reverb</td></tr>
+          <tr><td>6</td><td>OWASP Top 10, Encryption, API Hardening</td></tr>
+          <tr><td>7</td><td>Capstone: Cart, Checkout, Payment Gateway, Order Management</td></tr>
+          <tr><td>8</td><td>Docker, CI/CD, k6 Load Testing</td></tr>
+          <tr><td>9</td><td>Nginx/Supervisor, Cloud AWS/GCP, Terraform</td></tr>
+          <tr><td>10</td><td>Microservices, Message Broker, CQRS, Kubernetes</td></tr>
+          <tr><td>11</td><td>Replication, Sharding, Load Balancing, CAP Theorem</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout success">
+        <div class="callout-title">Dari Pemula Menjadi Backend Engineer Berpengalaman</div>
+        <code>laravel-crud-app</code> yang dulu cuma CRUD produk sederhana, sekarang sudah
+        punya arsitektur rapi, teruji, aman, observable, real-time, ter-containerize,
+        ter-deploy otomatis ke cloud, dan siap dibicarakan dari sudut pandang system design.
+        Skill ini bukan cuma tentang Laravel &mdash; sebagian besar konsepnya (repository
+        pattern, caching, message broker, CAP theorem) berlaku juga di framework/bahasa lain.
+      </div>
+      <p>Ingin memperdalam salah satu topik, atau mulai project baru dari nol dengan skill
+        ini? Kembali ke <a href="index.html">roadmap lengkap</a> kapan saja untuk membaca
+        ulang modul mana pun.</p>
+    </div>
+
+   </div>
+  </main>
+
+  <!-- RIGHT TOC -->
+  <aside class="toc">
+    <div class="toc-title">Daftar Isi</div>
+
+    <a href="#replication-intro">Database Replication</a>
+    <a class="sub" href="#replication-intro">Primary-Replica</a>
+    <a class="sub" href="#replication-laravel">Read/Write Splitting</a>
+
+    <a href="#sharding-intro" style="margin-top:12px;display:block">Database Sharding</a>
+    <a class="sub" href="#sharding-intro">Konsep Sharding</a>
+    <a class="sub" href="#sharding-implementation">Routing Shard</a>
+
+    <a href="#lb-intro" style="margin-top:12px;display:block">Load Balancing</a>
+    <a class="sub" href="#lb-intro">Algoritma</a>
+    <a class="sub" href="#lb-nginx">Nginx Load Balancer</a>
+
+    <a href="#cap-intro" style="margin-top:12px;display:block">CAP Theorem</a>
+    <a class="sub" href="#cap-intro">C, A, P</a>
+    <a class="sub" href="#cap-tradeoffs">Trade-off Nyata</a>
+
+    <a href="#ringkasan" style="margin-top:12px;display:block">Ringkasan</a>
+    <a class="sub" href="#roadmap-selesai">Roadmap Selesai!</a>
+  </aside>
+
+</div>
+
+<script>
+  // Sidebar accordion
+  document.querySelectorAll('.nav-group-title').forEach(title => {
+    title.addEventListener('click', () => {
+      title.parentElement.classList.toggle('open');
+    });
+  });
+
+  // Laravel nav bar — sub navbar (dropdown) toggle
+  document.querySelectorAll('.laravel-nav-trigger').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      btn.closest('.laravel-nav').classList.toggle('open');
+    });
+  });
+  document.addEventListener('click', (e) => {
+    document.querySelectorAll('.laravel-nav.open').forEach(nav => {
+      if (!nav.contains(e.target)) nav.classList.remove('open');
+    });
+  });
+
+  // Mobile sidebar toggle
+  const sidebarEl = document.querySelector('.sidebar');
+  const overlayEl = document.getElementById('sidebarOverlay');
+  const menuToggleBtn = document.getElementById('menuToggle');
+  function closeSidebar() {
+    sidebarEl.classList.remove('open');
+    overlayEl.classList.remove('show');
+  }
+  if (menuToggleBtn) {
+    menuToggleBtn.addEventListener('click', () => {
+      sidebarEl.classList.toggle('open');
+      overlayEl.classList.toggle('show');
+    });
+  }
+  if (overlayEl) overlayEl.addEventListener('click', closeSidebar);
+  document.querySelectorAll('.sidebar a').forEach(a => a.addEventListener('click', closeSidebar));
+
+  // Wrap tables so they scroll horizontally instead of breaking layout on small screens
+  document.querySelectorAll('.main table').forEach(t => {
+    if (t.closest('.table-scroll')) return;
+    const wrap = document.createElement('div');
+    wrap.className = 'table-scroll';
+    t.parentNode.insertBefore(wrap, t);
+    wrap.appendChild(t);
+  });
+
+  // Copy button on every code block
+  function copyText(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+      return navigator.clipboard.writeText(text);
+    }
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); } catch (err) {}
+    document.body.removeChild(ta);
+    return Promise.resolve();
+  }
+  document.querySelectorAll('pre').forEach(pre => {
+    const codeEl = pre.querySelector('code');
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'copy-btn';
+    btn.textContent = 'Copy';
+    btn.setAttribute('aria-label', 'Salin kode');
+    btn.addEventListener('click', () => {
+      const text = (codeEl ? codeEl.textContent : pre.textContent).trim();
+      copyText(text).then(() => {
+        btn.textContent = 'Copied!';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = 'Copy';
+          btn.classList.remove('copied');
+        }, 1500);
+      });
+    });
+    pre.appendChild(btn);
+  });
+
+  // Scroll spy for sidebar + TOC
+  const sections = document.querySelectorAll('.section[id]');
+  const navLinks = document.querySelectorAll('.nav-link');
+  const tocLinks = document.querySelectorAll('.toc a');
+
+  function setActive(links, id) {
+    links.forEach(l => {
+      l.classList.toggle('active', l.getAttribute('href') === '#' + id);
+    });
+  }
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        setActive(navLinks, entry.target.id);
+        setActive(tocLinks, entry.target.id);
+        const activeLink = document.querySelector('.nav-link.active');
+        if (activeLink) {
+          const group = activeLink.closest('.nav-group');
+          if (group) group.classList.add('open');
+        }
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+
+  sections.forEach(s => observer.observe(s));
+</script>
+
+</body>
+</html>

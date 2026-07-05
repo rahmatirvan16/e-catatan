@@ -1,0 +1,1293 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Modul Optimasi &amp; Otomatisasi</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --sidebar-w: 260px;
+      --toc-w: 220px;
+      --accent: #0d6efd;
+      --accent-light: #e7f1ff;
+      --text: #212529;
+      --muted: #6c757d;
+      --border: #dee2e6;
+      --code-bg: #f8f9fa;
+      --code-border: #e9ecef;
+      --sidebar-bg: #f8f9fa;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 15px;
+      line-height: 1.7;
+      color: var(--text);
+      background: #fff;
+    }
+
+    /* TOP BAR */
+    .topbar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      height: 56px;
+      background: #fff;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; padding: 0 24px;
+      gap: 16px;
+    }
+    .topbar-brand {
+      font-weight: 700; font-size: 17px; color: var(--accent);
+      text-decoration: none;
+    }
+    .topbar-version {
+      background: var(--accent-light); color: var(--accent);
+      font-size: 11px; font-weight: 600; padding: 2px 8px;
+      border-radius: 20px;
+    }
+    .topbar-subtitle {
+      color: var(--muted); font-size: 13px; margin-left: auto;
+    }
+    /* LARAVEL NAV BAR + SUB NAVBAR (dropdown by Fokus Utama) */
+    .laravel-nav { position: relative; margin-left: 24px; }
+    .laravel-nav-trigger {
+      display: flex; align-items: center; gap: 6px;
+      background: none; border: 1px solid var(--border); border-radius: 6px;
+      padding: 6px 14px; font-size: 13px; font-weight: 600;
+      color: var(--text); cursor: pointer; font-family: inherit;
+    }
+    .laravel-nav-trigger:hover { background: var(--accent-light); color: var(--accent); border-color: var(--accent); }
+    .laravel-nav.open .laravel-nav-trigger { background: var(--accent-light); color: var(--accent); border-color: var(--accent); }
+    .laravel-nav-trigger .caret { font-size: 10px; transition: transform .15s; }
+    .laravel-nav.open .laravel-nav-trigger .caret { transform: rotate(180deg); }
+    .laravel-nav-menu {
+      display: none;
+      position: absolute; top: calc(100% + 8px); left: 0;
+      width: 360px; max-height: 75vh; overflow-y: auto;
+      background: #fff; border: 1px solid var(--border); border-radius: 10px;
+      box-shadow: 0 12px 32px rgba(0,0,0,.14);
+      padding: 8px; z-index: 200;
+    }
+    .laravel-nav.open .laravel-nav-menu { display: block; }
+    .laravel-nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 12px; border-radius: 8px;
+      text-decoration: none; color: var(--text); font-size: 13px;
+    }
+    .laravel-nav-item:hover { background: var(--accent-light); }
+    .laravel-nav-item.active { background: var(--accent-light); color: var(--accent); font-weight: 600; }
+    .laravel-nav-item .lni-week {
+      flex-shrink: 0; width: 34px; font-size: 11px; font-weight: 700; color: var(--muted);
+    }
+    .laravel-nav-item.active .lni-week { color: var(--accent); }
+    .laravel-nav-item .lni-title { flex: 1; }
+    .laravel-nav-item .lni-soon {
+      flex-shrink: 0; font-size: 10px; font-weight: 700; text-transform: uppercase;
+      background: #e9ecef; color: #495057; padding: 2px 6px; border-radius: 20px;
+    }
+
+    /* LAYOUT */
+    .layout {
+      display: flex;
+      padding-top: 56px;
+      min-height: 100vh;
+    }
+
+    /* LEFT SIDEBAR */
+    .sidebar {
+      width: var(--sidebar-w);
+      flex-shrink: 0;
+      position: fixed;
+      top: 56px; bottom: 0; left: 0;
+      overflow-y: auto;
+      background: var(--sidebar-bg);
+      border-right: 1px solid var(--border);
+      padding: 20px 0 40px;
+    }
+    .sidebar::-webkit-scrollbar { width: 4px; }
+    .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    .nav-group { margin-bottom: 4px; }
+    .nav-group-title {
+      display: flex; align-items: center; gap: 8px;
+      padding: 6px 20px;
+      font-size: 12px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .06em;
+      color: var(--text);
+      cursor: pointer;
+      user-select: none;
+    }
+    .nav-group-title .arrow {
+      display: inline-block; transition: transform .2s;
+      font-size: 10px; color: var(--muted);
+    }
+    .nav-group.open .arrow { transform: rotate(90deg); }
+    .nav-group-items { display: none; }
+    .nav-group.open .nav-group-items { display: block; }
+
+    .nav-link {
+      display: block;
+      padding: 5px 20px 5px 36px;
+      font-size: 14px; color: var(--muted);
+      text-decoration: none;
+      border-left: 3px solid transparent;
+      transition: color .15s, border-color .15s, background .15s;
+    }
+    .nav-link:hover { color: var(--accent); background: var(--accent-light); }
+    .nav-link.active {
+      color: var(--accent); font-weight: 600;
+      border-left-color: var(--accent);
+      background: var(--accent-light);
+    }
+
+    /* MAIN CONTENT */
+    .main {
+      margin-left: var(--sidebar-w);
+      margin-right: var(--toc-w);
+      flex: 1;
+      min-width: 0;
+    }
+    .main-inner {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 48px 56px;
+    }
+
+    /* MOBILE MENU TOGGLE */
+    .menu-toggle {
+      display: none;
+      align-items: center; justify-content: center;
+      width: 32px; height: 32px; flex-shrink: 0;
+      border: 1px solid var(--border); border-radius: 6px;
+      background: none; cursor: pointer; font-size: 16px;
+      color: var(--text);
+    }
+    .menu-toggle:hover { background: var(--accent-light); color: var(--accent); border-color: var(--accent); }
+    .sidebar-overlay {
+      display: none;
+      position: fixed; inset: 56px 0 0 0;
+      background: rgba(0,0,0,.35);
+      z-index: 95;
+    }
+    .sidebar-overlay.show { display: block; }
+
+    /* TABLES THAT OVERFLOW SCROLL INSTEAD OF BREAKING LAYOUT */
+    .table-scroll { overflow-x: auto; margin: 16px 0; -webkit-overflow-scrolling: touch; }
+    .table-scroll table { margin: 0; }
+
+    /* RESPONSIVE */
+    @media (max-width: 1300px) {
+      .toc { display: none; }
+      .main { margin-right: 0; }
+    }
+    @media (max-width: 900px) {
+      .menu-toggle { display: inline-flex; }
+      .topbar-subtitle { display: none; }
+      .sidebar {
+        transform: translateX(-100%);
+        transition: transform .2s ease;
+        z-index: 96;
+        box-shadow: 4px 0 24px rgba(0,0,0,.15);
+      }
+      .sidebar.open { transform: translateX(0); }
+      .main { margin-left: 0; }
+      .main-inner { padding: 32px 24px; }
+      .laravel-nav-menu { width: min(360px, 88vw); }
+    }
+    @media (max-width: 560px) {
+      .topbar { padding: 0 14px; gap: 10px; }
+      .topbar-brand { font-size: 15px; }
+      .topbar-version { display: none; }
+      .page-title { font-size: 28px; }
+      .page-lead { font-size: 15px; padding-bottom: 24px; margin-bottom: 28px; }
+      .main-inner { padding: 24px 16px; }
+      h2 { font-size: 21px; }
+    }
+
+    /* RIGHT TOC */
+    .toc {
+      width: var(--toc-w);
+      flex-shrink: 0;
+      position: fixed;
+      top: 56px; bottom: 0; right: 0;
+      overflow-y: auto;
+      padding: 24px 16px;
+      border-left: 1px solid var(--border);
+    }
+    .toc-title {
+      font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .06em;
+      color: var(--muted); margin-bottom: 12px;
+    }
+    .toc a {
+      display: block; font-size: 13px; color: var(--muted);
+      text-decoration: none; padding: 3px 0 3px 8px;
+      border-left: 2px solid transparent;
+      transition: color .15s, border-color .15s;
+    }
+    .toc a:hover, .toc a.active {
+      color: var(--accent); border-left-color: var(--accent);
+    }
+    .toc a.sub { padding-left: 20px; font-size: 12px; }
+
+    /* CONTENT TYPOGRAPHY */
+    .page-title {
+      font-size: 40px; font-weight: 700;
+      margin-bottom: 12px; line-height: 1.2;
+    }
+    .page-lead {
+      font-size: 18px; color: var(--muted);
+      margin-bottom: 40px; border-bottom: 1px solid var(--border);
+      padding-bottom: 32px;
+    }
+    .section { margin-bottom: 56px; }
+    h2 {
+      font-size: 26px; font-weight: 700;
+      margin-bottom: 16px; padding-top: 8px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 8px;
+    }
+    h3 {
+      font-size: 18px; font-weight: 600;
+      margin: 24px 0 10px;
+    }
+    h4 {
+      font-size: 15px; font-weight: 600;
+      margin: 18px 0 8px; color: var(--text);
+    }
+    p { margin-bottom: 14px; }
+    ul, ol { padding-left: 24px; margin-bottom: 14px; }
+    li { margin-bottom: 6px; }
+    strong { font-weight: 600; }
+
+    /* CODE */
+    code {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      font-size: 13px;
+      background: var(--code-bg);
+      border: 1px solid var(--code-border);
+      padding: 1px 5px; border-radius: 4px;
+      color: #d63384;
+    }
+    pre {
+      background: #1e1e2e;
+      border-radius: 8px;
+      padding: 20px 24px;
+      overflow-x: auto;
+      margin: 16px 0 20px;
+      position: relative;
+    }
+    pre code {
+      background: none; border: none; padding: 0;
+      color: #cdd6f4; font-size: 13px; line-height: 1.65;
+    }
+    .pre-label {
+      font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .06em;
+      color: #6c757d; margin-bottom: 6px;
+    }
+
+    /* COPY BUTTON */
+    .copy-btn {
+      position: absolute; top: 10px; right: 10px;
+      display: flex; align-items: center; gap: 5px;
+      background: rgba(255,255,255,.08);
+      color: #cdd6f4;
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 6px;
+      font-family: inherit; font-size: 11px; font-weight: 600;
+      padding: 4px 9px;
+      cursor: pointer;
+      opacity: .55;
+      transition: opacity .15s, background .15s;
+    }
+    pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
+    .copy-btn:hover { background: rgba(255,255,255,.2); }
+    .copy-btn.copied {
+      opacity: 1; background: #198754; border-color: #198754; color: #fff;
+    }
+    @media (max-width: 900px) { .copy-btn { opacity: .8; } }
+    @media print { .copy-btn { display: none; } }
+
+    .kw  { color: #cba6f7; }
+    .fn  { color: #89b4fa; }
+    .str { color: #a6e3a1; }
+    .cm  { color: #6c7086; }
+    .cl  { color: #fab387; }
+    .nb  { color: #89dceb; }
+    .op  { color: #89dceb; }
+
+    /* BADGES / CALLOUTS */
+    .badge {
+      display: inline-block; font-size: 11px; font-weight: 700;
+      padding: 2px 8px; border-radius: 4px;
+      text-transform: uppercase; letter-spacing: .04em;
+    }
+    .badge-blue  { background: #cfe2ff; color: #084298; }
+    .badge-green { background: #d1e7dd; color: #0a3622; }
+    .badge-red   { background: #f8d7da; color: #842029; }
+    .badge-yellow{ background: #fff3cd; color: #664d03; }
+    .badge-purple{ background: #e8d5fb; color: #5e2d91; }
+    .badge-orange{ background: #ffe5d0; color: #8a3800; }
+
+    .callout {
+      border-left: 4px solid var(--accent);
+      background: var(--accent-light);
+      padding: 14px 18px; border-radius: 0 6px 6px 0;
+      margin: 16px 0;
+    }
+    .callout.warning { border-left-color: #ffc107; background: #fff3cd; }
+    .callout.danger  { border-left-color: #dc3545; background: #f8d7da; }
+    .callout.success { border-left-color: #198754; background: #d1e7dd; }
+    .callout-title { font-weight: 700; margin-bottom: 4px; font-size: 13px; }
+
+    /* TABLE */
+    table {
+      width: 100%; border-collapse: collapse;
+      margin: 16px 0; font-size: 14px;
+    }
+    th {
+      background: var(--code-bg); font-weight: 600;
+      padding: 10px 14px; border: 1px solid var(--border);
+      text-align: left;
+    }
+    td { padding: 9px 14px; border: 1px solid var(--border); }
+    tr:nth-child(even) td { background: #fafafa; }
+
+    /* STEP LIST */
+    .step-list { list-style: none; padding: 0; }
+    .step-list li { display: flex; gap: 16px; margin-bottom: 20px; }
+    .step-num {
+      flex-shrink: 0;
+      width: 28px; height: 28px;
+      background: var(--accent); color: #fff;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700; margin-top: 2px;
+    }
+    .step-body h4 { margin-top: 0; }
+
+    /* DIVIDER */
+    .divider { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
+
+    /* PRINT */
+    @media print {
+      .topbar, .sidebar, .toc { display: none; }
+      .main { margin: 0; }
+      .main-inner { padding: 24px 32px; max-width: 100%; }
+      pre { background: #f8f9fa !important; }
+      pre code { color: #212529 !important; }
+      .kw,.fn,.str,.cm,.cl,.nb,.op { color: #212529 !important; }
+      h2 { page-break-before: always; }
+      .section:first-of-type h2 { page-break-before: avoid; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<header class="topbar">
+  <button class="menu-toggle" id="menuToggle" aria-label="Buka menu">&#9776;</button>
+  <a class="topbar-brand" href="index.html">Laravel Docs</a>
+  <span class="topbar-version">v12.x</span>
+  <div class="laravel-nav" id="laravelNav">
+    <button class="laravel-nav-trigger" type="button">Laravel <span class="caret">&#9662;</span></button>
+    <div class="laravel-nav-menu">
+      <a class="laravel-nav-item" href="modul-rest-api-sanctum.html"><span class="lni-week">M1</span><span class="lni-title">Core Laravel &amp; Database</span></a>
+      <a class="laravel-nav-item" href="modul-arsitektur-otorisasi.html"><span class="lni-week">M2</span><span class="lni-title">Arsitektur Kode &amp; Otorisasi</span></a>
+      <a class="laravel-nav-item active" href="modul-optimasi.html"><span class="lni-week">M3</span><span class="lni-title">Testing &amp; Optimasi</span></a>
+      <a class="laravel-nav-item" href="modul-observability.html"><span class="lni-week">M4</span><span class="lni-title">Observability</span></a>
+      <a class="laravel-nav-item" href="modul-api-design-realtime.html"><span class="lni-week">M5</span><span class="lni-title">API Design &amp; Real-time</span></a>
+      <a class="laravel-nav-item" href="modul-security-deepdive.html"><span class="lni-week">M6</span><span class="lni-title">Security Deep-dive</span></a>
+      <a class="laravel-nav-item" href="modul-capstone-ecommerce.html"><span class="lni-week">M7</span><span class="lni-title">Capstone Project: E-commerce</span></a>
+      <a class="laravel-nav-item" href="modul-containerization-deployment.html"><span class="lni-week">M8</span><span class="lni-title">Containerization &amp; Deployment</span></a>
+      <a class="laravel-nav-item" href="modul-cloud-infrastructure.html"><span class="lni-week">M9</span><span class="lni-title">Cloud &amp; Infrastructure</span></a>
+      <a class="laravel-nav-item" href="modul-skala-besar.html"><span class="lni-week">M10</span><span class="lni-title">Skala Besar</span></a>
+      <a class="laravel-nav-item" href="modul-system-design.html"><span class="lni-week">M11</span><span class="lni-title">System Design</span></a>
+    </div>
+  </div>
+  <span class="topbar-subtitle">Optimasi &amp; Otomatisasi &mdash; Modul Belajar</span>
+</header>
+
+<div class="layout">
+
+  <!-- LEFT SIDEBAR -->
+  <nav class="sidebar">
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Redis</div>
+      <div class="nav-group-items">
+        <a class="nav-link active" href="#redis-intro">Pengenalan Redis</a>
+        <a class="nav-link" href="#redis-install">Instalasi</a>
+        <a class="nav-link" href="#redis-cache">Cache dengan Redis</a>
+        <a class="nav-link" href="#redis-session">Session Redis</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Laravel Horizon</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#queue-intro">Pengenalan Queue</a>
+        <a class="nav-link" href="#queue-job">Membuat Job</a>
+        <a class="nav-link" href="#horizon-install">Install Horizon</a>
+        <a class="nav-link" href="#horizon-dashboard">Dashboard</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Testing</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#testing-intro">Pengenalan Testing</a>
+        <a class="nav-link" href="#pest-install">Install Pest</a>
+        <a class="nav-link" href="#pest-unit">Unit Test</a>
+        <a class="nav-link" href="#pest-feature">Feature Test</a>
+        <a class="nav-link" href="#phpunit">PHPUnit</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Ringkasan</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#ringkasan">Ringkasan Minggu 3</a>
+      </div>
+    </div>
+
+  </nav>
+
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- MAIN CONTENT -->
+  <main class="main">
+   <div class="main-inner">
+
+    <!-- PENGENALAN -->
+    <div class="section" id="redis-intro">
+      <h1 class="page-title">Optimasi &amp; Otomatisasi</h1>
+      <p class="page-lead">
+        Pelajari cara mengoptimalkan aplikasi Laravel menggunakan Redis untuk caching,
+        mengelola background jobs dengan Laravel Horizon, dan memastikan kualitas kode
+        dengan Pest/PHPUnit.
+      </p>
+
+      <h2>Pengenalan Redis</h2>
+      <p>
+        <strong>Redis</strong> (Remote Dictionary Server) adalah in-memory data store yang
+        sangat cepat. Di Laravel, Redis digunakan untuk:
+      </p>
+      <table>
+        <thead><tr><th>Kegunaan</th><th>Manfaat</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Cache</strong></td><td>Simpan hasil query DB yang lambat, response tidak berubah sering</td></tr>
+          <tr><td><strong>Session</strong></td><td>Simpan session user lebih cepat daripada database/file</td></tr>
+          <tr><td><strong>Queue</strong></td><td>Antrian background jobs (email, notifikasi, export)</td></tr>
+          <tr><td><strong>Rate Limiting</strong></td><td>Batasi jumlah request per user/IP</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Redis vs Database Cache</h3>
+      <table>
+        <thead><tr><th>Aspek</th><th>Database Cache</th><th>Redis Cache</th></tr></thead>
+        <tbody>
+          <tr><td>Kecepatan</td><td>~10ms</td><td>&lt;1ms</td></tr>
+          <tr><td>Storage</td><td>Disk (HDD/SSD)</td><td>RAM</td></tr>
+          <tr><td>Cocok untuk</td><td>Data yang jarang diakses</td><td>Data yang sering diakses</td></tr>
+          <tr><td>Setup</td><td>Tidak perlu install tambahan</td><td>Perlu install Redis server</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout">
+        <div class="callout-title">Analogi</div>
+        Redis seperti meja kerja &mdash; kamu menaruh dokumen yang sering dipakai di meja
+        agar mudah dijangkau, bukan harus bolak-balik ke lemari arsip (database).
+      </div>
+    </div>
+
+    <!-- INSTALASI REDIS -->
+    <div class="section" id="redis-install">
+      <h2>Instalasi Redis</h2>
+
+      <h3>Langkah 1 &mdash; Install Redis Server</h3>
+      <p><strong>Windows (via Memurai atau WSL):</strong></p>
+      <div class="pre-label">Terminal (WSL/Ubuntu)</div>
+      <pre><code>sudo apt update
+sudo apt install redis-server
+sudo service redis-server start
+redis-cli ping   <span class="cm"># harus balas: PONG</span></code></pre>
+
+      <p><strong>Alternatif Windows: Memurai</strong> &mdash; download dari <code>memurai.com</code>, install, langsung bisa dipakai tanpa WSL.</p>
+
+      <h3>Langkah 2 &mdash; Install Predis (PHP Client)</h3>
+      <div class="pre-label">Terminal</div>
+      <pre><code>composer require predis/predis</code></pre>
+
+      <h3>Langkah 3 &mdash; Konfigurasi .env</h3>
+      <div class="pre-label">.env</div>
+      <pre><code>REDIS_HOST=127.0.0.1
+REDIS_PASSWORD=null
+REDIS_PORT=6379
+
+CACHE_STORE=redis
+SESSION_DRIVER=redis</code></pre>
+
+      <h3>Langkah 4 &mdash; Verifikasi Koneksi</h3>
+      <div class="pre-label">Terminal</div>
+      <pre><code>php artisan tinker
+<span class="cm">&gt;&gt;&gt;</span> <span class="cl">Redis</span>::<span class="fn">ping</span>();   <span class="cm">// output: "+PONG"</span></code></pre>
+    </div>
+
+    <!-- REDIS CACHE -->
+    <div class="section" id="redis-cache">
+      <h2>Cache dengan Redis</h2>
+      <p>
+        Laravel menyediakan facade <code>Cache</code> yang bekerja sama di semua driver &mdash;
+        termasuk Redis. Ganti driver di <code>.env</code> tanpa ubah kode aplikasi.
+      </p>
+
+      <h3>Operasi Dasar Cache</h3>
+      <div class="pre-label">app/Http/Controllers/Api/ProdukController.php</div>
+      <pre><code><span class="kw">use</span> Illuminate\Support\Facades\Cache;
+
+<span class="cm">// GET /api/produk — ambil dari cache, kalau tidak ada ambil dari DB</span>
+<span class="kw">public function</span> <span class="fn">index</span>()
+{
+    $produks = <span class="cl">Cache</span>::<span class="fn">remember</span>(<span class="str">'produk.all'</span>, <span class="fn">now</span>()-><span class="fn">addMinutes</span>(<span class="nb">10</span>), <span class="kw">function</span> () {
+        <span class="kw">return</span> <span class="cl">Produk</span>::<span class="fn">latest</span>()-><span class="fn">get</span>();
+    });
+
+    <span class="kw">return</span> <span class="fn">response</span>()-><span class="fn">json</span>([<span class="str">'success'</span> => <span class="kw">true</span>, <span class="str">'data'</span> => $produks]);
+}
+
+<span class="cm">// Hapus cache ketika data berubah</span>
+<span class="kw">public function</span> <span class="fn">store</span>(<span class="cl">Request</span> $request)
+{
+    $produk = <span class="cl">Produk</span>::<span class="fn">create</span>($request-><span class="fn">validated</span>());
+    <span class="cl">Cache</span>::<span class="fn">forget</span>(<span class="str">'produk.all'</span>);   <span class="cm">// invalidasi cache</span>
+    <span class="kw">return</span> <span class="fn">response</span>()-><span class="fn">json</span>([<span class="str">'success'</span> => <span class="kw">true</span>, <span class="str">'data'</span> => $produk], <span class="nb">201</span>);
+}
+
+<span class="kw">public function</span> <span class="fn">update</span>(<span class="cl">Request</span> $request, <span class="cl">Produk</span> $produk)
+{
+    $produk-><span class="fn">update</span>($request-><span class="fn">validated</span>());
+    <span class="cl">Cache</span>::<span class="fn">forget</span>(<span class="str">'produk.all'</span>);   <span class="cm">// invalidasi cache</span>
+    <span class="kw">return</span> <span class="fn">response</span>()-><span class="fn">json</span>([<span class="str">'success'</span> => <span class="kw">true</span>, <span class="str">'data'</span> => $produk]);
+}
+
+<span class="kw">public function</span> <span class="fn">destroy</span>(<span class="cl">Produk</span> $produk)
+{
+    $produk-><span class="fn">delete</span>();
+    <span class="cl">Cache</span>::<span class="fn">forget</span>(<span class="str">'produk.all'</span>);   <span class="cm">// invalidasi cache</span>
+    <span class="kw">return</span> <span class="fn">response</span>()-><span class="fn">json</span>([<span class="str">'success'</span> => <span class="kw">true</span>]);
+}</code></pre>
+
+      <h3>Metode Cache yang Sering Dipakai</h3>
+      <table>
+        <thead><tr><th>Metode</th><th>Fungsi</th></tr></thead>
+        <tbody>
+          <tr><td><code>Cache::remember($key, $ttl, $fn)</code></td><td>Ambil cache; kalau tidak ada, jalankan <code>$fn</code> dan simpan</td></tr>
+          <tr><td><code>Cache::get($key)</code></td><td>Ambil nilai dari cache (null jika tidak ada)</td></tr>
+          <tr><td><code>Cache::put($key, $value, $ttl)</code></td><td>Simpan nilai ke cache</td></tr>
+          <tr><td><code>Cache::forget($key)</code></td><td>Hapus satu entri cache</td></tr>
+          <tr><td><code>Cache::flush()</code></td><td>Hapus semua cache</td></tr>
+          <tr><td><code>Cache::has($key)</code></td><td>Cek apakah key ada di cache</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout warning">
+        <div class="callout-title">Penting &mdash; Cache Invalidation</div>
+        Selalu hapus cache ketika data di database berubah (<code>store</code>, <code>update</code>,
+        <code>destroy</code>). Cache yang stale lebih berbahaya dari tidak ada cache sama sekali.
+      </div>
+    </div>
+
+    <!-- REDIS SESSION -->
+    <div class="section" id="redis-session">
+      <h2>Session dengan Redis</h2>
+      <p>
+        Menggunakan Redis sebagai session driver membuat session lebih cepat dan
+        mudah di-scale di multi-server deployment.
+      </p>
+      <div class="pre-label">.env</div>
+      <pre><code>SESSION_DRIVER=redis
+SESSION_LIFETIME=120   <span class="cm"># menit</span></code></pre>
+
+      <p>Tidak ada perubahan kode yang dibutuhkan &mdash; Laravel menangani ini secara otomatis.
+      Session tetap bekerja sama seperti sebelumnya dengan <code>session()</code> dan
+      <code>Request::session()</code>.</p>
+
+      <div class="callout success">
+        <div class="callout-title">Kapan Pakai Redis Session?</div>
+        Wajib jika kamu deploy ke lebih dari satu server (load balancing).
+        File session hanya ada di satu server &mdash; user yang hit server lain akan logout.
+        Redis session tersentralisasi dan bisa diakses semua server.
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- QUEUE INTRO -->
+    <div class="section" id="queue-intro">
+      <h2>Pengenalan Queue (Antrian)</h2>
+      <p>
+        <strong>Queue</strong> memungkinkan kamu menunda eksekusi task yang memakan waktu
+        ke background, sehingga HTTP response bisa dikembalikan ke user lebih cepat.
+      </p>
+
+      <h3>Kapan Butuh Queue?</h3>
+      <ul>
+        <li>Kirim email (bisa lambat jika SMTP server lama merespons)</li>
+        <li>Generate laporan PDF / export Excel besar</li>
+        <li>Resize &amp; upload gambar ke cloud storage</li>
+        <li>Kirim notifikasi ke banyak user sekaligus</li>
+        <li>Integrasi dengan third-party API yang lambat</li>
+      </ul>
+
+      <h3>Alur Kerja Queue</h3>
+      <pre><code><span class="cm">// Tanpa Queue (lambat — user nunggu):</span>
+<span class="cl">User</span> -<span class="op">&gt;</span> Request -<span class="op">&gt;</span> [kirim email 3 detik] -<span class="op">&gt;</span> Response (lama)
+
+<span class="cm">// Dengan Queue (cepat — email dikirim di background):</span>
+<span class="cl">User</span> -<span class="op">&gt;</span> Request -<span class="op">&gt;</span> [dispatch job ke queue] -<span class="op">&gt;</span> Response (cepat)
+                         <span class="op">|</span>
+                   [Worker proses job di background]
+                         <span class="op">|</span>
+                   [Email terkirim]</code></pre>
+    </div>
+
+    <!-- QUEUE JOB -->
+    <div class="section" id="queue-job">
+      <h2>Membuat Queue Job</h2>
+
+      <h3>Langkah 1 &mdash; Konfigurasi Queue Driver</h3>
+      <div class="pre-label">.env</div>
+      <pre><code>QUEUE_CONNECTION=redis</code></pre>
+
+      <h3>Langkah 2 &mdash; Buat Job Class</h3>
+      <div class="pre-label">Terminal</div>
+      <pre><code>php artisan make:job SendWelcomeEmail</code></pre>
+
+      <div class="pre-label">app/Jobs/SendWelcomeEmail.php</div>
+      <pre><code><span class="op">&lt;?php</span>
+
+<span class="kw">namespace</span> App\Jobs;
+
+<span class="kw">use</span> App\Models\User;
+<span class="kw">use</span> App\Mail\WelcomeMail;
+<span class="kw">use</span> Illuminate\Bus\Queueable;
+<span class="kw">use</span> Illuminate\Contracts\Queue\ShouldQueue;
+<span class="kw">use</span> Illuminate\Foundation\Bus\Dispatchable;
+<span class="kw">use</span> Illuminate\Queue\InteractsWithQueue;
+<span class="kw">use</span> Illuminate\Queue\SerializesModels;
+<span class="kw">use</span> Illuminate\Support\Facades\Mail;
+
+<span class="kw">class</span> <span class="cl">SendWelcomeEmail</span> <span class="kw">implements</span> <span class="cl">ShouldQueue</span>
+{
+    <span class="kw">use</span> Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
+    <span class="kw">public function</span> <span class="fn">__construct</span>(
+        <span class="kw">public</span> <span class="kw">readonly</span> <span class="cl">User</span> $user
+    ) {}
+
+    <span class="kw">public function</span> <span class="fn">handle</span>(): <span class="kw">void</span>
+    {
+        <span class="cl">Mail</span>::<span class="fn">to</span>($this->user->email)
+            -><span class="fn">send</span>(<span class="kw">new</span> <span class="cl">WelcomeMail</span>($this->user));
+    }
+}</code></pre>
+
+      <h3>Langkah 3 &mdash; Dispatch Job dari Controller</h3>
+      <div class="pre-label">app/Http/Controllers/AuthController.php</div>
+      <pre><code><span class="kw">use</span> App\Jobs\SendWelcomeEmail;
+
+<span class="kw">public function</span> <span class="fn">register</span>(<span class="cl">Request</span> $request)
+{
+    <span class="cm">// ... validasi dan create user ...</span>
+    $user = <span class="cl">User</span>::<span class="fn">create</span>([...]);
+
+    <span class="cm">// Dispatch ke queue — tidak blocking, user langsung dapat response</span>
+    <span class="cl">SendWelcomeEmail</span>::<span class="fn">dispatch</span>($user);
+
+    <span class="kw">return</span> <span class="fn">response</span>()-><span class="fn">json</span>([
+        <span class="str">'message'</span> => <span class="str">'Registrasi berhasil, email konfirmasi dikirim'</span>,
+        <span class="str">'token'</span>   => $user-><span class="fn">createToken</span>(<span class="str">'auth_token'</span>)-><span class="fn">plainTextToken</span>,
+    ], <span class="nb">201</span>);
+}</code></pre>
+
+      <h3>Langkah 4 &mdash; Jalankan Worker</h3>
+      <div class="pre-label">Terminal</div>
+      <pre><code><span class="cm"># Jalankan worker (proses jobs dari queue)</span>
+php artisan queue:work
+
+<span class="cm"># Worker dengan Redis, restart otomatis jika ada file baru</span>
+php artisan queue:work redis --tries=3 --timeout=60</code></pre>
+
+      <div class="callout">
+        <div class="callout-title">Opsi Dispatch Berguna</div>
+        <code>SendWelcomeEmail::dispatch($user)->delay(now()->addMinutes(5));</code>
+        &mdash; tunda eksekusi job 5 menit.<br>
+        <code>SendWelcomeEmail::dispatchSync($user);</code>
+        &mdash; jalankan langsung (synchronous, tanpa queue &mdash; berguna saat testing).
+      </div>
+    </div>
+
+    <!-- HORIZON INSTALL -->
+    <div class="section" id="horizon-install">
+      <h2>Install Laravel Horizon</h2>
+      <p>
+        <strong>Laravel Horizon</strong> adalah dashboard monitoring untuk queue berbasis Redis.
+        Kamu bisa melihat jobs yang berjalan, gagal, throughput, dan mengatur worker pool.
+      </p>
+
+      <h3>Langkah 1 &mdash; Install via Composer</h3>
+      <div class="pre-label">Terminal</div>
+      <pre><code>composer require laravel/horizon</code></pre>
+
+      <h3>Langkah 2 &mdash; Publish Assets</h3>
+      <div class="pre-label">Terminal</div>
+      <pre><code>php artisan horizon:install</code></pre>
+      <p>Ini membuat file <code>config/horizon.php</code> dan assets untuk dashboard.</p>
+
+      <h3>Langkah 3 &mdash; Konfigurasi Worker</h3>
+      <div class="pre-label">config/horizon.php</div>
+      <pre><code><span class="str">'environments'</span> => [
+    <span class="str">'local'</span> => [
+        <span class="str">'supervisor-1'</span> => [
+            <span class="str">'maxProcesses'</span>  => <span class="nb">3</span>,
+            <span class="str">'balanceMaxShift'</span> => <span class="nb">1</span>,
+            <span class="str">'balanceCooldown'</span> => <span class="nb">3</span>,
+        ],
+    ],
+    <span class="str">'production'</span> => [
+        <span class="str">'supervisor-1'</span> => [
+            <span class="str">'maxProcesses'</span>  => <span class="nb">10</span>,
+        ],
+    ],
+],</code></pre>
+
+      <h3>Langkah 4 &mdash; Jalankan Horizon</h3>
+      <div class="pre-label">Terminal</div>
+      <pre><code>php artisan horizon</code></pre>
+    </div>
+
+    <!-- HORIZON DASHBOARD -->
+    <div class="section" id="horizon-dashboard">
+      <h2>Horizon Dashboard</h2>
+      <p>
+        Akses dashboard di <code>http://localhost:8000/horizon</code> setelah Horizon berjalan.
+      </p>
+
+      <h3>Fitur Dashboard</h3>
+      <table>
+        <thead><tr><th>Fitur</th><th>Keterangan</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Monitoring</strong></td><td>Lihat jobs yang sedang berjalan, pending, dan selesai</td></tr>
+          <tr><td><strong>Failed Jobs</strong></td><td>Lihat jobs yang gagal beserta pesan error-nya</td></tr>
+          <tr><td><strong>Retry</strong></td><td>Coba ulang job yang gagal dengan satu klik</td></tr>
+          <tr><td><strong>Throughput</strong></td><td>Grafik berapa jobs diproses per menit</td></tr>
+          <tr><td><strong>Runtime</strong></td><td>Berapa lama tiap job rata-rata diproses</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Proteksi Dashboard (Production)</h3>
+      <div class="pre-label">app/Providers/AppServiceProvider.php</div>
+      <pre><code><span class="kw">use</span> Laravel\Horizon\Horizon;
+
+<span class="kw">public function</span> <span class="fn">boot</span>(): <span class="kw">void</span>
+{
+    <span class="cl">Horizon</span>::<span class="fn">auth</span>(<span class="kw">function</span> ($request) {
+        <span class="kw">return</span> $request-><span class="fn">user</span>() &amp;&amp; $request-><span class="fn">user</span>()-><span class="fn">isAdmin</span>();
+    });
+}</code></pre>
+
+      <div class="callout warning">
+        <div class="callout-title">Perhatian</div>
+        Di production, selalu batasi akses dashboard hanya untuk admin.
+        Secara default, dashboard hanya bisa diakses di environment <code>local</code>.
+      </div>
+
+      <h3>Retry Failed Jobs via Artisan</h3>
+      <div class="pre-label">Terminal</div>
+      <pre><code><span class="cm"># Lihat semua failed jobs</span>
+php artisan queue:failed
+
+<span class="cm"># Retry satu job berdasarkan ID</span>
+php artisan queue:retry {id}
+
+<span class="cm"># Retry semua failed jobs</span>
+php artisan queue:retry all
+
+<span class="cm"># Hapus semua failed jobs</span>
+php artisan queue:flush</code></pre>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- TESTING INTRO -->
+    <div class="section" id="testing-intro">
+      <h2>Pengenalan Testing</h2>
+      <p>
+        Testing memastikan kode kamu bekerja sesuai ekspektasi &mdash; sekarang dan setelah
+        ada perubahan di masa depan. Laravel mendukung dua framework testing populer:
+      </p>
+      <table>
+        <thead><tr><th>Framework</th><th>Sintaks</th><th>Kelebihan</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>Pest</strong></td>
+            <td>Functional, ringkas</td>
+            <td>Lebih sedikit boilerplate, readable, plugin ecosystem bagus</td>
+          </tr>
+          <tr>
+            <td><strong>PHPUnit</strong></td>
+            <td>OOP class-based</td>
+            <td>Standard PHP, familiar, Pest berjalan di atasnya</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>Jenis Test</h3>
+      <ul>
+        <li><strong>Unit Test</strong> &mdash; test satu fungsi/method secara terisolasi (tanpa DB, tanpa HTTP)</li>
+        <li><strong>Feature Test</strong> &mdash; test alur lengkap: HTTP request ke response (boleh hit DB)</li>
+      </ul>
+
+      <div class="callout">
+        <div class="callout-title">Aturan Praktis</div>
+        Tulis Feature Test untuk endpoint API &mdash; pastikan register, login, CRUD produk
+        semuanya menghasilkan response yang benar. Unit Test untuk logic bisnis kompleks
+        yang bisa diisolasi.
+      </div>
+    </div>
+
+    <!-- PEST INSTALL -->
+    <div class="section" id="pest-install">
+      <h2>Install Pest</h2>
+
+      <h3>Laravel 12 sudah include Pest</h3>
+      <p>
+        Project Laravel 12 baru sudah menyertakan Pest secara default. Jika project kamu
+        masih menggunakan PHPUnit murni, install Pest dengan:
+      </p>
+      <div class="pre-label">Terminal</div>
+      <pre><code>composer require pestphp/pest pestphp/pest-plugin-laravel --dev
+php artisan pest:install</code></pre>
+
+      <h3>Struktur Folder Test</h3>
+      <pre><code>tests/
+  Feature/       <span class="cm"># Feature tests (HTTP, DB)</span>
+    Auth/
+      AuthTest.php
+    Api/
+      ProdukApiTest.php
+  Unit/           <span class="cm"># Unit tests (isolated logic)</span>
+    ProdukTest.php
+  Pest.php        <span class="cm"># Bootstrap Pest</span></code></pre>
+
+      <h3>Konfigurasi Database Test</h3>
+      <div class="pre-label">phpunit.xml</div>
+      <pre><code><span class="op">&lt;</span>env name=<span class="str">"DB_CONNECTION"</span> value=<span class="str">"sqlite"</span><span class="op">/&gt;</span>
+<span class="op">&lt;</span>env name=<span class="str">"DB_DATABASE"</span> value=<span class="str">":memory:"</span><span class="op">/&gt;</span></code></pre>
+
+      <p>Ini membuat test menggunakan SQLite in-memory &mdash; lebih cepat dan tidak mencemari database development kamu.</p>
+
+      <h3>Jalankan Test</h3>
+      <div class="pre-label">Terminal</div>
+      <pre><code><span class="cm"># Jalankan semua test</span>
+php artisan test
+
+<span class="cm"># Atau langsung via Pest</span>
+./vendor/bin/pest
+
+<span class="cm"># Jalankan test tertentu</span>
+./vendor/bin/pest tests/Feature/Api/ProdukApiTest.php
+
+<span class="cm"># Tampilkan detail tiap test</span>
+./vendor/bin/pest --verbose</code></pre>
+    </div>
+
+    <!-- PEST UNIT -->
+    <div class="section" id="pest-unit">
+      <h2>Unit Test dengan Pest</h2>
+      <p>Unit test berjalan cepat karena tidak menyentuh database atau HTTP.</p>
+
+      <div class="pre-label">tests/Unit/ProdukTest.php</div>
+      <pre><code><span class="op">&lt;?php</span>
+
+<span class="fn">it</span>(<span class="str">'harga produk harus lebih dari nol'</span>, <span class="kw">function</span> () {
+    $produk = <span class="kw">new</span> <span class="cl">Produk</span>([<span class="str">'harga'</span> => <span class="nb">0</span>]);
+
+    <span class="fn">expect</span>($produk->harga)-><span class="fn">toBe</span>(<span class="nb">0</span>)
+        -><span class="fn">not</span>()-><span class="fn">toBeGreaterThan</span>(<span class="nb">0</span>);
+});
+
+<span class="fn">it</span>(<span class="str">'nama produk tidak boleh kosong'</span>, <span class="kw">function</span> () {
+    $produk = <span class="kw">new</span> <span class="cl">Produk</span>();
+    <span class="fn">expect</span>($produk->nama_produk)-><span class="fn">toBeNull</span>();
+});
+
+<span class="fn">it</span>(<span class="str">'produk dapat dihitung stoknya'</span>, <span class="kw">function</span> () {
+    $produk = <span class="kw">new</span> <span class="cl">Produk</span>([<span class="str">'stok'</span> => <span class="nb">10</span>]);
+    <span class="fn">expect</span>($produk->stok)-><span class="fn">toBe</span>(<span class="nb">10</span>);
+});</code></pre>
+
+      <h3>Matcher Pest yang Sering Dipakai</h3>
+      <table>
+        <thead><tr><th>Matcher</th><th>Fungsi</th></tr></thead>
+        <tbody>
+          <tr><td><code>toBe($val)</code></td><td>Strict equal (<code>===</code>)</td></tr>
+          <tr><td><code>toEqual($val)</code></td><td>Loose equal (<code>==</code>), cocok untuk array/object</td></tr>
+          <tr><td><code>toBeTrue() / toBeFalse()</code></td><td>Cek nilai boolean</td></tr>
+          <tr><td><code>toBeNull()</code></td><td>Nilai harus null</td></tr>
+          <tr><td><code>toBeEmpty()</code></td><td>String/array/collection kosong</td></tr>
+          <tr><td><code>toContain($val)</code></td><td>Array/string mengandung nilai</td></tr>
+          <tr><td><code>toHaveCount($n)</code></td><td>Array/collection punya N elemen</td></tr>
+          <tr><td><code>not()-&gt;toBe($val)</code></td><td>Negasi dari matcher apapun</td></tr>
+          <tr><td><code>toThrow(Exception::class)</code></td><td>Closure harus melempar exception</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- PEST FEATURE -->
+    <div class="section" id="pest-feature">
+      <h2>Feature Test dengan Pest</h2>
+      <p>
+        Feature test mensimulasikan HTTP request ke aplikasi kamu.
+        Gunakan trait <code>RefreshDatabase</code> agar database di-reset tiap test.
+      </p>
+
+      <div class="pre-label">tests/Feature/Auth/AuthTest.php</div>
+      <pre><code><span class="op">&lt;?php</span>
+
+<span class="kw">use</span> App\Models\User;
+<span class="kw">use</span> Illuminate\Foundation\Testing\RefreshDatabase;
+
+<span class="fn">uses</span>(<span class="cl">RefreshDatabase</span>::class);
+
+<span class="fn">it</span>(<span class="str">'user dapat register dengan data valid'</span>, <span class="kw">function</span> () {
+    $response = $this-><span class="fn">postJson</span>(<span class="str">'/api/register'</span>, [
+        <span class="str">'name'</span>                  => <span class="str">'John Doe'</span>,
+        <span class="str">'email'</span>                 => <span class="str">'john@example.com'</span>,
+        <span class="str">'password'</span>              => <span class="str">'password123'</span>,
+        <span class="str">'password_confirmation'</span>  => <span class="str">'password123'</span>,
+    ]);
+
+    $response
+        -><span class="fn">assertStatus</span>(<span class="nb">201</span>)
+        -><span class="fn">assertJsonStructure</span>([<span class="str">'message'</span>, <span class="str">'token'</span>, <span class="str">'user'</span>]);
+
+    <span class="fn">expect</span>(<span class="cl">User</span>::<span class="fn">count</span>())-><span class="fn">toBe</span>(<span class="nb">1</span>);
+});
+
+<span class="fn">it</span>(<span class="str">'register gagal jika email sudah dipakai'</span>, <span class="kw">function</span> () {
+    <span class="cl">User</span>::<span class="fn">factory</span>()-><span class="fn">create</span>([<span class="str">'email'</span> => <span class="str">'john@example.com'</span>]);
+
+    $this-><span class="fn">postJson</span>(<span class="str">'/api/register'</span>, [
+        <span class="str">'name'</span>                 => <span class="str">'Jane'</span>,
+        <span class="str">'email'</span>                => <span class="str">'john@example.com'</span>,
+        <span class="str">'password'</span>             => <span class="str">'password123'</span>,
+        <span class="str">'password_confirmation'</span> => <span class="str">'password123'</span>,
+    ])-><span class="fn">assertStatus</span>(<span class="nb">422</span>);
+});
+
+<span class="fn">it</span>(<span class="str">'user dapat login dengan kredensial benar'</span>, <span class="kw">function</span> () {
+    <span class="cl">User</span>::<span class="fn">factory</span>()-><span class="fn">create</span>([
+        <span class="str">'email'</span>    => <span class="str">'john@example.com'</span>,
+        <span class="str">'password'</span> => <span class="fn">bcrypt</span>(<span class="str">'password123'</span>),
+    ]);
+
+    $this-><span class="fn">postJson</span>(<span class="str">'/api/login'</span>, [
+        <span class="str">'email'</span>    => <span class="str">'john@example.com'</span>,
+        <span class="str">'password'</span> => <span class="str">'password123'</span>,
+    ])
+        -><span class="fn">assertOk</span>()
+        -><span class="fn">assertJsonStructure</span>([<span class="str">'token'</span>, <span class="str">'user'</span>]);
+});</code></pre>
+
+      <div class="pre-label">tests/Feature/Api/ProdukApiTest.php</div>
+      <pre><code><span class="op">&lt;?php</span>
+
+<span class="kw">use</span> App\Models\{Produk, User};
+<span class="kw">use</span> Illuminate\Foundation\Testing\RefreshDatabase;
+
+<span class="fn">uses</span>(<span class="cl">RefreshDatabase</span>::class);
+
+<span class="cm">// Helper: buat user + token untuk test</span>
+<span class="fn">beforeEach</span>(<span class="kw">function</span> () {
+    $this->user  = <span class="cl">User</span>::<span class="fn">factory</span>()-><span class="fn">create</span>();
+    $this->token = $this->user-><span class="fn">createToken</span>(<span class="str">'test'</span>)-><span class="fn">plainTextToken</span>;
+    $this->headers = [<span class="str">'Authorization'</span> => <span class="str">'Bearer '</span> . $this->token];
+});
+
+<span class="fn">it</span>(<span class="str">'dapat mengambil daftar produk'</span>, <span class="kw">function</span> () {
+    <span class="cl">Produk</span>::<span class="fn">factory</span>()-><span class="fn">count</span>(<span class="nb">3</span>)-><span class="fn">create</span>();
+
+    $this-><span class="fn">getJson</span>(<span class="str">'/api/produk'</span>, $this->headers)
+        -><span class="fn">assertOk</span>()
+        -><span class="fn">assertJsonCount</span>(<span class="nb">3</span>, <span class="str">'data'</span>);
+});
+
+<span class="fn">it</span>(<span class="str">'dapat menambah produk baru'</span>, <span class="kw">function</span> () {
+    $this-><span class="fn">postJson</span>(<span class="str">'/api/produk'</span>, [
+        <span class="str">'nama_produk'</span> => <span class="str">'Laptop Gaming'</span>,
+        <span class="str">'harga'</span>       => <span class="nb">15000000</span>,
+        <span class="str">'stok'</span>        => <span class="nb">5</span>,
+    ], $this->headers)
+        -><span class="fn">assertStatus</span>(<span class="nb">201</span>)
+        -><span class="fn">assertJsonPath</span>(<span class="str">'data.nama_produk'</span>, <span class="str">'Laptop Gaming'</span>);
+
+    <span class="fn">expect</span>(<span class="cl">Produk</span>::<span class="fn">count</span>())-><span class="fn">toBe</span>(<span class="nb">1</span>);
+});
+
+<span class="fn">it</span>(<span class="str">'tidak bisa akses produk tanpa token'</span>, <span class="kw">function</span> () {
+    $this-><span class="fn">getJson</span>(<span class="str">'/api/produk'</span>)-><span class="fn">assertStatus</span>(<span class="nb">401</span>);
+});
+
+<span class="fn">it</span>(<span class="str">'dapat menghapus produk'</span>, <span class="kw">function</span> () {
+    $produk = <span class="cl">Produk</span>::<span class="fn">factory</span>()-><span class="fn">create</span>();
+
+    $this-><span class="fn">deleteJson</span>(<span class="str">"/api/produk/{$produk->id}"</span>, [], $this->headers)
+        -><span class="fn">assertOk</span>();
+
+    <span class="fn">expect</span>(<span class="cl">Produk</span>::<span class="fn">count</span>())-><span class="fn">toBe</span>(<span class="nb">0</span>);
+});</code></pre>
+    </div>
+
+    <!-- PHPUNIT -->
+    <div class="section" id="phpunit">
+      <h2>PHPUnit (Gaya Klasik)</h2>
+      <p>
+        PHPUnit menggunakan class yang extend <code>TestCase</code>.
+        Pest sebenarnya berjalan di atas PHPUnit, jadi kamu bisa mix keduanya.
+      </p>
+
+      <div class="pre-label">tests/Feature/Api/ProdukApiTestClass.php</div>
+      <pre><code><span class="op">&lt;?php</span>
+
+<span class="kw">namespace</span> Tests\Feature\Api;
+
+<span class="kw">use</span> App\Models\{Produk, User};
+<span class="kw">use</span> Illuminate\Foundation\Testing\RefreshDatabase;
+<span class="kw">use</span> Tests\TestCase;
+
+<span class="kw">class</span> <span class="cl">ProdukApiTestClass</span> <span class="kw">extends</span> <span class="cl">TestCase</span>
+{
+    <span class="kw">use</span> RefreshDatabase;
+
+    <span class="kw">private</span> <span class="cl">User</span> $user;
+    <span class="kw">private</span> <span class="kw">string</span> $token;
+
+    <span class="kw">protected function</span> <span class="fn">setUp</span>(): <span class="kw">void</span>
+    {
+        <span class="kw">parent</span>::<span class="fn">setUp</span>();
+        $this->user  = <span class="cl">User</span>::<span class="fn">factory</span>()-><span class="fn">create</span>();
+        $this->token = $this->user-><span class="fn">createToken</span>(<span class="str">'test'</span>)-><span class="fn">plainTextToken</span>;
+    }
+
+    <span class="kw">public function</span> <span class="fn">test_dapat_mengambil_daftar_produk</span>(): <span class="kw">void</span>
+    {
+        <span class="cl">Produk</span>::<span class="fn">factory</span>()-><span class="fn">count</span>(<span class="nb">3</span>)-><span class="fn">create</span>();
+
+        $this-><span class="fn">getJson</span>(<span class="str">'/api/produk'</span>, [
+            <span class="str">'Authorization'</span> => <span class="str">'Bearer '</span> . $this->token,
+        ])-><span class="fn">assertOk</span>()
+           -><span class="fn">assertJsonCount</span>(<span class="nb">3</span>, <span class="str">'data'</span>);
+    }
+
+    <span class="kw">public function</span> <span class="fn">test_validasi_gagal_jika_nama_kosong</span>(): <span class="kw">void</span>
+    {
+        $this-><span class="fn">postJson</span>(<span class="str">'/api/produk'</span>, [<span class="str">'harga'</span> => <span class="nb">5000</span>], [
+            <span class="str">'Authorization'</span> => <span class="str">'Bearer '</span> . $this->token,
+        ])-><span class="fn">assertStatus</span>(<span class="nb">422</span>)
+           -><span class="fn">assertJsonValidationErrors</span>([<span class="str">'nama_produk'</span>]);
+    }
+}</code></pre>
+
+      <h3>Pest vs PHPUnit &mdash; Perbandingan</h3>
+      <table>
+        <thead><tr><th>Aspek</th><th>Pest</th><th>PHPUnit</th></tr></thead>
+        <tbody>
+          <tr><td>Sintaks</td><td><code>it('desc', fn() =&gt; ...)</code></td><td><code>public function test_desc()</code></td></tr>
+          <tr><td>Boilerplate</td><td>Minimal</td><td>Class + namespace + setUp</td></tr>
+          <tr><td>Assertion</td><td><code>expect($val)-&gt;toBe(1)</code></td><td><code>$this-&gt;assertSame(1, $val)</code></td></tr>
+          <tr><td>Grouping</td><td><code>describe('group', fn)</code></td><td>Class method</td></tr>
+          <tr><td>Setup</td><td><code>beforeEach(fn)</code></td><td><code>setUp()</code></td></tr>
+          <tr><td>Direkomendasikan</td><td>Project baru / modern</td><td>Tim yang familiar PHPUnit</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout success">
+        <div class="callout-title">Rekomendasi</div>
+        Gunakan <strong>Pest</strong> untuk project baru &mdash; sintaksnya lebih bersih dan
+        cepat ditulis. Tapi kalau tim sudah familiar dengan PHPUnit, keduanya sama-sama bagus
+        karena Pest berjalan di atas PHPUnit.
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- RINGKASAN -->
+    <div class="section" id="ringkasan">
+      <h2>Ringkasan Minggu 3</h2>
+      <p>Kamu sudah mempelajari tiga topik utama optimasi dan otomatisasi Laravel:</p>
+      <ul class="step-list">
+        <li>
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <h4>Redis</h4>
+            <p>Cache query lambat dengan <code>Cache::remember()</code>, gunakan Redis sebagai session driver untuk deployment multi-server, invalidasi cache saat data berubah.</p>
+          </div>
+        </li>
+        <li>
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <h4>Laravel Horizon (Queue)</h4>
+            <p>Pindahkan task berat (email, export) ke background dengan <code>dispatch()</code>, monitor semua jobs via dashboard Horizon, retry jobs yang gagal.</p>
+          </div>
+        </li>
+        <li>
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <h4>Pest / PHPUnit</h4>
+            <p>Tulis Feature Test untuk setiap endpoint API, gunakan <code>RefreshDatabase</code> agar test terisolasi, jalankan <code>php artisan test</code> sebelum setiap deploy.</p>
+          </div>
+        </li>
+      </ul>
+
+      <div class="callout success">
+        <div class="callout-title">Selamat!</div>
+        Dengan Redis, Horizon, dan automated testing, aplikasi Laravel kamu sekarang lebih
+        cepat, lebih andal, dan lebih mudah di-maintain. Ini fondasi penting sebelum masuk
+        ke deployment production. Lihat <a href="index.html">roadmap lengkap</a> untuk
+        minggu-minggu berikutnya, atau kembali ke
+        <a href="modul-rest-api-sanctum.html">Minggu 1</a> jika ada dasar yang perlu diulang.
+      </div>
+    </div>
+
+   </div>
+  </main>
+
+  <!-- RIGHT TOC -->
+  <aside class="toc">
+    <div class="toc-title">On this page</div>
+    <a href="#redis-intro">Redis</a>
+    <a class="sub" href="#redis-intro">Pengenalan</a>
+    <a class="sub" href="#redis-install">Instalasi</a>
+    <a class="sub" href="#redis-cache">Cache</a>
+    <a class="sub" href="#redis-session">Session</a>
+    <a href="#queue-intro">Laravel Horizon</a>
+    <a class="sub" href="#queue-intro">Pengenalan Queue</a>
+    <a class="sub" href="#queue-job">Membuat Job</a>
+    <a class="sub" href="#horizon-install">Install Horizon</a>
+    <a class="sub" href="#horizon-dashboard">Dashboard</a>
+    <a href="#testing-intro">Testing</a>
+    <a class="sub" href="#testing-intro">Pengenalan</a>
+    <a class="sub" href="#pest-install">Install Pest</a>
+    <a class="sub" href="#pest-unit">Unit Test</a>
+    <a class="sub" href="#pest-feature">Feature Test</a>
+    <a class="sub" href="#phpunit">PHPUnit</a>
+    <a href="#ringkasan">Ringkasan</a>
+  </aside>
+
+</div>
+
+<script>
+  document.querySelectorAll('.nav-group-title').forEach(title => {
+    title.addEventListener('click', () => {
+      title.closest('.nav-group').classList.toggle('open');
+    });
+  });
+
+  // Laravel nav bar — sub navbar (dropdown) toggle
+  document.querySelectorAll('.laravel-nav-trigger').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      btn.closest('.laravel-nav').classList.toggle('open');
+    });
+  });
+  document.addEventListener('click', (e) => {
+    document.querySelectorAll('.laravel-nav.open').forEach(nav => {
+      if (!nav.contains(e.target)) nav.classList.remove('open');
+    });
+  });
+
+  // Mobile sidebar toggle
+  const sidebarEl = document.querySelector('.sidebar');
+  const overlayEl = document.getElementById('sidebarOverlay');
+  const menuToggleBtn = document.getElementById('menuToggle');
+  function closeSidebar() {
+    sidebarEl.classList.remove('open');
+    overlayEl.classList.remove('show');
+  }
+  if (menuToggleBtn) {
+    menuToggleBtn.addEventListener('click', () => {
+      sidebarEl.classList.toggle('open');
+      overlayEl.classList.toggle('show');
+    });
+  }
+  if (overlayEl) overlayEl.addEventListener('click', closeSidebar);
+  document.querySelectorAll('.sidebar a').forEach(a => a.addEventListener('click', closeSidebar));
+
+  // Wrap tables so they scroll horizontally instead of breaking layout on small screens
+  document.querySelectorAll('.main table').forEach(t => {
+    if (t.closest('.table-scroll')) return;
+    const wrap = document.createElement('div');
+    wrap.className = 'table-scroll';
+    t.parentNode.insertBefore(wrap, t);
+    wrap.appendChild(t);
+  });
+
+  // Copy button on every code block
+  function copyText(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+      return navigator.clipboard.writeText(text);
+    }
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); } catch (err) {}
+    document.body.removeChild(ta);
+    return Promise.resolve();
+  }
+  document.querySelectorAll('pre').forEach(pre => {
+    const codeEl = pre.querySelector('code');
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'copy-btn';
+    btn.textContent = 'Copy';
+    btn.setAttribute('aria-label', 'Salin kode');
+    btn.addEventListener('click', () => {
+      const text = (codeEl ? codeEl.textContent : pre.textContent).trim();
+      copyText(text).then(() => {
+        btn.textContent = 'Copied!';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = 'Copy';
+          btn.classList.remove('copied');
+        }, 1500);
+      });
+    });
+    pre.appendChild(btn);
+  });
+
+  const sections = document.querySelectorAll('.section[id]');
+  const navLinks = document.querySelectorAll('.nav-link');
+  const tocLinks = document.querySelectorAll('.toc a');
+
+  function onScroll() {
+    let current = '';
+    sections.forEach(sec => {
+      if (window.scrollY >= sec.offsetTop - 80) current = sec.id;
+    });
+    navLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + current));
+    tocLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + current));
+  }
+
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+</script>
+
+</body>
+</html>

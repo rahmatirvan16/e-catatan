@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Modul Security Deep-dive &mdash; Laravel</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --sidebar-w: 260px;
+      --toc-w: 220px;
+      --accent: #0d6efd;
+      --accent-light: #e7f1ff;
+      --text: #212529;
+      --muted: #6c757d;
+      --border: #dee2e6;
+      --code-bg: #f8f9fa;
+      --code-border: #e9ecef;
+      --sidebar-bg: #f8f9fa;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 15px;
+      line-height: 1.7;
+      color: var(--text);
+      background: #fff;
+    }
+
+    /* TOP BAR */
+    .topbar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      height: 56px;
+      background: #fff;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; padding: 0 24px;
+      gap: 16px;
+    }
+    .topbar-brand {
+      font-weight: 700; font-size: 17px; color: var(--accent);
+      text-decoration: none;
+    }
+    .topbar-version {
+      background: var(--accent-light); color: var(--accent);
+      font-size: 11px; font-weight: 600; padding: 2px 8px;
+      border-radius: 20px;
+    }
+    .topbar-subtitle {
+      color: var(--muted); font-size: 13px; margin-left: auto;
+    }
+    /* LARAVEL NAV BAR + SUB NAVBAR (dropdown by Fokus Utama) */
+    .laravel-nav { position: relative; margin-left: 24px; }
+    .laravel-nav-trigger {
+      display: flex; align-items: center; gap: 6px;
+      background: none; border: 1px solid var(--border); border-radius: 6px;
+      padding: 6px 14px; font-size: 13px; font-weight: 600;
+      color: var(--text); cursor: pointer; font-family: inherit;
+    }
+    .laravel-nav-trigger:hover { background: var(--accent-light); color: var(--accent); border-color: var(--accent); }
+    .laravel-nav.open .laravel-nav-trigger { background: var(--accent-light); color: var(--accent); border-color: var(--accent); }
+    .laravel-nav-trigger .caret { font-size: 10px; transition: transform .15s; }
+    .laravel-nav.open .laravel-nav-trigger .caret { transform: rotate(180deg); }
+    .laravel-nav-menu {
+      display: none;
+      position: absolute; top: calc(100% + 8px); left: 0;
+      width: 360px; max-height: 75vh; overflow-y: auto;
+      background: #fff; border: 1px solid var(--border); border-radius: 10px;
+      box-shadow: 0 12px 32px rgba(0,0,0,.14);
+      padding: 8px; z-index: 200;
+    }
+    .laravel-nav.open .laravel-nav-menu { display: block; }
+    .laravel-nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 12px; border-radius: 8px;
+      text-decoration: none; color: var(--text); font-size: 13px;
+    }
+    .laravel-nav-item:hover { background: var(--accent-light); }
+    .laravel-nav-item.active { background: var(--accent-light); color: var(--accent); font-weight: 600; }
+    .laravel-nav-item .lni-week {
+      flex-shrink: 0; width: 34px; font-size: 11px; font-weight: 700; color: var(--muted);
+    }
+    .laravel-nav-item.active .lni-week { color: var(--accent); }
+    .laravel-nav-item .lni-title { flex: 1; }
+    .laravel-nav-item .lni-soon {
+      flex-shrink: 0; font-size: 10px; font-weight: 700; text-transform: uppercase;
+      background: #e9ecef; color: #495057; padding: 2px 6px; border-radius: 20px;
+    }
+
+    /* LAYOUT */
+    .layout {
+      display: flex;
+      padding-top: 56px;
+      min-height: 100vh;
+    }
+
+    /* LEFT SIDEBAR */
+    .sidebar {
+      width: var(--sidebar-w);
+      flex-shrink: 0;
+      position: fixed;
+      top: 56px; bottom: 0; left: 0;
+      overflow-y: auto;
+      background: var(--sidebar-bg);
+      border-right: 1px solid var(--border);
+      padding: 20px 0 40px;
+    }
+    .sidebar::-webkit-scrollbar { width: 4px; }
+    .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    .nav-group { margin-bottom: 4px; }
+    .nav-group-title {
+      display: flex; align-items: center; gap: 8px;
+      padding: 6px 20px;
+      font-size: 12px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .06em;
+      color: var(--text);
+      cursor: pointer;
+      user-select: none;
+    }
+    .nav-group-title .arrow {
+      display: inline-block; transition: transform .2s;
+      font-size: 10px; color: var(--muted);
+    }
+    .nav-group.open .arrow { transform: rotate(90deg); }
+    .nav-group-items { display: none; }
+    .nav-group.open .nav-group-items { display: block; }
+
+    .nav-link {
+      display: block;
+      padding: 5px 20px 5px 36px;
+      font-size: 14px; color: var(--muted);
+      text-decoration: none;
+      border-left: 3px solid transparent;
+      transition: color .15s, border-color .15s, background .15s;
+    }
+    .nav-link:hover { color: var(--accent); background: var(--accent-light); }
+    .nav-link.active {
+      color: var(--accent); font-weight: 600;
+      border-left-color: var(--accent);
+      background: var(--accent-light);
+    }
+
+    /* MAIN CONTENT */
+    .main {
+      margin-left: var(--sidebar-w);
+      margin-right: var(--toc-w);
+      flex: 1;
+      min-width: 0;
+    }
+    .main-inner {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 48px 56px;
+    }
+
+    /* MOBILE MENU TOGGLE */
+    .menu-toggle {
+      display: none;
+      align-items: center; justify-content: center;
+      width: 32px; height: 32px; flex-shrink: 0;
+      border: 1px solid var(--border); border-radius: 6px;
+      background: none; cursor: pointer; font-size: 16px;
+      color: var(--text);
+    }
+    .menu-toggle:hover { background: var(--accent-light); color: var(--accent); border-color: var(--accent); }
+    .sidebar-overlay {
+      display: none;
+      position: fixed; inset: 56px 0 0 0;
+      background: rgba(0,0,0,.35);
+      z-index: 95;
+    }
+    .sidebar-overlay.show { display: block; }
+
+    /* TABLES THAT OVERFLOW SCROLL INSTEAD OF BREAKING LAYOUT */
+    .table-scroll { overflow-x: auto; margin: 16px 0; -webkit-overflow-scrolling: touch; }
+    .table-scroll table { margin: 0; }
+
+    /* RESPONSIVE */
+    @media (max-width: 1300px) {
+      .toc { display: none; }
+      .main { margin-right: 0; }
+    }
+    @media (max-width: 900px) {
+      .menu-toggle { display: inline-flex; }
+      .topbar-subtitle { display: none; }
+      .sidebar {
+        transform: translateX(-100%);
+        transition: transform .2s ease;
+        z-index: 96;
+        box-shadow: 4px 0 24px rgba(0,0,0,.15);
+      }
+      .sidebar.open { transform: translateX(0); }
+      .main { margin-left: 0; }
+      .main-inner { padding: 32px 24px; }
+      .laravel-nav-menu { width: min(360px, 88vw); }
+    }
+    @media (max-width: 560px) {
+      .topbar { padding: 0 14px; gap: 10px; }
+      .topbar-brand { font-size: 15px; }
+      .topbar-version { display: none; }
+      .page-title { font-size: 28px; }
+      .page-lead { font-size: 15px; padding-bottom: 24px; margin-bottom: 28px; }
+      .main-inner { padding: 24px 16px; }
+      h2 { font-size: 21px; }
+    }
+
+    /* RIGHT TOC */
+    .toc {
+      width: var(--toc-w);
+      flex-shrink: 0;
+      position: fixed;
+      top: 56px; bottom: 0; right: 0;
+      overflow-y: auto;
+      padding: 24px 16px;
+      border-left: 1px solid var(--border);
+    }
+    .toc-title {
+      font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .06em;
+      color: var(--muted); margin-bottom: 12px;
+    }
+    .toc a {
+      display: block; font-size: 13px; color: var(--muted);
+      text-decoration: none; padding: 3px 0 3px 8px;
+      border-left: 2px solid transparent;
+      transition: color .15s, border-color .15s;
+    }
+    .toc a:hover, .toc a.active {
+      color: var(--accent); border-left-color: var(--accent);
+    }
+    .toc a.sub { padding-left: 20px; font-size: 12px; }
+
+    /* CONTENT TYPOGRAPHY */
+    .page-title {
+      font-size: 40px; font-weight: 700;
+      margin-bottom: 12px; line-height: 1.2;
+    }
+    .page-lead {
+      font-size: 18px; color: var(--muted);
+      margin-bottom: 40px; border-bottom: 1px solid var(--border);
+      padding-bottom: 32px;
+    }
+    .section { margin-bottom: 56px; }
+    h2 {
+      font-size: 26px; font-weight: 700;
+      margin-bottom: 16px; padding-top: 8px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 8px;
+    }
+    h3 {
+      font-size: 18px; font-weight: 600;
+      margin: 24px 0 10px;
+    }
+    h4 {
+      font-size: 15px; font-weight: 600;
+      margin: 18px 0 8px; color: var(--text);
+    }
+    p { margin-bottom: 14px; }
+    ul, ol { padding-left: 24px; margin-bottom: 14px; }
+    li { margin-bottom: 6px; }
+    strong { font-weight: 600; }
+
+    /* CODE */
+    code {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      font-size: 13px;
+      background: var(--code-bg);
+      border: 1px solid var(--code-border);
+      padding: 1px 5px; border-radius: 4px;
+      color: #d63384;
+    }
+    pre {
+      background: #1e1e2e;
+      border-radius: 8px;
+      padding: 20px 24px;
+      overflow-x: auto;
+      margin: 16px 0 20px;
+      position: relative;
+    }
+    pre code {
+      background: none; border: none; padding: 0;
+      color: #cdd6f4; font-size: 13px; line-height: 1.65;
+    }
+    .pre-label {
+      font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .06em;
+      color: #6c757d; margin-bottom: 6px;
+    }
+
+    /* COPY BUTTON */
+    .copy-btn {
+      position: absolute; top: 10px; right: 10px;
+      display: flex; align-items: center; gap: 5px;
+      background: rgba(255,255,255,.08);
+      color: #cdd6f4;
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 6px;
+      font-family: inherit; font-size: 11px; font-weight: 600;
+      padding: 4px 9px;
+      cursor: pointer;
+      opacity: .55;
+      transition: opacity .15s, background .15s;
+    }
+    pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
+    .copy-btn:hover { background: rgba(255,255,255,.2); }
+    .copy-btn.copied {
+      opacity: 1; background: #198754; border-color: #198754; color: #fff;
+    }
+    @media (max-width: 900px) { .copy-btn { opacity: .8; } }
+    @media print { .copy-btn { display: none; } }
+
+    .kw  { color: #cba6f7; }
+    .fn  { color: #89b4fa; }
+    .str { color: #a6e3a1; }
+    .cm  { color: #6c7086; }
+    .cl  { color: #fab387; }
+    .nb  { color: #89dceb; }
+    .op  { color: #89dceb; }
+
+    /* BADGES / CALLOUTS */
+    .badge {
+      display: inline-block; font-size: 11px; font-weight: 700;
+      padding: 2px 8px; border-radius: 4px;
+      text-transform: uppercase; letter-spacing: .04em;
+    }
+    .badge-blue  { background: #cfe2ff; color: #084298; }
+    .badge-green { background: #d1e7dd; color: #0a3622; }
+    .badge-red   { background: #f8d7da; color: #842029; }
+    .badge-yellow{ background: #fff3cd; color: #664d03; }
+    .badge-purple{ background: #e8d5fb; color: #5e2d91; }
+    .badge-orange{ background: #ffe5d0; color: #8a3800; }
+
+    .callout {
+      border-left: 4px solid var(--accent);
+      background: var(--accent-light);
+      padding: 14px 18px; border-radius: 0 6px 6px 0;
+      margin: 16px 0;
+    }
+    .callout.warning { border-left-color: #ffc107; background: #fff3cd; }
+    .callout.danger  { border-left-color: #dc3545; background: #f8d7da; }
+    .callout.success { border-left-color: #198754; background: #d1e7dd; }
+    .callout-title { font-weight: 700; margin-bottom: 4px; font-size: 13px; }
+
+    /* TABLE */
+    table {
+      width: 100%; border-collapse: collapse;
+      margin: 16px 0; font-size: 14px;
+    }
+    th {
+      background: var(--code-bg); font-weight: 600;
+      padding: 10px 14px; border: 1px solid var(--border);
+      text-align: left;
+    }
+    td { padding: 9px 14px; border: 1px solid var(--border); }
+    tr:nth-child(even) td { background: #fafafa; }
+
+    /* STEP LIST */
+    .step-list { list-style: none; padding: 0; }
+    .step-list li { display: flex; gap: 16px; margin-bottom: 20px; }
+    .step-num {
+      flex-shrink: 0;
+      width: 28px; height: 28px;
+      background: var(--accent); color: #fff;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700; margin-top: 2px;
+    }
+    .step-body h4 { margin-top: 0; }
+
+    /* DIVIDER */
+    .divider { border: none; border-top: 2px solid var(--border); margin: 56px 0; }
+
+    /* PRINT */
+    @media print {
+      .topbar, .sidebar, .toc { display: none; }
+      .main { margin: 0; }
+      .main-inner { padding: 24px 32px; max-width: 100%; }
+      pre { background: #f8f9fa !important; }
+      pre code { color: #212529 !important; }
+      .kw,.fn,.str,.cm,.cl,.nb,.op { color: #212529 !important; }
+      h2 { page-break-before: always; }
+      .section:first-of-type h2 { page-break-before: avoid; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<header class="topbar">
+  <button class="menu-toggle" id="menuToggle" aria-label="Buka menu">&#9776;</button>
+  <a class="topbar-brand" href="index.html">Laravel Docs</a>
+  <span class="topbar-version">v12.x</span>
+  <div class="laravel-nav" id="laravelNav">
+    <button class="laravel-nav-trigger" type="button">Laravel <span class="caret">&#9662;</span></button>
+    <div class="laravel-nav-menu">
+      <a class="laravel-nav-item" href="modul-rest-api-sanctum.html"><span class="lni-week">M1</span><span class="lni-title">Core Laravel &amp; Database</span></a>
+      <a class="laravel-nav-item" href="modul-arsitektur-otorisasi.html"><span class="lni-week">M2</span><span class="lni-title">Arsitektur Kode &amp; Otorisasi</span></a>
+      <a class="laravel-nav-item" href="modul-optimasi.html"><span class="lni-week">M3</span><span class="lni-title">Testing &amp; Optimasi</span></a>
+      <a class="laravel-nav-item" href="modul-observability.html"><span class="lni-week">M4</span><span class="lni-title">Observability</span></a>
+      <a class="laravel-nav-item" href="modul-api-design-realtime.html"><span class="lni-week">M5</span><span class="lni-title">API Design &amp; Real-time</span></a>
+      <a class="laravel-nav-item active" href="modul-security-deepdive.html"><span class="lni-week">M6</span><span class="lni-title">Security Deep-dive</span></a>
+      <a class="laravel-nav-item" href="modul-capstone-ecommerce.html"><span class="lni-week">M7</span><span class="lni-title">Capstone Project: E-commerce</span></a>
+      <a class="laravel-nav-item" href="modul-containerization-deployment.html"><span class="lni-week">M8</span><span class="lni-title">Containerization &amp; Deployment</span></a>
+      <a class="laravel-nav-item" href="modul-cloud-infrastructure.html"><span class="lni-week">M9</span><span class="lni-title">Cloud &amp; Infrastructure</span></a>
+      <a class="laravel-nav-item" href="modul-skala-besar.html"><span class="lni-week">M10</span><span class="lni-title">Skala Besar</span></a>
+      <a class="laravel-nav-item" href="modul-system-design.html"><span class="lni-week">M11</span><span class="lni-title">System Design</span></a>
+    </div>
+  </div>
+  <span class="topbar-subtitle">OWASP Top 10, Encryption &amp; Secrets, API Hardening &mdash; Modul Belajar</span>
+</header>
+
+<div class="layout">
+
+  <!-- LEFT SIDEBAR -->
+  <nav class="sidebar">
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> OWASP Top 10</div>
+      <div class="nav-group-items">
+        <a class="nav-link active" href="#owasp-intro">Overview &amp; Pemetaan</a>
+        <a class="nav-link" href="#owasp-access-control">Broken Access Control</a>
+        <a class="nav-link" href="#owasp-crypto-failures">Cryptographic Failures</a>
+        <a class="nav-link" href="#owasp-misconfig">Security Misconfiguration</a>
+        <a class="nav-link" href="#owasp-components">Vulnerable Components</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Encryption &amp; Secrets</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#encrypt-crypt">Enkripsi Data (Crypt)</a>
+        <a class="nav-link" href="#encrypt-hashing">Hashing vs Encryption</a>
+        <a class="nav-link" href="#encrypt-secrets">Mengelola Secrets</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> API Security Hardening</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#hardening-headers">HTTPS &amp; Security Headers</a>
+        <a class="nav-link" href="#hardening-cors">Konfigurasi CORS</a>
+        <a class="nav-link" href="#hardening-deps">Dependency Scanning</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Ringkasan</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#ringkasan">Ringkasan Minggu 6</a>
+      </div>
+    </div>
+
+  </nav>
+
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- MAIN CONTENT -->
+  <main class="main">
+   <div class="main-inner">
+
+    <!-- ========== OWASP TOP 10 ========== -->
+    <div class="section" id="owasp-intro">
+      <h1 class="page-title">Security Deep-dive</h1>
+      <p class="page-lead">
+        Minggu 1 sudah membahas tiga ancaman dasar (CSRF, XSS, SQL Injection). Minggu ini
+        melihat gambaran lebih luas lewat <strong>OWASP Top 10</strong> &mdash; daftar risiko
+        keamanan web paling kritis versi OWASP &mdash; lalu masuk ke enkripsi, manajemen
+        secrets, dan pengerasan (<em>hardening</em>) API secara menyeluruh.
+      </p>
+
+      <h2>OWASP Top 10 &mdash; Pemetaan ke Laravel</h2>
+      <p>
+        <strong>OWASP Top 10</strong> adalah daftar 10 risiko keamanan aplikasi web paling
+        kritis, disusun berdasarkan data ribuan aplikasi nyata. Laravel sudah menyediakan
+        proteksi bawaan untuk sebagian besar, tapi tetap perlu dikonfigurasi dan dipakai
+        dengan benar.
+      </p>
+      <table>
+        <thead><tr><th>#</th><th>Risiko OWASP</th><th>Status di Project Ini</th></tr></thead>
+        <tbody>
+          <tr><td>A01</td><td>Broken Access Control</td><td>Dibahas di bawah &mdash; perluasan dari Spatie Roles (Minggu 2)</td></tr>
+          <tr><td>A02</td><td>Cryptographic Failures</td><td>Dibahas di bawah &mdash; enkripsi &amp; secrets</td></tr>
+          <tr><td>A03</td><td>Injection (SQLi, XSS)</td><td>&#x2705; Sudah dibahas di <a href="modul-rest-api-sanctum.html#sql-injection">Minggu 1</a></td></tr>
+          <tr><td>A04</td><td>Insecure Design</td><td>Tercermin dari Repository/Service Pattern di <a href="modul-arsitektur-otorisasi.html">Minggu 2</a></td></tr>
+          <tr><td>A05</td><td>Security Misconfiguration</td><td>Dibahas di bawah</td></tr>
+          <tr><td>A06</td><td>Vulnerable &amp; Outdated Components</td><td>Dibahas di bawah &mdash; <code>composer audit</code></td></tr>
+          <tr><td>A07</td><td>Identification &amp; Auth Failures</td><td>&#x2705; Sanctum/JWT (Minggu 1) + Rate Limiting login (Minggu 2)</td></tr>
+          <tr><td>A08</td><td>Software &amp; Data Integrity Failures</td><td>Dibahas di bawah &mdash; verifikasi package &amp; signed URL</td></tr>
+          <tr><td>A09</td><td>Logging &amp; Monitoring Failures</td><td>&#x2705; Sudah dibahas di <a href="modul-observability.html">Minggu 4</a></td></tr>
+          <tr><td>A10</td><td>Server-Side Request Forgery (SSRF)</td><td>Dibahas di bawah</td></tr>
+        </tbody>
+      </table>
+      <div class="callout success">
+        <div class="callout-title">Kabar Baik</div>
+        Kamu sudah menyelesaikan 4 dari 10 risiko lewat modul-modul sebelumnya tanpa sadar.
+        Minggu ini melengkapi sisanya.
+      </div>
+    </div>
+
+    <!-- BROKEN ACCESS CONTROL -->
+    <div class="section" id="owasp-access-control">
+      <h2>A01: Broken Access Control</h2>
+      <p>Risiko #1 di OWASP Top 10 &mdash; user bisa mengakses data/aksi yang seharusnya tidak
+        boleh mereka akses.</p>
+
+      <h3>Kasus Umum &mdash; IDOR (Insecure Direct Object Reference)</h3>
+      <div class="pre-label">Rentan</div>
+      <pre><code><span class="kw">public function</span> <span class="fn">show</span>(<span class="kw">int</span> $id)
+{
+    <span class="cm">// Siapapun yang login bisa lihat order siapapun cuma ganti angka di URL!</span>
+    $order = Order::<span class="fn">find</span>($id);
+    <span class="kw">return</span> <span class="fn">response</span>()-&gt;<span class="fn">json</span>($order);
+}</code></pre>
+      <div class="pre-label">Aman &mdash; Policy Otorisasi</div>
+      <pre><code>php artisan make:policy OrderPolicy --model=Order</code></pre>
+      <pre><code><span class="cm">// app/Policies/OrderPolicy.php</span>
+<span class="kw">public function</span> <span class="fn">view</span>(User $user, Order $order): <span class="kw">bool</span>
+{
+    <span class="kw">return</span> $user-&gt;id === $order-&gt;user_id || $user-&gt;<span class="fn">hasRole</span>(<span class="str">'admin'</span>);
+}</code></pre>
+      <pre><code><span class="cm">// Controller</span>
+<span class="kw">public function</span> <span class="fn">show</span>(Order $order)
+{
+    $this-&gt;<span class="fn">authorize</span>(<span class="str">'view'</span>, $order);   <span class="cm">// lempar 403 kalau tidak lolos</span>
+    <span class="kw">return</span> <span class="fn">response</span>()-&gt;<span class="fn">json</span>($order);
+}</code></pre>
+
+      <table>
+        <thead><tr><th>Prinsip</th><th>Penerapan</th></tr></thead>
+        <tbody>
+          <tr><td>Deny by default</td><td>Route dilindungi middleware auth, hanya buka yang benar-benar publik</td></tr>
+          <tr><td>Cek kepemilikan resource</td><td>Policy <code>view/update/delete</code>, bukan cuma cek login</td></tr>
+          <tr><td>Jangan percaya input client</td><td>ID dari URL/body harus diverifikasi lewat Policy, bukan diasumsikan valid</td></tr>
+        </tbody>
+      </table>
+      <div class="callout warning">
+        <div class="callout-title">Middleware Role Saja Tidak Cukup</div>
+        Middleware <code>role:admin</code> dari Minggu 2 memastikan "user ini admin", tapi
+        Policy memastikan "user ini <em>pemilik</em> resource spesifik ini" &mdash; keduanya
+        dibutuhkan untuk kasus berbeda.
+      </div>
+    </div>
+
+    <!-- CRYPTOGRAPHIC FAILURES -->
+    <div class="section" id="owasp-crypto-failures">
+      <h2>A02: Cryptographic Failures</h2>
+      <p>Data sensitif (password, nomor kartu, token) yang disimpan atau dikirim tanpa
+        proteksi kriptografi yang memadai.</p>
+      <table>
+        <thead><tr><th>Kesalahan Umum</th><th>Perbaikan di Laravel</th></tr></thead>
+        <tbody>
+          <tr><td>Simpan password plain text</td><td><code>Hash::make()</code> &mdash; sudah default di Laravel</td></tr>
+          <tr><td>Kirim data sensitif lewat HTTP biasa</td><td>Force HTTPS (dibahas di Hardening)</td></tr>
+          <tr><td>Simpan data sensitif tanpa enkripsi di DB</td><td><code>encrypted</code> cast pada Model (dibahas di bawah)</td></tr>
+          <tr><td><code>APP_KEY</code> default/bocor</td><td>Generate unik per environment, jangan commit ke Git</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- SECURITY MISCONFIGURATION -->
+    <div class="section" id="owasp-misconfig">
+      <h2>A05: Security Misconfiguration</h2>
+      <p>Konfigurasi yang salah atau lupa diubah dari default saat rilis ke production.</p>
+
+      <h3>Checklist Konfigurasi Production</h3>
+      <div class="pre-label">.env (production)</div>
+      <pre><code>APP_ENV=production
+APP_DEBUG=false   <span class="cm"># WAJIB false — kalau true, stack trace lengkap tampil ke publik</span>
+APP_URL=https://laravel-crud-app.com
+
+SESSION_SECURE_COOKIE=true   <span class="cm"># cookie hanya dikirim lewat HTTPS</span>
+SESSION_HTTP_ONLY=true       <span class="cm"># cookie tidak bisa diakses JavaScript (anti-XSS)</span></code></pre>
+      <div class="callout danger">
+        <div class="callout-title">Bahaya <code>APP_DEBUG=true</code> di Production</div>
+        Kalau error terjadi, halaman debug Laravel menampilkan isi <code>.env</code>, query
+        SQL lengkap, dan path server &mdash; informasi emas untuk penyerang. Selalu pastikan
+        <code>false</code> di production.
+      </div>
+
+      <h3>Nonaktifkan Fitur Development</h3>
+      <table>
+        <thead><tr><th>Fitur</th><th>Tindakan di Production</th></tr></thead>
+        <tbody>
+          <tr><td>Telescope (Minggu 4)</td><td>Hanya aktif di <code>local</code>, atau proteksi ketat dengan Gate</td></tr>
+          <tr><td><code>php artisan route:list</code></td><td>Tidak diakses publik, hanya lewat CLI server</td></tr>
+          <tr><td>Error page default framework</td><td>Custom error page tanpa detail teknis</td></tr>
+          <tr><td>Directory listing web server</td><td>Nonaktifkan di konfigurasi Apache/Nginx</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- VULNERABLE COMPONENTS -->
+    <div class="section" id="owasp-components">
+      <h2>A06: Vulnerable &amp; Outdated Components</h2>
+      <p>Package pihak ketiga (Composer/NPM) yang punya celah keamanan diketahui publik, tapi
+        belum di-update di project.</p>
+
+      <h3>Cek Kerentanan Dependency</h3>
+      <div class="pre-label">Terminal</div>
+      <pre><code><span class="cm"># Composer bawaan sejak versi 2.4+</span>
+composer audit
+
+<span class="cm"># NPM untuk dependency frontend</span>
+npm audit</code></pre>
+      <div class="pre-label">Contoh Output</div>
+      <pre><code>Found 1 security vulnerability advisory affecting 1 package:
++----------+----------------------+-----------------------------+
+| Package  | guzzlehttp/guzzle    |                               |
+| CVE      | CVE-2022-31090       |                               |
+| Title    | Guzzle sensitive data|                               |
+| Solution | Upgrade to >=7.4.5   |                               |
++----------+----------------------+-----------------------------+</code></pre>
+
+      <h3>Otomatisasi Cek Berkala</h3>
+      <p>Jalankan <code>composer audit</code> sebagai bagian dari CI/CD (lihat Minggu 8) supaya
+        kerentanan terdeteksi otomatis setiap ada perubahan kode, bukan menunggu diingat manual.</p>
+      <div class="callout success">
+        <div class="callout-title">Kebiasaan Sehat</div>
+        Update <code>composer.lock</code>/<code>package-lock.json</code> secara rutin
+        (bulanan), bukan hanya saat butuh fitur baru. Semakin lama tidak update, semakin besar
+        risiko dan semakin sulit migrasinya.
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- ========== ENCRYPTION & SECRETS ========== -->
+    <div class="section" id="encrypt-crypt">
+      <h2>Enkripsi Data dengan Crypt</h2>
+      <p>
+        Laravel menyediakan facade <code>Crypt</code> untuk enkripsi <strong>simetris</strong>
+        (bisa dienkripsi dan didekripsi kembali) menggunakan <code>APP_KEY</code> di
+        <code>.env</code> sebagai kuncinya.
+      </p>
+
+      <h3>Enkripsi Manual</h3>
+      <pre><code><span class="kw">use</span> Illuminate\Support\Facades\Crypt;
+
+$encrypted = Crypt::<span class="fn">encryptString</span>(<span class="str">'nomor-rekening-sensitif'</span>);
+$decrypted = Crypt::<span class="fn">decryptString</span>($encrypted);</code></pre>
+
+      <h3>Encrypted Cast di Model (Lebih Praktis)</h3>
+      <p>Untuk kolom yang harus selalu terenkripsi di database, gunakan cast
+        <code>encrypted</code> &mdash; Laravel otomatis enkripsi saat simpan, dekripsi saat
+        dibaca.</p>
+      <div class="pre-label">app/Models/Pelanggan.php</div>
+      <pre><code><span class="kw">protected function</span> <span class="fn">casts</span>(): <span class="kw">array</span>
+{
+    <span class="kw">return</span> [
+        <span class="str">'nomor_ktp'</span>      =&gt; <span class="str">'encrypted'</span>,
+        <span class="str">'catatan_khusus'</span> =&gt; <span class="str">'encrypted'</span>,
+    ];
+}</code></pre>
+      <pre><code>$pelanggan = <span class="kw">new</span> Pelanggan();
+$pelanggan-&gt;nomor_ktp = <span class="str">'3201xxxxxxxxxxxx'</span>;   <span class="cm">// otomatis terenkripsi saat save()</span>
+$pelanggan-&gt;<span class="fn">save</span>();
+
+<span class="fn">echo</span> $pelanggan-&gt;nomor_ktp;   <span class="cm">// otomatis terdekripsi saat dibaca, transparan</span></code></pre>
+      <div class="callout warning">
+        <div class="callout-title">Kolom Terenkripsi Tidak Bisa Di-<code>WHERE</code></div>
+        Karena nilai di database benar-benar ciphertext acak, kamu tidak bisa
+        <code>WHERE nomor_ktp = '...'</code> langsung. Kalau butuh pencarian, simpan hash
+        terpisah (misal SHA-256) di kolom tambahan untuk pencarian, sementara data asli tetap
+        di kolom terenkripsi.
+      </div>
+    </div>
+
+    <!-- HASHING VS ENCRYPTION -->
+    <div class="section" id="encrypt-hashing">
+      <h2>Hashing vs Encryption &mdash; Jangan Tertukar</h2>
+      <table>
+        <thead><tr><th>Aspek</th><th>Hashing</th><th>Encryption</th></tr></thead>
+        <tbody>
+          <tr><td>Bisa dibalik?</td><td>Tidak (satu arah)</td><td>Ya (dengan key yang benar)</td></tr>
+          <tr><td>Dipakai untuk</td><td>Password, integritas data</td><td>Data yang perlu dibaca kembali (nomor KTP, catatan medis)</td></tr>
+          <tr><td>Fungsi Laravel</td><td><code>Hash::make()</code>, <code>Hash::check()</code></td><td><code>Crypt::encryptString()</code>, cast <code>encrypted</code></td></tr>
+          <tr><td>Kalau di-decode</td><td>Tetap tidak bisa dapat nilai asli</td><td>Bisa didapat nilai aslinya kembali</td></tr>
+        </tbody>
+      </table>
+      <div class="pre-label">Password — SELALU Hash, Jangan Pernah Encrypt</div>
+      <pre><code><span class="cm">// BENAR</span>
+$user-&gt;password = Hash::<span class="fn">make</span>($request-&gt;password);
+
+<span class="cm">// SALAH — password bisa "dibuka kembali" kalau APP_KEY bocor</span>
+$user-&gt;password = Crypt::<span class="fn">encryptString</span>($request-&gt;password);</code></pre>
+      <div class="callout danger">
+        <div class="callout-title">Kenapa Password Wajib Di-hash, Bukan Di-encrypt?</div>
+        Kalau <code>APP_KEY</code> bocor, semua data yang di-<em>encrypt</em> bisa didekripsi
+        balik oleh penyerang. Password yang di-<em>hash</em> tidak bisa dikembalikan ke bentuk
+        asli sama sekali, bahkan oleh developer aplikasi sendiri.
+      </div>
+    </div>
+
+    <!-- SECRETS MANAGEMENT -->
+    <div class="section" id="encrypt-secrets">
+      <h2>Mengelola Secrets</h2>
+      <p><strong>Secrets</strong> adalah kredensial sensitif: <code>APP_KEY</code>, password
+        database, API key pihak ketiga, DSN Sentry, dll &mdash; semuanya hidup di
+        <code>.env</code>.</p>
+
+      <h3>Aturan Dasar</h3>
+      <ul>
+        <li><code>.env</code> <strong>wajib</strong> masuk <code>.gitignore</code> &mdash; jangan pernah commit ke Git</li>
+        <li>Commit <code>.env.example</code> (tanpa nilai asli) sebagai template untuk tim</li>
+        <li>Generate <code>APP_KEY</code> unik per environment: <code>php artisan key:generate</code></li>
+        <li>Rotasi secrets secara berkala, terutama setelah ada anggota tim yang keluar</li>
+      </ul>
+
+      <div class="pre-label">.gitignore</div>
+      <pre><code>.env
+.env.backup
+.env.production</code></pre>
+
+      <h3>Level Selanjutnya &mdash; Secrets Manager</h3>
+      <p>Untuk tim/production yang lebih besar, secrets sebaiknya tidak hanya berupa file
+        <code>.env</code> di server, tapi dikelola lewat layanan khusus.</p>
+      <table>
+        <thead><tr><th>Layanan</th><th>Kelebihan</th></tr></thead>
+        <tbody>
+          <tr><td>AWS Secrets Manager</td><td>Rotasi otomatis, audit log siapa mengakses apa</td></tr>
+          <tr><td>HashiCorp Vault</td><td>Self-hosted, dynamic secrets (kredensial DB sementara)</td></tr>
+          <tr><td>Laravel Forge / Vapor Environment</td><td>Terintegrasi langsung dengan deployment Laravel</td></tr>
+        </tbody>
+      </table>
+      <div class="callout">
+        <div class="callout-title">Untuk Project Skala Kecil-Menengah</div>
+        <code>.env</code> yang dikelola rapi (tidak commit, akses server dibatasi SSH key)
+        sudah cukup. Secrets manager terpisah baru krusial saat tim besar atau butuh compliance
+        (misal ISO 27001, SOC 2).
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- ========== API HARDENING ========== -->
+    <div class="section" id="hardening-headers">
+      <h2>HTTPS &amp; Security Headers</h2>
+
+      <h3>Paksa HTTPS</h3>
+      <div class="pre-label">app/Providers/AppServiceProvider.php</div>
+      <pre><code><span class="kw">use</span> Illuminate\Support\Facades\URL;
+
+<span class="kw">public function</span> <span class="fn">boot</span>(): <span class="kw">void</span>
+{
+    <span class="kw">if</span> ($this-&gt;app-&gt;<span class="fn">environment</span>(<span class="str">'production'</span>)) {
+        URL::<span class="fn">forceScheme</span>(<span class="str">'https'</span>);
+    }
+}</code></pre>
+
+      <h3>Middleware Security Headers</h3>
+      <div class="pre-label">Terminal</div>
+      <pre><code>php artisan make:middleware SecurityHeaders</code></pre>
+      <div class="pre-label">app/Http/Middleware/SecurityHeaders.php</div>
+      <pre><code><span class="kw">public function</span> <span class="fn">handle</span>($request, Closure $next)
+{
+    $response = $next($request);
+
+    $response-&gt;<span class="fn">headers</span>-&gt;<span class="fn">set</span>(<span class="str">'X-Frame-Options'</span>, <span class="str">'DENY'</span>);
+    $response-&gt;<span class="fn">headers</span>-&gt;<span class="fn">set</span>(<span class="str">'X-Content-Type-Options'</span>, <span class="str">'nosniff'</span>);
+    $response-&gt;<span class="fn">headers</span>-&gt;<span class="fn">set</span>(<span class="str">'Referrer-Policy'</span>, <span class="str">'strict-origin-when-cross-origin'</span>);
+    $response-&gt;<span class="fn">headers</span>-&gt;<span class="fn">set</span>(
+        <span class="str">'Strict-Transport-Security'</span>,
+        <span class="str">'max-age=31536000; includeSubDomains'</span>
+    );
+
+    <span class="kw">return</span> $response;
+}</code></pre>
+
+      <table>
+        <thead><tr><th>Header</th><th>Mencegah</th></tr></thead>
+        <tbody>
+          <tr><td><code>X-Frame-Options: DENY</code></td><td>Clickjacking &mdash; situs dimuat dalam <code>&lt;iframe&gt;</code> jahat</td></tr>
+          <tr><td><code>X-Content-Type-Options: nosniff</code></td><td>Browser "menebak" tipe file, membuka celah XSS</td></tr>
+          <tr><td><code>Strict-Transport-Security</code> (HSTS)</td><td>Browser dipaksa selalu pakai HTTPS, walau user ketik <code>http://</code></td></tr>
+          <tr><td><code>Content-Security-Policy</code></td><td>Batasi sumber script/style yang boleh dimuat halaman</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- CORS -->
+    <div class="section" id="hardening-cors">
+      <h2>Konfigurasi CORS</h2>
+      <p>
+        <strong>CORS</strong> (Cross-Origin Resource Sharing) mengatur domain mana saja yang
+        boleh memanggil API kamu langsung dari browser (JavaScript <code>fetch</code>/<code>axios</code>).
+      </p>
+      <div class="pre-label">config/cors.php</div>
+      <pre><code><span class="str">'paths'</span> =&gt; [<span class="str">'api/*'</span>],
+
+<span class="str">'allowed_methods'</span> =&gt; [<span class="str">'*'</span>],
+
+<span class="cm">// Produksi: sebutkan domain spesifik, JANGAN pakai '*'</span>
+<span class="str">'allowed_origins'</span> =&gt; [
+    <span class="str">'https://laravel-crud-app.com'</span>,
+    <span class="str">'https://admin.laravel-crud-app.com'</span>,
+],
+
+<span class="str">'allowed_headers'</span> =&gt; [<span class="str">'*'</span>],
+
+<span class="str">'supports_credentials'</span> =&gt; <span class="kw">true</span>,   <span class="cm">// perlu true untuk Sanctum SPA auth</span></code></pre>
+      <div class="callout danger">
+        <div class="callout-title">Jangan Pakai <code>allowed_origins: ['*']</code> di Production</div>
+        Wildcard <code>*</code> berarti <em>semua</em> website di internet boleh memanggil API
+        kamu langsung dari browser user. Kombinasikan dengan
+        <code>supports_credentials: true</code> bahkan bisa membocorkan data user yang sedang
+        login ke situs manapun.
+      </div>
+    </div>
+
+    <!-- DEPENDENCY SCANNING -->
+    <div class="section" id="hardening-deps">
+      <h2>Dependency Scanning &amp; SSRF</h2>
+
+      <h3>Composer Audit di Alur Kerja</h3>
+      <pre><code><span class="cm"># Jalankan sebelum deploy, atau otomatis di CI/CD</span>
+composer audit --format=json</code></pre>
+
+      <h3>Mencegah SSRF (Server-Side Request Forgery)</h3>
+      <p>SSRF terjadi kalau server dipaksa melakukan request ke alamat internal yang seharusnya
+        tidak bisa diakses publik &mdash; misal lewat fitur "import gambar dari URL".</p>
+      <div class="pre-label">Rentan</div>
+      <pre><code><span class="kw">public function</span> <span class="fn">importGambar</span>(Request $request)
+{
+    <span class="cm">// Penyerang bisa isi url=http://169.254.169.254/latest/meta-data/ (metadata cloud!)</span>
+    $isi = <span class="fn">file_get_contents</span>($request-&gt;url);
+    <span class="kw">return</span> $isi;
+}</code></pre>
+      <div class="pre-label">Aman &mdash; Validasi &amp; Whitelist</div>
+      <pre><code><span class="kw">public function</span> <span class="fn">importGambar</span>(Request $request)
+{
+    $request-&gt;<span class="fn">validate</span>([<span class="str">'url'</span> =&gt; <span class="str">'required|url'</span>]);
+
+    $host = <span class="fn">parse_url</span>($request-&gt;url, PHP_URL_HOST);
+    $allowedHosts = [<span class="str">'cdn.trustedpartner.com'</span>];
+
+    <span class="kw">if</span> (!<span class="fn">in_array</span>($host, $allowedHosts, <span class="kw">true</span>)) {
+        <span class="fn">abort</span>(<span class="nb">422</span>, <span class="str">'Domain sumber gambar tidak diizinkan.'</span>);
+    }
+
+    <span class="cm">// lanjut proses download dari domain yang sudah divalidasi</span>
+}</code></pre>
+      <div class="callout warning">
+        <div class="callout-title">Blokir IP Internal Juga</div>
+        Selain whitelist domain, tolak juga request ke IP privat
+        (<code>127.0.0.1</code>, <code>169.254.169.254</code>, <code>10.0.0.0/8</code>,
+        <code>192.168.0.0/16</code>) supaya fitur seperti "import dari URL" tidak disalahgunakan
+        untuk memindai jaringan internal server.
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- RINGKASAN -->
+    <div class="section" id="ringkasan">
+      <h2>Ringkasan Minggu 6</h2>
+      <ul class="step-list">
+        <li>
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <h4>OWASP Top 10</h4>
+            <p>Sepuluh risiko keamanan web paling kritis &mdash; sebagian sudah tertangani lewat
+              modul sebelumnya (injection, auth, logging), sisanya (access control, crypto,
+              misconfiguration, components) dibahas eksplisit minggu ini.</p>
+          </div>
+        </li>
+        <li>
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <h4>Encryption &amp; Secrets Management</h4>
+            <p>Gunakan <code>Hash</code> untuk password (satu arah), <code>Crypt</code>/cast
+              <code>encrypted</code> untuk data sensitif yang perlu dibaca kembali, dan jangan
+              pernah commit <code>.env</code> ke Git.</p>
+          </div>
+        </li>
+        <li>
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <h4>API Security Hardening</h4>
+            <p>Paksa HTTPS, tambahkan security headers, batasi CORS ke domain yang dipercaya,
+              scan dependency secara rutin, dan validasi ketat setiap fitur yang menerima URL
+              dari user untuk mencegah SSRF.</p>
+          </div>
+        </li>
+      </ul>
+
+      <div class="callout success">
+        <div class="callout-title">Selamat! Minggu 6 Selesai &mdash; Fondasi Backend Lengkap</div>
+        Dengan selesainya Minggu 1&ndash;6, <code>laravel-crud-app</code> sudah punya fondasi
+        backend yang lengkap: fitur, arsitektur, performa, observability, API design, dan
+        keamanan. Lanjut ke <a href="modul-capstone-ecommerce.html"><strong>Minggu 7 &mdash;
+        Capstone Project: E-commerce</strong></a> untuk menggabungkan semuanya, atau lihat
+        <a href="index.html">roadmap lengkap</a> untuk lanjutannya.
+      </div>
+    </div>
+
+   </div>
+  </main>
+
+  <!-- RIGHT TOC -->
+  <aside class="toc">
+    <div class="toc-title">Daftar Isi</div>
+
+    <a href="#owasp-intro">OWASP Top 10</a>
+    <a class="sub" href="#owasp-intro">Overview &amp; Pemetaan</a>
+    <a class="sub" href="#owasp-access-control">Broken Access Control</a>
+    <a class="sub" href="#owasp-crypto-failures">Cryptographic Failures</a>
+    <a class="sub" href="#owasp-misconfig">Security Misconfiguration</a>
+    <a class="sub" href="#owasp-components">Vulnerable Components</a>
+
+    <a href="#encrypt-crypt" style="margin-top:12px;display:block">Encryption &amp; Secrets</a>
+    <a class="sub" href="#encrypt-crypt">Enkripsi Data</a>
+    <a class="sub" href="#encrypt-hashing">Hashing vs Encryption</a>
+    <a class="sub" href="#encrypt-secrets">Mengelola Secrets</a>
+
+    <a href="#hardening-headers" style="margin-top:12px;display:block">API Hardening</a>
+    <a class="sub" href="#hardening-headers">HTTPS &amp; Headers</a>
+    <a class="sub" href="#hardening-cors">CORS</a>
+    <a class="sub" href="#hardening-deps">Dependency Scanning</a>
+
+    <a href="#ringkasan" style="margin-top:12px;display:block">Ringkasan</a>
+  </aside>
+
+</div>
+
+<script>
+  // Sidebar accordion
+  document.querySelectorAll('.nav-group-title').forEach(title => {
+    title.addEventListener('click', () => {
+      title.parentElement.classList.toggle('open');
+    });
+  });
+
+  // Laravel nav bar — sub navbar (dropdown) toggle
+  document.querySelectorAll('.laravel-nav-trigger').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      btn.closest('.laravel-nav').classList.toggle('open');
+    });
+  });
+  document.addEventListener('click', (e) => {
+    document.querySelectorAll('.laravel-nav.open').forEach(nav => {
+      if (!nav.contains(e.target)) nav.classList.remove('open');
+    });
+  });
+
+  // Mobile sidebar toggle
+  const sidebarEl = document.querySelector('.sidebar');
+  const overlayEl = document.getElementById('sidebarOverlay');
+  const menuToggleBtn = document.getElementById('menuToggle');
+  function closeSidebar() {
+    sidebarEl.classList.remove('open');
+    overlayEl.classList.remove('show');
+  }
+  if (menuToggleBtn) {
+    menuToggleBtn.addEventListener('click', () => {
+      sidebarEl.classList.toggle('open');
+      overlayEl.classList.toggle('show');
+    });
+  }
+  if (overlayEl) overlayEl.addEventListener('click', closeSidebar);
+  document.querySelectorAll('.sidebar a').forEach(a => a.addEventListener('click', closeSidebar));
+
+  // Wrap tables so they scroll horizontally instead of breaking layout on small screens
+  document.querySelectorAll('.main table').forEach(t => {
+    if (t.closest('.table-scroll')) return;
+    const wrap = document.createElement('div');
+    wrap.className = 'table-scroll';
+    t.parentNode.insertBefore(wrap, t);
+    wrap.appendChild(t);
+  });
+
+  // Copy button on every code block
+  function copyText(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+      return navigator.clipboard.writeText(text);
+    }
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); } catch (err) {}
+    document.body.removeChild(ta);
+    return Promise.resolve();
+  }
+  document.querySelectorAll('pre').forEach(pre => {
+    const codeEl = pre.querySelector('code');
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'copy-btn';
+    btn.textContent = 'Copy';
+    btn.setAttribute('aria-label', 'Salin kode');
+    btn.addEventListener('click', () => {
+      const text = (codeEl ? codeEl.textContent : pre.textContent).trim();
+      copyText(text).then(() => {
+        btn.textContent = 'Copied!';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = 'Copy';
+          btn.classList.remove('copied');
+        }, 1500);
+      });
+    });
+    pre.appendChild(btn);
+  });
+
+  // Scroll spy for sidebar + TOC
+  const sections = document.querySelectorAll('.section[id]');
+  const navLinks = document.querySelectorAll('.nav-link');
+  const tocLinks = document.querySelectorAll('.toc a');
+
+  function setActive(links, id) {
+    links.forEach(l => {
+      l.classList.toggle('active', l.getAttribute('href') === '#' + id);
+    });
+  }
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        setActive(navLinks, entry.target.id);
+        setActive(tocLinks, entry.target.id);
+        const activeLink = document.querySelector('.nav-link.active');
+        if (activeLink) {
+          const group = activeLink.closest('.nav-group');
+          if (group) group.classList.add('open');
+        }
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+
+  sections.forEach(s => observer.observe(s));
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1105 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Modul Skala Besar &mdash; Laravel</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --sidebar-w: 260px;
+      --toc-w: 220px;
+      --accent: #0d6efd;
+      --accent-light: #e7f1ff;
+      --text: #212529;
+      --muted: #6c757d;
+      --border: #dee2e6;
+      --code-bg: #f8f9fa;
+      --code-border: #e9ecef;
+      --sidebar-bg: #f8f9fa;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 15px;
+      line-height: 1.7;
+      color: var(--text);
+      background: #fff;
+    }
+
+    /* TOP BAR */
+    .topbar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      height: 56px;
+      background: #fff;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; padding: 0 24px;
+      gap: 16px;
+    }
+    .topbar-brand {
+      font-weight: 700; font-size: 17px; color: var(--accent);
+      text-decoration: none;
+    }
+    .topbar-version {
+      background: var(--accent-light); color: var(--accent);
+      font-size: 11px; font-weight: 600; padding: 2px 8px;
+      border-radius: 20px;
+    }
+    .topbar-subtitle {
+      color: var(--muted); font-size: 13px; margin-left: auto;
+    }
+    /* LARAVEL NAV BAR + SUB NAVBAR (dropdown by Fokus Utama) */
+    .laravel-nav { position: relative; margin-left: 24px; }
+    .laravel-nav-trigger {
+      display: flex; align-items: center; gap: 6px;
+      background: none; border: 1px solid var(--border); border-radius: 6px;
+      padding: 6px 14px; font-size: 13px; font-weight: 600;
+      color: var(--text); cursor: pointer; font-family: inherit;
+    }
+    .laravel-nav-trigger:hover { background: var(--accent-light); color: var(--accent); border-color: var(--accent); }
+    .laravel-nav.open .laravel-nav-trigger { background: var(--accent-light); color: var(--accent); border-color: var(--accent); }
+    .laravel-nav-trigger .caret { font-size: 10px; transition: transform .15s; }
+    .laravel-nav.open .laravel-nav-trigger .caret { transform: rotate(180deg); }
+    .laravel-nav-menu {
+      display: none;
+      position: absolute; top: calc(100% + 8px); left: 0;
+      width: 360px; max-height: 75vh; overflow-y: auto;
+      background: #fff; border: 1px solid var(--border); border-radius: 10px;
+      box-shadow: 0 12px 32px rgba(0,0,0,.14);
+      padding: 8px; z-index: 200;
+    }
+    .laravel-nav.open .laravel-nav-menu { display: block; }
+    .laravel-nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 12px; border-radius: 8px;
+      text-decoration: none; color: var(--text); font-size: 13px;
+    }
+    .laravel-nav-item:hover { background: var(--accent-light); }
+    .laravel-nav-item.active { background: var(--accent-light); color: var(--accent); font-weight: 600; }
+    .laravel-nav-item .lni-week {
+      flex-shrink: 0; width: 34px; font-size: 11px; font-weight: 700; color: var(--muted);
+    }
+    .laravel-nav-item.active .lni-week { color: var(--accent); }
+    .laravel-nav-item .lni-title { flex: 1; }
+    .laravel-nav-item .lni-soon {
+      flex-shrink: 0; font-size: 10px; font-weight: 700; text-transform: uppercase;
+      background: #e9ecef; color: #495057; padding: 2px 6px; border-radius: 20px;
+    }
+
+    /* LAYOUT */
+    .layout {
+      display: flex;
+      padding-top: 56px;
+      min-height: 100vh;
+    }
+
+    /* LEFT SIDEBAR */
+    .sidebar {
+      width: var(--sidebar-w);
+      flex-shrink: 0;
+      position: fixed;
+      top: 56px; bottom: 0; left: 0;
+      overflow-y: auto;
+      background: var(--sidebar-bg);
+      border-right: 1px solid var(--border);
+      padding: 20px 0 40px;
+    }
+    .sidebar::-webkit-scrollbar { width: 4px; }
+    .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    .nav-group { margin-bottom: 4px; }
+    .nav-group-title {
+      display: flex; align-items: center; gap: 8px;
+      padding: 6px 20px;
+      font-size: 12px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .06em;
+      color: var(--text);
+      cursor: pointer;
+      user-select: none;
+    }
+    .nav-group-title .arrow {
+      display: inline-block; transition: transform .2s;
+      font-size: 10px; color: var(--muted);
+    }
+    .nav-group.open .arrow { transform: rotate(90deg); }
+    .nav-group-items { display: none; }
+    .nav-group.open .nav-group-items { display: block; }
+
+    .nav-link {
+      display: block;
+      padding: 5px 20px 5px 36px;
+      font-size: 14px; color: var(--muted);
+      text-decoration: none;
+      border-left: 3px solid transparent;
+      transition: color .15s, border-color .15s, background .15s;
+    }
+    .nav-link:hover { color: var(--accent); background: var(--accent-light); }
+    .nav-link.active {
+      color: var(--accent); font-weight: 600;
+      border-left-color: var(--accent);
+      background: var(--accent-light);
+    }
+
+    /* MAIN CONTENT */
+    .main {
+      margin-left: var(--sidebar-w);
+      margin-right: var(--toc-w);
+      flex: 1;
+      min-width: 0;
+    }
+    .main-inner {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 48px 56px;
+    }
+
+    /* MOBILE MENU TOGGLE */
+    .menu-toggle {
+      display: none;
+      align-items: center; justify-content: center;
+      width: 32px; height: 32px; flex-shrink: 0;
+      border: 1px solid var(--border); border-radius: 6px;
+      background: none; cursor: pointer; font-size: 16px;
+      color: var(--text);
+    }
+    .menu-toggle:hover { background: var(--accent-light); color: var(--accent); border-color: var(--accent); }
+    .sidebar-overlay {
+      display: none;
+      position: fixed; inset: 56px 0 0 0;
+      background: rgba(0,0,0,.35);
+      z-index: 95;
+    }
+    .sidebar-overlay.show { display: block; }
+
+    /* TABLES THAT OVERFLOW SCROLL INSTEAD OF BREAKING LAYOUT */
+    .table-scroll { overflow-x: auto; margin: 16px 0; -webkit-overflow-scrolling: touch; }
+    .table-scroll table { margin: 0; }
+
+    /* RESPONSIVE */
+    @media (max-width: 1300px) {
+      .toc { display: none; }
+      .main { margin-right: 0; }
+    }
+    @media (max-width: 900px) {
+      .menu-toggle { display: inline-flex; }
+      .topbar-subtitle { display: none; }
+      .sidebar {
+        transform: translateX(-100%);
+        transition: transform .2s ease;
+        z-index: 96;
+        box-shadow: 4px 0 24px rgba(0,0,0,.15);
+      }
+      .sidebar.open { transform: translateX(0); }
+      .main { margin-left: 0; }
+      .main-inner { padding: 32px 24px; }
+      .laravel-nav-menu { width: min(360px, 88vw); }
+    }
+    @media (max-width: 560px) {
+      .topbar { padding: 0 14px; gap: 10px; }
+      .topbar-brand { font-size: 15px; }
+      .topbar-version { display: none; }
+      .page-title { font-size: 28px; }
+      .page-lead { font-size: 15px; padding-bottom: 24px; margin-bottom: 28px; }
+      .main-inner { padding: 24px 16px; }
+      h2 { font-size: 21px; }
+    }
+
+    /* RIGHT TOC */
+    .toc {
+      width: var(--toc-w);
+      flex-shrink: 0;
+      position: fixed;
+      top: 56px; bottom: 0; right: 0;
+      overflow-y: auto;
+      padding: 24px 16px;
+      border-left: 1px solid var(--border);
+    }
+    .toc-title {
+      font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .06em;
+      color: var(--muted); margin-bottom: 12px;
+    }
+    .toc a {
+      display: block; font-size: 13px; color: var(--muted);
+      text-decoration: none; padding: 3px 0 3px 8px;
+      border-left: 2px solid transparent;
+      transition: color .15s, border-color .15s;
+    }
+    .toc a:hover, .toc a.active {
+      color: var(--accent); border-left-color: var(--accent);
+    }
+    .toc a.sub { padding-left: 20px; font-size: 12px; }
+
+    /* CONTENT TYPOGRAPHY */
+    .page-title {
+      font-size: 40px; font-weight: 700;
+      margin-bottom: 12px; line-height: 1.2;
+    }
+    .page-lead {
+      font-size: 18px; color: var(--muted);
+      margin-bottom: 40px; border-bottom: 1px solid var(--border);
+      padding-bottom: 32px;
+    }
+    .section { margin-bottom: 56px; }
+    h2 {
+      font-size: 26px; font-weight: 700;
+      margin-bottom: 16px; padding-top: 8px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 8px;
+    }
+    h3 {
+      font-size: 18px; font-weight: 600;
+      margin: 24px 0 10px;
+    }
+    h4 {
+      font-size: 15px; font-weight: 600;
+      margin: 18px 0 8px; color: var(--text);
+    }
+    p { margin-bottom: 14px; }
+    ul, ol { padding-left: 24px; margin-bottom: 14px; }
+    li { margin-bottom: 6px; }
+    strong { font-weight: 600; }
+
+    /* CODE */
+    code {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      font-size: 13px;
+      background: var(--code-bg);
+      border: 1px solid var(--code-border);
+      padding: 1px 5px; border-radius: 4px;
+      color: #d63384;
+    }
+    pre {
+      background: #1e1e2e;
+      border-radius: 8px;
+      padding: 20px 24px;
+      overflow-x: auto;
+      margin: 16px 0 20px;
+      position: relative;
+    }
+    pre code {
+      background: none; border: none; padding: 0;
+      color: #cdd6f4; font-size: 13px; line-height: 1.65;
+    }
+    .pre-label {
+      font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .06em;
+      color: #6c757d; margin-bottom: 6px;
+    }
+
+    /* COPY BUTTON */
+    .copy-btn {
+      position: absolute; top: 10px; right: 10px;
+      display: flex; align-items: center; gap: 5px;
+      background: rgba(255,255,255,.08);
+      color: #cdd6f4;
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 6px;
+      font-family: inherit; font-size: 11px; font-weight: 600;
+      padding: 4px 9px;
+      cursor: pointer;
+      opacity: .55;
+      transition: opacity .15s, background .15s;
+    }
+    pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
+    .copy-btn:hover { background: rgba(255,255,255,.2); }
+    .copy-btn.copied {
+      opacity: 1; background: #198754; border-color: #198754; color: #fff;
+    }
+    @media (max-width: 900px) { .copy-btn { opacity: .8; } }
+    @media print { .copy-btn { display: none; } }
+
+    .kw  { color: #cba6f7; }
+    .fn  { color: #89b4fa; }
+    .str { color: #a6e3a1; }
+    .cm  { color: #6c7086; }
+    .cl  { color: #fab387; }
+    .nb  { color: #89dceb; }
+    .op  { color: #89dceb; }
+
+    /* BADGES / CALLOUTS */
+    .badge {
+      display: inline-block; font-size: 11px; font-weight: 700;
+      padding: 2px 8px; border-radius: 4px;
+      text-transform: uppercase; letter-spacing: .04em;
+    }
+    .badge-blue  { background: #cfe2ff; color: #084298; }
+    .badge-green { background: #d1e7dd; color: #0a3622; }
+    .badge-red   { background: #f8d7da; color: #842029; }
+    .badge-yellow{ background: #fff3cd; color: #664d03; }
+    .badge-purple{ background: #e8d5fb; color: #5e2d91; }
+    .badge-orange{ background: #ffe5d0; color: #8a3800; }
+
+    .callout {
+      border-left: 4px solid var(--accent);
+      background: var(--accent-light);
+      padding: 14px 18px; border-radius: 0 6px 6px 0;
+      margin: 16px 0;
+    }
+    .callout.warning { border-left-color: #ffc107; background: #fff3cd; }
+    .callout.danger  { border-left-color: #dc3545; background: #f8d7da; }
+    .callout.success { border-left-color: #198754; background: #d1e7dd; }
+    .callout-title { font-weight: 700; margin-bottom: 4px; font-size: 13px; }
+
+    /* TABLE */
+    table {
+      width: 100%; border-collapse: collapse;
+      margin: 16px 0; font-size: 14px;
+    }
+    th {
+      background: var(--code-bg); font-weight: 600;
+      padding: 10px 14px; border: 1px solid var(--border);
+      text-align: left;
+    }
+    td { padding: 9px 14px; border: 1px solid var(--border); }
+    tr:nth-child(even) td { background: #fafafa; }
+
+    /* STEP LIST */
+    .step-list { list-style: none; padding: 0; }
+    .step-list li { display: flex; gap: 16px; margin-bottom: 20px; }
+    .step-num {
+      flex-shrink: 0;
+      width: 28px; height: 28px;
+      background: var(--accent); color: #fff;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700; margin-top: 2px;
+    }
+    .step-body h4 { margin-top: 0; }
+
+    /* DIVIDER */
+    .divider { border: none; border-top: 2px solid var(--border); margin: 56px 0; }
+
+    /* PRINT */
+    @media print {
+      .topbar, .sidebar, .toc { display: none; }
+      .main { margin: 0; }
+      .main-inner { padding: 24px 32px; max-width: 100%; }
+      pre { background: #f8f9fa !important; }
+      pre code { color: #212529 !important; }
+      .kw,.fn,.str,.cm,.cl,.nb,.op { color: #212529 !important; }
+      h2 { page-break-before: always; }
+      .section:first-of-type h2 { page-break-before: avoid; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<header class="topbar">
+  <button class="menu-toggle" id="menuToggle" aria-label="Buka menu">&#9776;</button>
+  <a class="topbar-brand" href="index.html">Laravel Docs</a>
+  <span class="topbar-version">v12.x</span>
+  <div class="laravel-nav" id="laravelNav">
+    <button class="laravel-nav-trigger" type="button">Laravel <span class="caret">&#9662;</span></button>
+    <div class="laravel-nav-menu">
+      <a class="laravel-nav-item" href="modul-rest-api-sanctum.html"><span class="lni-week">M1</span><span class="lni-title">Core Laravel &amp; Database</span></a>
+      <a class="laravel-nav-item" href="modul-arsitektur-otorisasi.html"><span class="lni-week">M2</span><span class="lni-title">Arsitektur Kode &amp; Otorisasi</span></a>
+      <a class="laravel-nav-item" href="modul-optimasi.html"><span class="lni-week">M3</span><span class="lni-title">Testing &amp; Optimasi</span></a>
+      <a class="laravel-nav-item" href="modul-observability.html"><span class="lni-week">M4</span><span class="lni-title">Observability</span></a>
+      <a class="laravel-nav-item" href="modul-api-design-realtime.html"><span class="lni-week">M5</span><span class="lni-title">API Design &amp; Real-time</span></a>
+      <a class="laravel-nav-item" href="modul-security-deepdive.html"><span class="lni-week">M6</span><span class="lni-title">Security Deep-dive</span></a>
+      <a class="laravel-nav-item" href="modul-capstone-ecommerce.html"><span class="lni-week">M7</span><span class="lni-title">Capstone Project: E-commerce</span></a>
+      <a class="laravel-nav-item" href="modul-containerization-deployment.html"><span class="lni-week">M8</span><span class="lni-title">Containerization &amp; Deployment</span></a>
+      <a class="laravel-nav-item" href="modul-cloud-infrastructure.html"><span class="lni-week">M9</span><span class="lni-title">Cloud &amp; Infrastructure</span></a>
+      <a class="laravel-nav-item active" href="modul-skala-besar.html"><span class="lni-week">M10</span><span class="lni-title">Skala Besar</span></a>
+      <a class="laravel-nav-item" href="modul-system-design.html"><span class="lni-week">M11</span><span class="lni-title">System Design</span></a>
+    </div>
+  </div>
+  <span class="topbar-subtitle">Microservices, Kafka/RabbitMQ, CQRS, Kubernetes &mdash; Modul Belajar</span>
+</header>
+
+<div class="layout">
+
+  <!-- LEFT SIDEBAR -->
+  <nav class="sidebar">
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Microservices</div>
+      <div class="nav-group-items">
+        <a class="nav-link active" href="#micro-intro">Dari Monolith ke Microservices</a>
+        <a class="nav-link" href="#micro-split">Memecah laravel-crud-app</a>
+        <a class="nav-link" href="#micro-communication">Komunikasi Antar Service</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Message Brokers</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#broker-intro">Kenapa Butuh Message Broker</a>
+        <a class="nav-link" href="#broker-rabbitmq">Install RabbitMQ</a>
+        <a class="nav-link" href="#broker-kafka">Install Kafka</a>
+        <a class="nav-link" href="#broker-publish">Publish &amp; Consume Event</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> CQRS &amp; Event Sourcing</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#cqrs-intro">Konsep CQRS</a>
+        <a class="nav-link" href="#cqrs-eventsourcing">Event Sourcing Dasar</a>
+        <a class="nav-link" href="#cqrs-implementation">Implementasi di Laravel</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Kubernetes</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#k8s-intro">Kenapa Butuh Kubernetes</a>
+        <a class="nav-link" href="#k8s-install">Install kubectl &amp; Minikube</a>
+        <a class="nav-link" href="#k8s-manifest">Deployment &amp; Service YAML</a>
+        <a class="nav-link" href="#k8s-run">Menjalankan di Minikube</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Ringkasan</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#ringkasan">Ringkasan Minggu 10</a>
+      </div>
+    </div>
+
+  </nav>
+
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- MAIN CONTENT -->
+  <main class="main">
+   <div class="main-inner">
+
+    <!-- ========== MICROSERVICES ========== -->
+    <div class="section" id="micro-intro">
+      <h1 class="page-title">Skala Besar</h1>
+      <p class="page-lead">
+        Semua yang dipelajari sejak Minggu 1 membangun satu aplikasi <strong>monolith</strong>
+        (<code>laravel-crud-app</code> berisi produk, cart, order, payment dalam satu
+        codebase). Minggu ini melihat bagaimana arsitektur berubah kalau skala sudah jauh
+        lebih besar &mdash; dan kapan (atau kapan <em>tidak</em>) perubahan itu masuk akal.
+      </p>
+
+      <h2>Dari Monolith ke Microservices</h2>
+      <table>
+        <thead><tr><th>Aspek</th><th>Monolith</th><th>Microservices</th></tr></thead>
+        <tbody>
+          <tr><td>Deployment</td><td>Satu unit, deploy semua sekaligus</td><td>Tiap service deploy independen</td></tr>
+          <tr><td>Scaling</td><td>Scale seluruh aplikasi</td><td>Scale hanya service yang butuh (mis. hanya Payment saat flash sale)</td></tr>
+          <tr><td>Database</td><td>Satu database bersama</td><td>Tiap service punya database sendiri</td></tr>
+          <tr><td>Kompleksitas operasional</td><td>Rendah</td><td>Tinggi &mdash; butuh service discovery, distributed tracing, dll</td></tr>
+          <tr><td>Cocok untuk</td><td>Tim kecil-menengah, kebanyakan startup</td><td>Tim besar, domain bisnis sudah sangat jelas batasannya</td></tr>
+        </tbody>
+      </table>
+      <div class="callout warning">
+        <div class="callout-title">Microservices Bukan "Upgrade" Otomatis</div>
+        Banyak tim memecah monolith terlalu dini dan malah menambah kompleksitas tanpa
+        manfaat nyata. <code>laravel-crud-app</code> sebagai monolith modular (Repository/
+        Service Pattern dari Minggu 2) sudah cukup untuk sebagian besar skala bisnis.
+        Microservices baru masuk akal kalau tim sudah besar dan bagian tertentu (misal Payment)
+        butuh di-scale &amp; di-deploy jauh lebih sering daripada bagian lain.
+      </div>
+    </div>
+
+    <!-- MEMECAH APLIKASI -->
+    <div class="section" id="micro-split">
+      <h2>Memecah <code>laravel-crud-app</code> (Contoh Konseptual)</h2>
+      <p>Kalau memang diperlukan, begini kira-kira <code>laravel-crud-app</code> dipecah
+        berdasarkan <em>bounded context</em> (batas domain bisnis yang jelas):</p>
+      <pre><code>laravel-crud-app (monolith)
+  ├── Produk & Kategori
+  ├── Cart
+  ├── Order
+  └── Payment
+
+        ↓ dipecah berdasarkan bounded context ↓
+
+produk-service      (Laravel API — kelola produk & stok)
+order-service       (Laravel API — cart, checkout, status order)
+payment-service     (Laravel API — integrasi Midtrans, webhook)</code></pre>
+      <table>
+        <thead><tr><th>Service</th><th>Database Sendiri</th><th>Tanggung Jawab</th></tr></thead>
+        <tbody>
+          <tr><td><code>produk-service</code></td><td>MySQL produk</td><td>CRUD produk, stok, kategori</td></tr>
+          <tr><td><code>order-service</code></td><td>MySQL order</td><td>Cart, checkout, state machine order</td></tr>
+          <tr><td><code>payment-service</code></td><td>MySQL payment</td><td>Integrasi Midtrans, verifikasi webhook</td></tr>
+        </tbody>
+      </table>
+      <div class="callout">
+        <div class="callout-title">Repository/Service Pattern Mempermudah Migrasi Ini</div>
+        Karena logic bisnis sudah rapi di <code>ProdukService</code>, <code>OrderService</code>,
+        dan <code>PaymentService</code> sejak Minggu 2, "memisahkan" mereka jadi
+        aplikasi Laravel terpisah jauh lebih mudah dibanding kalau semua logic tercampur
+        langsung di controller.
+      </div>
+    </div>
+
+    <!-- KOMUNIKASI ANTAR SERVICE -->
+    <div class="section" id="micro-communication">
+      <h2>Komunikasi Antar Service</h2>
+      <table>
+        <thead><tr><th>Pola</th><th>Kapan Dipakai</th><th>Contoh</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Synchronous (REST API)</strong></td><td>Butuh jawaban langsung</td><td><code>order-service</code> panggil <code>produk-service</code> untuk cek stok saat checkout</td></tr>
+          <tr><td><strong>Asynchronous (Message Broker)</strong></td><td>Tidak perlu jawaban langsung, tahan gangguan sementara</td><td><code>order-service</code> publish <em>"OrderPaid"</em>, <code>produk-service</code> dengar &amp; kurangi stok</td></tr>
+        </tbody>
+      </table>
+      <div class="callout warning">
+        <div class="callout-title">Masalah Klasik: Distributed Transaction</div>
+        Kalau checkout perlu "kurangi stok DI produk-service" DAN "buat order DI
+        order-service" sebagai satu transaksi, <code>DB::transaction()</code> (yang dipakai di
+        <a href="modul-capstone-ecommerce.html#checkout-flow">Minggu 7</a>) tidak lagi cukup
+        karena keduanya database berbeda. Di sinilah <strong>message broker</strong> dan
+        <strong>event sourcing</strong> berperan.
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- ========== MESSAGE BROKERS ========== -->
+    <div class="section" id="broker-intro">
+      <h2>Kenapa Butuh Message Broker?</h2>
+      <p>
+        Queue Redis (Minggu 3) sudah cukup untuk background job <em>dalam satu aplikasi</em>.
+        <strong>Message broker</strong> (RabbitMQ, Kafka) dipakai saat pesan perlu mengalir
+        <em>antar service/aplikasi berbeda</em>, dengan jaminan pengiriman yang lebih kuat.
+      </p>
+      <table>
+        <thead><tr><th>Aspek</th><th>Redis Queue (Minggu 3)</th><th>RabbitMQ</th><th>Kafka</th></tr></thead>
+        <tbody>
+          <tr><td>Model</td><td>Antrian sederhana</td><td>Message queue dengan routing kompleks</td><td>Distributed log/stream</td></tr>
+          <tr><td>Cocok untuk</td><td>Background job dalam 1 app</td><td>Komunikasi antar service, RPC-like</td><td>Event stream volume tinggi, replay data</td></tr>
+          <tr><td>Retensi pesan</td><td>Hilang setelah diproses</td><td>Hilang setelah di-ack</td><td>Bisa disimpan &amp; diputar ulang (replay)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- INSTALL RABBITMQ -->
+    <div class="section" id="broker-rabbitmq">
+      <h2>Install RabbitMQ (via Docker)</h2>
+      <p>Cara termudah menjalankan RabbitMQ di lokal &mdash; tidak perlu install native,
+        cukup pakai Docker yang sudah di-setup di Minggu 8.</p>
+      <div class="pre-label">Terminal</div>
+      <pre><code>docker run -d --name rabbitmq \
+  -p 5672:5672 -p 15672:15672 \
+  rabbitmq:3-management</code></pre>
+      <p>Buka <code>http://localhost:15672</code> (login default <code>guest</code>/<code>guest</code>)
+        &mdash; dashboard manajemen RabbitMQ untuk melihat queue &amp; pesan secara visual.</p>
+
+      <h3>Install Package Laravel</h3>
+      <div class="pre-label">Terminal</div>
+      <pre><code>composer require vladimir-yuldashev/laravel-queue-rabbitmq</code></pre>
+      <div class="pre-label">.env</div>
+      <pre><code>QUEUE_CONNECTION=rabbitmq
+RABBITMQ_HOST=127.0.0.1
+RABBITMQ_PORT=5672
+RABBITMQ_USER=guest
+RABBITMQ_PASSWORD=guest</code></pre>
+    </div>
+
+    <!-- INSTALL KAFKA -->
+    <div class="section" id="broker-kafka">
+      <h2>Install Kafka (via Docker)</h2>
+      <div class="pre-label">docker-compose.kafka.yml</div>
+      <pre><code><span class="kw">services</span>:
+  kafka:
+    <span class="kw">image</span>: apache/kafka:3.7.0
+    <span class="kw">ports</span>:
+      - <span class="str">"9092:9092"</span>
+    <span class="kw">environment</span>:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092</code></pre>
+      <div class="pre-label">Terminal</div>
+      <pre><code>docker compose -f docker-compose.kafka.yml up -d</code></pre>
+
+      <h3>Package Kafka untuk Laravel</h3>
+      <div class="pre-label">Terminal</div>
+      <pre><code>composer require mateusjunges/laravel-kafka</code></pre>
+      <div class="callout">
+        <div class="callout-title">Pilih Salah Satu Dulu</div>
+        Untuk kebanyakan project, cukup pilih <strong>RabbitMQ</strong> (lebih sederhana) atau
+        <strong>Kafka</strong> (untuk volume event yang sangat tinggi dan butuh replay data)
+        &mdash; jarang butuh keduanya sekaligus di satu project.
+      </div>
+    </div>
+
+    <!-- PUBLISH & CONSUME -->
+    <div class="section" id="broker-publish">
+      <h2>Publish &amp; Consume Event (Contoh RabbitMQ)</h2>
+      <div class="pre-label">app/Events/OrderPaid.php</div>
+      <pre><code><span class="kw">class</span> <span class="cl">OrderPaid</span>
+{
+    <span class="kw">public function</span> <span class="fn">__construct</span>(
+        <span class="kw">public readonly int</span> $orderId,
+        <span class="kw">public readonly array</span> $items   <span class="cm">// [['produk_id' => 1, 'qty' => 2], ...]</span>
+    ) {}
+}</code></pre>
+
+      <div class="pre-label">Publish dari order-service</div>
+      <pre><code><span class="cl">Queue</span>::<span class="fn">connection</span>(<span class="str">'rabbitmq'</span>)-&gt;<span class="fn">pushRaw</span>(
+    <span class="fn">json_encode</span>([
+        <span class="str">'event'</span> =&gt; <span class="str">'OrderPaid'</span>,
+        <span class="str">'order_id'</span> =&gt; $order-&gt;id,
+        <span class="str">'items'</span> =&gt; $order-&gt;items-&gt;<span class="fn">toArray</span>(),
+    ]),
+    <span class="str">'stock-updates'</span>   <span class="cm">// nama queue/exchange</span>
+);</code></pre>
+
+      <div class="pre-label">Consume di produk-service</div>
+      <pre><code><span class="kw">class</span> <span class="cl">ProcessStockUpdate</span> <span class="kw">implements</span> <span class="cl">ShouldQueue</span>
+{
+    <span class="kw">public function</span> <span class="fn">handle</span>(<span class="kw">array</span> $payload): <span class="kw">void</span>
+    {
+        <span class="kw">foreach</span> ($payload[<span class="str">'items'</span>] <span class="kw">as</span> $item) {
+            Produk::<span class="fn">find</span>($item[<span class="str">'produk_id'</span>])?-&gt;<span class="fn">decrement</span>(<span class="str">'stok'</span>, $item[<span class="str">'qty'</span>]);
+        }
+    }
+}</code></pre>
+      <div class="callout success">
+        <div class="callout-title">Eventual Consistency</div>
+        Stok baru berkurang <em>beberapa saat setelah</em> order dibayar, bukan seketika dalam
+        satu transaction seperti Minggu 7. Ini disebut <strong>eventual consistency</strong>
+        &mdash; trade-off yang harus diterima saat data tersebar di banyak service.
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- ========== CQRS & EVENT SOURCING ========== -->
+    <div class="section" id="cqrs-intro">
+      <h2>Konsep CQRS</h2>
+      <p>
+        <strong>CQRS (Command Query Responsibility Segregation)</strong>: pisahkan jalur untuk
+        <em>menulis</em> data (Command) dari jalur untuk <em>membaca</em> data (Query) &mdash;
+        keduanya bisa dioptimasi dan di-scale secara independen.
+      </p>
+      <pre><code>Model Biasa (yang dipakai sejak Minggu 1):
+  Controller → Service → satu Model Eloquent → satu tabel (baca & tulis sama)
+
+CQRS:
+  Command (tulis) → OrderService → tabel "orders" (ternormalisasi, banyak relasi)
+  Query (baca)    → OrderReadService → tabel "orders_view" (denormalisasi, siap tampil)</code></pre>
+      <table>
+        <thead><tr><th>Aspek</th><th>Tanpa CQRS</th><th>Dengan CQRS</th></tr></thead>
+        <tbody>
+          <tr><td>Struktur data baca</td><td>Sama dengan struktur tulis (perlu banyak JOIN)</td><td>Bisa didenormalisasi khusus untuk kecepatan baca</td></tr>
+          <tr><td>Scaling</td><td>Baca &amp; tulis di-scale bersama</td><td>Baca (sering) bisa di-scale terpisah dari tulis (jarang)</td></tr>
+          <tr><td>Kompleksitas</td><td>Rendah</td><td>Tinggi &mdash; perlu sinkronisasi data baca &amp; tulis</td></tr>
+        </tbody>
+      </table>
+      <div class="callout warning">
+        <div class="callout-title">Kapan CQRS Masuk Akal?</div>
+        Hanya kalau pola baca dan tulis benar-benar sangat berbeda skalanya (mis. jutaan orang
+        lihat halaman produk, tapi cuma ribuan yang checkout). Untuk sebagian besar fitur
+        <code>laravel-crud-app</code>, Eloquent biasa (Minggu 1) sudah lebih dari cukup.
+      </div>
+    </div>
+
+    <!-- EVENT SOURCING -->
+    <div class="section" id="cqrs-eventsourcing">
+      <h2>Event Sourcing Dasar</h2>
+      <p>
+        Alih-alih menyimpan <em>status akhir</em> (<code>orders.status = 'paid'</code>),
+        <strong>Event Sourcing</strong> menyimpan <em>riwayat semua kejadian</em> yang membentuk
+        status itu. Status akhir dihitung dengan memutar ulang (<em>replay</em>) semua event.
+      </p>
+      <pre><code>Cara Biasa (Minggu 7):
+  orders.status = 'paid'   ← hanya tahu status TERAKHIR
+
+Event Sourcing:
+  OrderCreated   { order_id: 1 }
+  OrderPaid      { order_id: 1, paid_at: '...' }
+  OrderShipped   { order_id: 1, shipped_at: '...' }
+  → status "shipped" DIHITUNG dari riwayat 3 event di atas</code></pre>
+      <table>
+        <thead><tr><th>Keuntungan</th><th>Kerugian</th></tr></thead>
+        <tbody>
+          <tr><td>Riwayat lengkap untuk audit (siapa ubah apa, kapan)</td><td>Query "status saat ini" jadi lebih kompleks (butuh replay atau proyeksi)</td></tr>
+          <tr><td>Bisa "time travel" ke state di masa lalu</td><td>Storage event terus bertambah, butuh strategi snapshot</td></tr>
+          <tr><td>Cocok untuk debugging masalah bisnis kompleks</td><td>Kurva belajar tim lebih curam</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- IMPLEMENTASI SEDERHANA -->
+    <div class="section" id="cqrs-implementation">
+      <h2>Implementasi Sederhana Event Sourcing di Laravel</h2>
+      <div class="pre-label">database/migrations/..._create_order_events_table.php</div>
+      <pre><code>Schema::<span class="fn">create</span>(<span class="str">'order_events'</span>, <span class="kw">function</span> (Blueprint $table) {
+    $table-&gt;<span class="fn">id</span>();
+    $table-&gt;<span class="fn">foreignId</span>(<span class="str">'order_id'</span>)-&gt;<span class="fn">constrained</span>();
+    $table-&gt;<span class="fn">string</span>(<span class="str">'event_type'</span>);   <span class="cm">// OrderCreated, OrderPaid, OrderShipped</span>
+    $table-&gt;<span class="fn">json</span>(<span class="str">'payload'</span>);
+    $table-&gt;<span class="fn">timestamp</span>(<span class="str">'occurred_at'</span>);
+});</code></pre>
+
+      <div class="pre-label">app/Services/OrderEventStore.php</div>
+      <pre><code><span class="kw">class</span> <span class="cl">OrderEventStore</span>
+{
+    <span class="kw">public function</span> <span class="fn">record</span>(<span class="kw">int</span> $orderId, <span class="kw">string</span> $eventType, <span class="kw">array</span> $payload): <span class="kw">void</span>
+    {
+        DB::table(<span class="str">'order_events'</span>)-&gt;<span class="fn">insert</span>([
+            <span class="str">'order_id'</span>    =&gt; $orderId,
+            <span class="str">'event_type'</span>  =&gt; $eventType,
+            <span class="str">'payload'</span>     =&gt; <span class="fn">json_encode</span>($payload),
+            <span class="str">'occurred_at'</span> =&gt; <span class="fn">now</span>(),
+        ]);
+    }
+
+    <span class="kw">public function</span> <span class="fn">currentStatus</span>(<span class="kw">int</span> $orderId): <span class="kw">string</span>
+    {
+        $lastEvent = DB::table(<span class="str">'order_events'</span>)
+            -&gt;<span class="fn">where</span>(<span class="str">'order_id'</span>, $orderId)
+            -&gt;<span class="fn">orderByDesc</span>(<span class="str">'occurred_at'</span>)
+            -&gt;<span class="fn">first</span>();
+
+        <span class="kw">return match</span> ($lastEvent-&gt;event_type ?? <span class="kw">null</span>) {
+            <span class="str">'OrderShipped'</span> =&gt; <span class="str">'shipped'</span>,
+            <span class="str">'OrderPaid'</span>    =&gt; <span class="str">'paid'</span>,
+            <span class="kw">default</span>          =&gt; <span class="str">'pending'</span>,
+        };
+    }
+}</code></pre>
+      <div class="callout success">
+        <div class="callout-title">Mulai Kecil</div>
+        Tidak perlu framework event sourcing penuh untuk mulai belajar konsepnya &mdash;
+        tabel <code>order_events</code> sederhana seperti di atas sudah cukup untuk memahami
+        prinsip "simpan riwayat, bukan cuma status akhir".
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- ========== KUBERNETES ========== -->
+    <div class="section" id="k8s-intro">
+      <h2>Kenapa Butuh Kubernetes?</h2>
+      <p>
+        <code>docker compose</code> (Minggu 8) cukup untuk menjalankan stack di <strong>satu
+        mesin</strong>. <strong>Kubernetes (K8s)</strong> mengelola container di
+        <strong>banyak mesin/server sekaligus</strong> &mdash; auto-scaling, auto-healing
+        (restart otomatis container yang mati), dan rolling update tanpa downtime.
+      </p>
+      <table>
+        <thead><tr><th>Aspek</th><th>Docker Compose</th><th>Kubernetes</th></tr></thead>
+        <tbody>
+          <tr><td>Skala</td><td>Satu mesin</td><td>Cluster banyak mesin</td></tr>
+          <tr><td>Auto-scaling</td><td>Tidak ada bawaan</td><td>Bawaan (Horizontal Pod Autoscaler)</td></tr>
+          <tr><td>Auto-healing</td><td>Terbatas (<code>restart: always</code>)</td><td>Otomatis reschedule ke node sehat</td></tr>
+          <tr><td>Cocok untuk</td><td>Development, project kecil-menengah</td><td>Production skala besar, banyak service (microservices)</td></tr>
+        </tbody>
+      </table>
+      <div class="callout">
+        <div class="callout-title">Tidak Selalu Perlu K8s</div>
+        Kalau <code>docker compose</code> di satu server sudah menangani trafik dengan baik
+        (divalidasi lewat k6 di Minggu 8), belum tentu perlu Kubernetes. K8s menambah
+        kompleksitas operasional signifikan &mdash; masuk akal saat sudah benar-benar butuh
+        multi-server &amp; multi-service.
+      </div>
+    </div>
+
+    <!-- INSTALL KUBERNETES -->
+    <div class="section" id="k8s-install">
+      <h2>Install kubectl &amp; Minikube (Windows)</h2>
+      <p><strong>Minikube</strong> menjalankan cluster Kubernetes mini di laptop untuk belajar
+        &mdash; tanpa perlu sewa banyak server dulu.</p>
+
+      <h3>Langkah 1 &mdash; Install kubectl (CLI Kubernetes)</h3>
+      <div class="pre-label">PowerShell</div>
+      <pre><code>winget install Kubernetes.kubectl</code></pre>
+
+      <h3>Langkah 2 &mdash; Install Minikube</h3>
+      <div class="pre-label">PowerShell</div>
+      <pre><code>winget install Kubernetes.minikube</code></pre>
+
+      <h3>Langkah 3 &mdash; Jalankan Cluster Lokal</h3>
+      <div class="pre-label">Terminal (Docker Desktop harus sudah menyala)</div>
+      <pre><code>minikube start --driver=docker</code></pre>
+
+      <h3>Verifikasi</h3>
+      <div class="pre-label">Terminal</div>
+      <pre><code>kubectl version --client
+kubectl get nodes</code></pre>
+      <div class="pre-label">Contoh Output</div>
+      <pre><code>NAME       STATUS   ROLES           AGE   VERSION
+minikube   Ready    control-plane   1m    v1.30.0</code></pre>
+    </div>
+
+    <!-- MANIFEST -->
+    <div class="section" id="k8s-manifest">
+      <h2>Deployment &amp; Service YAML</h2>
+      <p>Manifest Kubernetes mendefinisikan berapa banyak <em>instance</em> (Pod) aplikasi yang
+        harus selalu berjalan, memakai image Docker yang sama dari Minggu 8.</p>
+      <div class="pre-label">k8s/deployment.yaml</div>
+      <pre><code><span class="kw">apiVersion</span>: apps/v1
+<span class="kw">kind</span>: Deployment
+<span class="kw">metadata</span>:
+  <span class="kw">name</span>: laravel-crud-app
+<span class="kw">spec</span>:
+  <span class="kw">replicas</span>: 3   <span class="cm"># 3 instance identik berjalan bersamaan</span>
+  <span class="kw">selector</span>:
+    <span class="kw">matchLabels</span>:
+      <span class="kw">app</span>: laravel-crud-app
+  <span class="kw">template</span>:
+    <span class="kw">metadata</span>:
+      <span class="kw">labels</span>:
+        <span class="kw">app</span>: laravel-crud-app
+    <span class="kw">spec</span>:
+      <span class="kw">containers</span>:
+        - <span class="kw">name</span>: app
+          <span class="kw">image</span>: myusername/laravel-crud-app:latest
+          <span class="kw">ports</span>:
+            - <span class="kw">containerPort</span>: 9000
+          <span class="kw">envFrom</span>:
+            - <span class="kw">secretRef</span>:
+                <span class="kw">name</span>: laravel-crud-app-secrets</code></pre>
+
+      <div class="pre-label">k8s/service.yaml</div>
+      <pre><code><span class="kw">apiVersion</span>: v1
+<span class="kw">kind</span>: Service
+<span class="kw">metadata</span>:
+  <span class="kw">name</span>: laravel-crud-app-svc
+<span class="kw">spec</span>:
+  <span class="kw">selector</span>:
+    <span class="kw">app</span>: laravel-crud-app
+  <span class="kw">ports</span>:
+    - <span class="kw">port</span>: 80
+      <span class="kw">targetPort</span>: 9000
+  <span class="kw">type</span>: LoadBalancer</code></pre>
+
+      <div class="callout success">
+        <div class="callout-title">Secrets Tetap Aman (Minggu 6)</div>
+        <code>secretRef</code> mengambil environment variable dari Kubernetes Secret
+        (dibuat terpisah lewat <code>kubectl create secret</code>), bukan ditulis langsung di
+        file YAML yang bisa ter-commit ke Git.
+      </div>
+    </div>
+
+    <!-- MENJALANKAN -->
+    <div class="section" id="k8s-run">
+      <h2>Menjalankan di Minikube</h2>
+      <div class="pre-label">Terminal</div>
+      <pre><code><span class="cm"># Buat secret dari file .env (contoh sederhana)</span>
+kubectl create secret generic laravel-crud-app-secrets --from-env-file=.env
+
+<span class="cm"># Terapkan manifest</span>
+kubectl apply -f k8s/deployment.yaml
+kubectl apply -f k8s/service.yaml
+
+<span class="cm"># Cek status Pod (harus 3 Running, sesuai "replicas: 3")</span>
+kubectl get pods
+
+<span class="cm"># Akses aplikasi dari Minikube</span>
+minikube service laravel-crud-app-svc</code></pre>
+
+      <h3>Simulasikan Auto-healing</h3>
+      <div class="pre-label">Terminal</div>
+      <pre><code><span class="cm"># Hapus satu Pod secara paksa</span>
+kubectl delete pod &lt;nama-pod&gt;
+
+<span class="cm"># Cek lagi — Kubernetes otomatis membuat Pod baru menggantikan yang dihapus</span>
+kubectl get pods</code></pre>
+      <div class="callout">
+        <div class="callout-title">Ini Bedanya dengan Supervisor (Minggu 9)</div>
+        Supervisor menjaga proses tetap hidup <em>di satu server</em>. Kubernetes menjaga
+        jumlah Pod tetap sesuai <code>replicas</code> <em>di seluruh cluster</em> &mdash;
+        kalau satu server mati total, Pod dipindah otomatis ke server lain yang masih hidup.
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- RINGKASAN -->
+    <div class="section" id="ringkasan">
+      <h2>Ringkasan Minggu 10</h2>
+      <ul class="step-list">
+        <li>
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <h4>Microservices</h4>
+            <p>Memecah monolith berdasarkan bounded context masuk akal saat tim besar dan
+              kebutuhan scaling berbeda antar domain &mdash; bukan default pilihan pertama.</p>
+          </div>
+        </li>
+        <li>
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <h4>Message Brokers (RabbitMQ/Kafka)</h4>
+            <p>Menghubungkan service secara asynchronous dengan konsekuensi eventual
+              consistency, berbeda dari queue Redis yang hanya untuk background job internal.</p>
+          </div>
+        </li>
+        <li>
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <h4>CQRS &amp; Event Sourcing</h4>
+            <p>Pisahkan jalur baca/tulis, dan simpan riwayat kejadian alih-alih hanya status
+              akhir &mdash; berguna untuk audit trail dan skenario baca/tulis yang timpang.</p>
+          </div>
+        </li>
+        <li>
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <h4>Kubernetes</h4>
+            <p>Auto-scaling dan auto-healing container di banyak server sekaligus, dengan
+              Secret untuk kredensial &mdash; kelanjutan alami dari Docker Compose Minggu 8.</p>
+          </div>
+        </li>
+      </ul>
+
+      <div class="callout success">
+        <div class="callout-title">Selamat! Minggu 10 Selesai</div>
+        Kamu sudah mengenal pola arsitektur untuk skala besar &mdash; sebagian besar tidak
+        wajib dipakai di setiap project, tapi penting dikenali kapan dan kenapa dibutuhkan.
+        Lanjut ke <a href="modul-system-design.html"><strong>Minggu 11 (terakhir!) &mdash;
+        System Design</strong></a> untuk melengkapi pemahaman ini secara konseptual, atau
+        lihat <a href="index.html">roadmap lengkap</a>.
+      </div>
+    </div>
+
+   </div>
+  </main>
+
+  <!-- RIGHT TOC -->
+  <aside class="toc">
+    <div class="toc-title">Daftar Isi</div>
+
+    <a href="#micro-intro">Microservices</a>
+    <a class="sub" href="#micro-intro">Monolith vs Microservices</a>
+    <a class="sub" href="#micro-split">Memecah Aplikasi</a>
+    <a class="sub" href="#micro-communication">Komunikasi Antar Service</a>
+
+    <a href="#broker-intro" style="margin-top:12px;display:block">Message Brokers</a>
+    <a class="sub" href="#broker-intro">Kenapa Butuh</a>
+    <a class="sub" href="#broker-rabbitmq">Install RabbitMQ</a>
+    <a class="sub" href="#broker-kafka">Install Kafka</a>
+    <a class="sub" href="#broker-publish">Publish/Consume</a>
+
+    <a href="#cqrs-intro" style="margin-top:12px;display:block">CQRS &amp; Event Sourcing</a>
+    <a class="sub" href="#cqrs-intro">Konsep CQRS</a>
+    <a class="sub" href="#cqrs-eventsourcing">Event Sourcing</a>
+    <a class="sub" href="#cqrs-implementation">Implementasi</a>
+
+    <a href="#k8s-intro" style="margin-top:12px;display:block">Kubernetes</a>
+    <a class="sub" href="#k8s-intro">Kenapa K8s</a>
+    <a class="sub" href="#k8s-install">Install kubectl/Minikube</a>
+    <a class="sub" href="#k8s-manifest">Deployment YAML</a>
+    <a class="sub" href="#k8s-run">Jalankan di Minikube</a>
+
+    <a href="#ringkasan" style="margin-top:12px;display:block">Ringkasan</a>
+  </aside>
+
+</div>
+
+<script>
+  // Sidebar accordion
+  document.querySelectorAll('.nav-group-title').forEach(title => {
+    title.addEventListener('click', () => {
+      title.parentElement.classList.toggle('open');
+    });
+  });
+
+  // Laravel nav bar — sub navbar (dropdown) toggle
+  document.querySelectorAll('.laravel-nav-trigger').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      btn.closest('.laravel-nav').classList.toggle('open');
+    });
+  });
+  document.addEventListener('click', (e) => {
+    document.querySelectorAll('.laravel-nav.open').forEach(nav => {
+      if (!nav.contains(e.target)) nav.classList.remove('open');
+    });
+  });
+
+  // Mobile sidebar toggle
+  const sidebarEl = document.querySelector('.sidebar');
+  const overlayEl = document.getElementById('sidebarOverlay');
+  const menuToggleBtn = document.getElementById('menuToggle');
+  function closeSidebar() {
+    sidebarEl.classList.remove('open');
+    overlayEl.classList.remove('show');
+  }
+  if (menuToggleBtn) {
+    menuToggleBtn.addEventListener('click', () => {
+      sidebarEl.classList.toggle('open');
+      overlayEl.classList.toggle('show');
+    });
+  }
+  if (overlayEl) overlayEl.addEventListener('click', closeSidebar);
+  document.querySelectorAll('.sidebar a').forEach(a => a.addEventListener('click', closeSidebar));
+
+  // Wrap tables so they scroll horizontally instead of breaking layout on small screens
+  document.querySelectorAll('.main table').forEach(t => {
+    if (t.closest('.table-scroll')) return;
+    const wrap = document.createElement('div');
+    wrap.className = 'table-scroll';
+    t.parentNode.insertBefore(wrap, t);
+    wrap.appendChild(t);
+  });
+
+  // Copy button on every code block
+  function copyText(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+      return navigator.clipboard.writeText(text);
+    }
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); } catch (err) {}
+    document.body.removeChild(ta);
+    return Promise.resolve();
+  }
+  document.querySelectorAll('pre').forEach(pre => {
+    const codeEl = pre.querySelector('code');
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'copy-btn';
+    btn.textContent = 'Copy';
+    btn.setAttribute('aria-label', 'Salin kode');
+    btn.addEventListener('click', () => {
+      const text = (codeEl ? codeEl.textContent : pre.textContent).trim();
+      copyText(text).then(() => {
+        btn.textContent = 'Copied!';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = 'Copy';
+          btn.classList.remove('copied');
+        }, 1500);
+      });
+    });
+    pre.appendChild(btn);
+  });
+
+  // Scroll spy for sidebar + TOC
+  const sections = document.querySelectorAll('.section[id]');
+  const navLinks = document.querySelectorAll('.nav-link');
+  const tocLinks = document.querySelectorAll('.toc a');
+
+  function setActive(links, id) {
+    links.forEach(l => {
+      l.classList.toggle('active', l.getAttribute('href') === '#' + id);
+    });
+  }
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        setActive(navLinks, entry.target.id);
+        setActive(tocLinks, entry.target.id);
+        const activeLink = document.querySelector('.nav-link.active');
+        if (activeLink) {
+          const group = activeLink.closest('.nav-group');
+          if (group) group.classList.add('open');
+        }
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+
+  sections.forEach(s => observer.observe(s));
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1179 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Modul Git &mdash; Version Control Pemula sampai Profesional</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --sidebar-w: 260px;
+      --toc-w: 220px;
+      --accent: #0d6efd;
+      --accent-light: #e7f1ff;
+      --text: #212529;
+      --muted: #6c757d;
+      --border: #dee2e6;
+      --code-bg: #f8f9fa;
+      --code-border: #e9ecef;
+      --sidebar-bg: #f8f9fa;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 15px;
+      line-height: 1.7;
+      color: var(--text);
+      background: #fff;
+    }
+
+    /* TOP BAR */
+    .topbar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      height: 56px;
+      background: #fff;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; padding: 0 24px;
+      gap: 16px;
+    }
+    .topbar-brand {
+      font-weight: 700; font-size: 17px; color: var(--accent);
+      text-decoration: none;
+    }
+    .topbar-version {
+      background: var(--accent-light); color: var(--accent);
+      font-size: 11px; font-weight: 600; padding: 2px 8px;
+      border-radius: 20px;
+    }
+    .topbar-subtitle {
+      color: var(--muted); font-size: 13px; margin-left: auto;
+    }
+    /* LARAVEL NAV BAR + SUB NAVBAR (dropdown by Fokus Utama) */
+    .laravel-nav { position: relative; margin-left: 24px; }
+    .laravel-nav-trigger {
+      display: flex; align-items: center; gap: 6px;
+      background: none; border: 1px solid var(--border); border-radius: 6px;
+      padding: 6px 14px; font-size: 13px; font-weight: 600;
+      color: var(--text); cursor: pointer; font-family: inherit;
+    }
+    .laravel-nav-trigger:hover { background: var(--accent-light); color: var(--accent); border-color: var(--accent); }
+    .laravel-nav.open .laravel-nav-trigger { background: var(--accent-light); color: var(--accent); border-color: var(--accent); }
+    .laravel-nav-trigger .caret { font-size: 10px; transition: transform .15s; }
+    .laravel-nav.open .laravel-nav-trigger .caret { transform: rotate(180deg); }
+    .laravel-nav-menu {
+      display: none;
+      position: absolute; top: calc(100% + 8px); left: 0;
+      width: 360px; max-height: 75vh; overflow-y: auto;
+      background: #fff; border: 1px solid var(--border); border-radius: 10px;
+      box-shadow: 0 12px 32px rgba(0,0,0,.14);
+      padding: 8px; z-index: 200;
+    }
+    .laravel-nav.open .laravel-nav-menu { display: block; }
+    .laravel-nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 12px; border-radius: 8px;
+      text-decoration: none; color: var(--text); font-size: 13px;
+    }
+    .laravel-nav-item:hover { background: var(--accent-light); }
+    .laravel-nav-item.active { background: var(--accent-light); color: var(--accent); font-weight: 600; }
+    .laravel-nav-item .lni-week {
+      flex-shrink: 0; width: 34px; font-size: 11px; font-weight: 700; color: var(--muted);
+    }
+    .laravel-nav-item.active .lni-week { color: var(--accent); }
+    .laravel-nav-item .lni-title { flex: 1; }
+    .laravel-nav-item .lni-soon {
+      flex-shrink: 0; font-size: 10px; font-weight: 700; text-transform: uppercase;
+      background: #e9ecef; color: #495057; padding: 2px 6px; border-radius: 20px;
+    }
+
+    /* LAYOUT */
+    .layout {
+      display: flex;
+      padding-top: 56px;
+      min-height: 100vh;
+    }
+
+    /* LEFT SIDEBAR */
+    .sidebar {
+      width: var(--sidebar-w);
+      flex-shrink: 0;
+      position: fixed;
+      top: 56px; bottom: 0; left: 0;
+      overflow-y: auto;
+      background: var(--sidebar-bg);
+      border-right: 1px solid var(--border);
+      padding: 20px 0 40px;
+    }
+    .sidebar::-webkit-scrollbar { width: 4px; }
+    .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    .nav-group { margin-bottom: 4px; }
+    .nav-group-title {
+      display: flex; align-items: center; gap: 8px;
+      padding: 6px 20px;
+      font-size: 12px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .06em;
+      color: var(--text);
+      cursor: pointer;
+      user-select: none;
+    }
+    .nav-group-title .arrow {
+      display: inline-block; transition: transform .2s;
+      font-size: 10px; color: var(--muted);
+    }
+    .nav-group.open .arrow { transform: rotate(90deg); }
+    .nav-group-items { display: none; }
+    .nav-group.open .nav-group-items { display: block; }
+
+    .nav-link {
+      display: block;
+      padding: 5px 20px 5px 36px;
+      font-size: 14px; color: var(--muted);
+      text-decoration: none;
+      border-left: 3px solid transparent;
+      transition: color .15s, border-color .15s, background .15s;
+    }
+    .nav-link:hover { color: var(--accent); background: var(--accent-light); }
+    .nav-link.active {
+      color: var(--accent); font-weight: 600;
+      border-left-color: var(--accent);
+      background: var(--accent-light);
+    }
+
+    /* MAIN CONTENT */
+    .main {
+      margin-left: var(--sidebar-w);
+      margin-right: var(--toc-w);
+      flex: 1;
+      min-width: 0;
+    }
+    .main-inner {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 48px 56px;
+    }
+
+    /* MOBILE MENU TOGGLE */
+    .menu-toggle {
+      display: none;
+      align-items: center; justify-content: center;
+      width: 32px; height: 32px; flex-shrink: 0;
+      border: 1px solid var(--border); border-radius: 6px;
+      background: none; cursor: pointer; font-size: 16px;
+      color: var(--text);
+    }
+    .menu-toggle:hover { background: var(--accent-light); color: var(--accent); border-color: var(--accent); }
+    .sidebar-overlay {
+      display: none;
+      position: fixed; inset: 56px 0 0 0;
+      background: rgba(0,0,0,.35);
+      z-index: 95;
+    }
+    .sidebar-overlay.show { display: block; }
+
+    /* TABLES THAT OVERFLOW SCROLL INSTEAD OF BREAKING LAYOUT */
+    .table-scroll { overflow-x: auto; margin: 16px 0; -webkit-overflow-scrolling: touch; }
+    .table-scroll table { margin: 0; }
+
+    /* RESPONSIVE */
+    @media (max-width: 1300px) {
+      .toc { display: none; }
+      .main { margin-right: 0; }
+    }
+    @media (max-width: 900px) {
+      .menu-toggle { display: inline-flex; }
+      .topbar-subtitle { display: none; }
+      .sidebar {
+        transform: translateX(-100%);
+        transition: transform .2s ease;
+        z-index: 96;
+        box-shadow: 4px 0 24px rgba(0,0,0,.15);
+      }
+      .sidebar.open { transform: translateX(0); }
+      .main { margin-left: 0; }
+      .main-inner { padding: 32px 24px; }
+      .laravel-nav-menu { width: min(360px, 88vw); }
+    }
+    @media (max-width: 560px) {
+      .topbar { padding: 0 14px; gap: 10px; }
+      .topbar-brand { font-size: 15px; }
+      .topbar-version { display: none; }
+      .page-title { font-size: 28px; }
+      .page-lead { font-size: 15px; padding-bottom: 24px; margin-bottom: 28px; }
+      .main-inner { padding: 24px 16px; }
+      h2 { font-size: 21px; }
+    }
+
+    /* RIGHT TOC */
+    .toc {
+      width: var(--toc-w);
+      flex-shrink: 0;
+      position: fixed;
+      top: 56px; bottom: 0; right: 0;
+      overflow-y: auto;
+      padding: 24px 16px;
+      border-left: 1px solid var(--border);
+    }
+    .toc-title {
+      font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .06em;
+      color: var(--muted); margin-bottom: 12px;
+    }
+    .toc a {
+      display: block; font-size: 13px; color: var(--muted);
+      text-decoration: none; padding: 3px 0 3px 8px;
+      border-left: 2px solid transparent;
+      transition: color .15s, border-color .15s;
+    }
+    .toc a:hover, .toc a.active {
+      color: var(--accent); border-left-color: var(--accent);
+    }
+    .toc a.sub { padding-left: 20px; font-size: 12px; }
+
+    /* CONTENT TYPOGRAPHY */
+    .page-title {
+      font-size: 40px; font-weight: 700;
+      margin-bottom: 12px; line-height: 1.2;
+    }
+    .page-lead {
+      font-size: 18px; color: var(--muted);
+      margin-bottom: 40px; border-bottom: 1px solid var(--border);
+      padding-bottom: 32px;
+    }
+    .section { margin-bottom: 56px; }
+    h2 {
+      font-size: 26px; font-weight: 700;
+      margin-bottom: 16px; padding-top: 8px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 8px;
+    }
+    h3 {
+      font-size: 18px; font-weight: 600;
+      margin: 24px 0 10px;
+    }
+    h4 {
+      font-size: 15px; font-weight: 600;
+      margin: 18px 0 8px; color: var(--text);
+    }
+    p { margin-bottom: 14px; }
+    ul, ol { padding-left: 24px; margin-bottom: 14px; }
+    li { margin-bottom: 6px; }
+    strong { font-weight: 600; }
+
+    /* CODE */
+    code {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      font-size: 13px;
+      background: var(--code-bg);
+      border: 1px solid var(--code-border);
+      padding: 1px 5px; border-radius: 4px;
+      color: #d63384;
+    }
+    pre {
+      background: #1e1e2e;
+      border-radius: 8px;
+      padding: 20px 24px;
+      overflow-x: auto;
+      margin: 16px 0 20px;
+      position: relative;
+    }
+    pre code {
+      background: none; border: none; padding: 0;
+      color: #cdd6f4; font-size: 13px; line-height: 1.65;
+    }
+    .pre-label {
+      font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .06em;
+      color: #6c757d; margin-bottom: 6px;
+    }
+
+    /* COPY BUTTON */
+    .copy-btn {
+      position: absolute; top: 10px; right: 10px;
+      display: flex; align-items: center; gap: 5px;
+      background: rgba(255,255,255,.08);
+      color: #cdd6f4;
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 6px;
+      font-family: inherit; font-size: 11px; font-weight: 600;
+      padding: 4px 9px;
+      cursor: pointer;
+      opacity: .55;
+      transition: opacity .15s, background .15s;
+    }
+    pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
+    .copy-btn:hover { background: rgba(255,255,255,.2); }
+    .copy-btn.copied {
+      opacity: 1; background: #198754; border-color: #198754; color: #fff;
+    }
+    @media (max-width: 900px) { .copy-btn { opacity: .8; } }
+    @media print { .copy-btn { display: none; } }
+
+    .kw  { color: #cba6f7; }
+    .fn  { color: #89b4fa; }
+    .str { color: #a6e3a1; }
+    .cm  { color: #6c7086; }
+    .cl  { color: #fab387; }
+    .nb  { color: #89dceb; }
+    .op  { color: #89dceb; }
+
+    /* MERMAID DIAGRAM WRAPPER */
+    .diagram-wrap {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px;
+      margin: 16px 0 20px;
+      overflow-x: auto;
+      text-align: center;
+    }
+    .diagram-wrap .mermaid { display: inline-block; }
+
+    /* BADGES / CALLOUTS */
+    .badge {
+      display: inline-block; font-size: 11px; font-weight: 700;
+      padding: 2px 8px; border-radius: 4px;
+      text-transform: uppercase; letter-spacing: .04em;
+    }
+    .badge-blue  { background: #cfe2ff; color: #084298; }
+    .badge-green { background: #d1e7dd; color: #0a3622; }
+    .badge-red   { background: #f8d7da; color: #842029; }
+    .badge-yellow{ background: #fff3cd; color: #664d03; }
+    .badge-purple{ background: #e8d5fb; color: #5e2d91; }
+    .badge-orange{ background: #ffe5d0; color: #8a3800; }
+
+    .callout {
+      border-left: 4px solid var(--accent);
+      background: var(--accent-light);
+      padding: 14px 18px; border-radius: 0 6px 6px 0;
+      margin: 16px 0;
+    }
+    .callout.warning { border-left-color: #ffc107; background: #fff3cd; }
+    .callout.danger  { border-left-color: #dc3545; background: #f8d7da; }
+    .callout.success { border-left-color: #198754; background: #d1e7dd; }
+    .callout-title { font-weight: 700; margin-bottom: 4px; font-size: 13px; }
+
+    /* TABLE */
+    table {
+      width: 100%; border-collapse: collapse;
+      margin: 16px 0; font-size: 14px;
+    }
+    th {
+      background: var(--code-bg); font-weight: 600;
+      padding: 10px 14px; border: 1px solid var(--border);
+      text-align: left;
+    }
+    td { padding: 9px 14px; border: 1px solid var(--border); }
+    tr:nth-child(even) td { background: #fafafa; }
+
+    /* STEP LIST */
+    .step-list { list-style: none; padding: 0; }
+    .step-list li { display: flex; gap: 16px; margin-bottom: 20px; }
+    .step-num {
+      flex-shrink: 0;
+      width: 28px; height: 28px;
+      background: var(--accent); color: #fff;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700; margin-top: 2px;
+    }
+    .step-body h4 { margin-top: 0; }
+
+    /* DIVIDER */
+    .divider { border: none; border-top: 2px solid var(--border); margin: 56px 0; }
+
+    /* PRINT */
+    @media print {
+      .topbar, .sidebar, .toc { display: none; }
+      .main { margin: 0; }
+      .main-inner { padding: 24px 32px; max-width: 100%; }
+      pre { background: #f8f9fa !important; }
+      pre code { color: #212529 !important; }
+      .kw,.fn,.str,.cm,.cl,.nb,.op { color: #212529 !important; }
+      h2 { page-break-before: always; }
+      .section:first-of-type h2 { page-break-before: avoid; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<header class="topbar">
+  <button class="menu-toggle" id="menuToggle" aria-label="Buka menu">&#9776;</button>
+  <a class="topbar-brand" href="index.html">Laravel Docs</a>
+  <span class="topbar-version">Git 2.x</span>
+  <div class="laravel-nav" id="laravelNav">
+    <button class="laravel-nav-trigger" type="button">Laravel <span class="caret">&#9662;</span></button>
+    <div class="laravel-nav-menu">
+      <a class="laravel-nav-item" href="modul-rest-api-sanctum.html"><span class="lni-week">M1</span><span class="lni-title">Core Laravel &amp; Database</span></a>
+      <a class="laravel-nav-item" href="modul-arsitektur-otorisasi.html"><span class="lni-week">M2</span><span class="lni-title">Arsitektur Kode &amp; Otorisasi</span></a>
+      <a class="laravel-nav-item" href="modul-optimasi.html"><span class="lni-week">M3</span><span class="lni-title">Testing &amp; Optimasi</span></a>
+      <a class="laravel-nav-item" href="modul-observability.html"><span class="lni-week">M4</span><span class="lni-title">Observability</span></a>
+      <a class="laravel-nav-item" href="modul-api-design-realtime.html"><span class="lni-week">M5</span><span class="lni-title">API Design &amp; Real-time</span></a>
+      <a class="laravel-nav-item" href="modul-security-deepdive.html"><span class="lni-week">M6</span><span class="lni-title">Security Deep-dive</span></a>
+      <a class="laravel-nav-item" href="modul-capstone-ecommerce.html"><span class="lni-week">M7</span><span class="lni-title">Capstone Project: E-commerce</span></a>
+      <a class="laravel-nav-item" href="modul-containerization-deployment.html"><span class="lni-week">M8</span><span class="lni-title">Containerization &amp; Deployment</span></a>
+      <a class="laravel-nav-item" href="modul-cloud-infrastructure.html"><span class="lni-week">M9</span><span class="lni-title">Cloud &amp; Infrastructure</span></a>
+      <a class="laravel-nav-item" href="modul-skala-besar.html"><span class="lni-week">M10</span><span class="lni-title">Skala Besar</span></a>
+      <a class="laravel-nav-item" href="modul-system-design.html"><span class="lni-week">M11</span><span class="lni-title">System Design</span></a>
+    </div>
+  </div>
+  <div class="laravel-nav" id="gitNav">
+    <button class="laravel-nav-trigger" type="button">GIT <span class="caret">&#9662;</span></button>
+    <div class="laravel-nav-menu">
+      <a class="laravel-nav-item active" href="#git-intro"><span class="lni-week">G1</span><span class="lni-title">Pengenalan Git</span></a>
+      <a class="laravel-nav-item" href="#git-konsep"><span class="lni-week">G2</span><span class="lni-title">Konsep &amp; Alur Kerja</span></a>
+      <a class="laravel-nav-item" href="#git-dasar"><span class="lni-week">G3</span><span class="lni-title">Perintah Dasar</span></a>
+      <a class="laravel-nav-item" href="#git-branch"><span class="lni-week">G4</span><span class="lni-title">Branching &amp; Merging</span></a>
+      <a class="laravel-nav-item" href="#git-remote"><span class="lni-week">G5</span><span class="lni-title">Remote &amp; Kolaborasi</span></a>
+      <a class="laravel-nav-item" href="#git-strategi"><span class="lni-week">G6</span><span class="lni-title">Strategi Branching</span></a>
+      <a class="laravel-nav-item" href="#git-rebase"><span class="lni-week">G7</span><span class="lni-title">Teknik Lanjutan</span></a>
+      <a class="laravel-nav-item" href="#git-best-practice"><span class="lni-week">G8</span><span class="lni-title">Best Practice</span></a>
+      <a class="laravel-nav-item" href="#git-ringkasan"><span class="lni-week">G9</span><span class="lni-title">Ringkasan</span></a>
+    </div>
+  </div>
+  <span class="topbar-subtitle">Git &mdash; Version Control Pemula sampai Profesional</span>
+</header>
+
+<div class="layout">
+
+  <!-- LEFT SIDEBAR -->
+  <nav class="sidebar">
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Pengenalan Git</div>
+      <div class="nav-group-items">
+        <a class="nav-link active" href="#git-intro">Apa itu Git &amp; Kenapa Penting</a>
+        <a class="nav-link" href="#git-install">Instalasi &amp; Konfigurasi Awal</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Konsep &amp; Alur Kerja</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#git-konsep">Working Dir, Staging, Repository</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Perintah Dasar</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#git-dasar">init, clone, add, commit, log</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Branching &amp; Merging</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#git-branch">Membuat &amp; Berpindah Branch</a>
+        <a class="nav-link" href="#git-merge">Merge &amp; Resolve Conflict</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Remote &amp; Kolaborasi</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#git-remote">Remote, Push, Pull, Fetch</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Strategi Branching Profesional</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#git-strategi">Git Flow, GitHub Flow, Trunk-based</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Teknik Tingkat Lanjut</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#git-rebase">Rebase &amp; Cherry-pick</a>
+        <a class="nav-link" href="#git-stash">Stash, Reset vs Revert, Tag, Reflog</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Best Practice &amp; Troubleshooting</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#git-best-practice">Commit Convention, .gitignore, PR</a>
+        <a class="nav-link" href="#git-troubleshooting">Troubleshooting Umum</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Ringkasan</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#git-ringkasan">Roadmap Pemula &rarr; Profesional</a>
+      </div>
+    </div>
+
+  </nav>
+
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- MAIN CONTENT -->
+  <main class="main">
+   <div class="main-inner">
+
+    <!-- ========== PENGENALAN ========== -->
+    <div class="section" id="git-intro">
+      <h1 class="page-title">Git &mdash; Version Control</h1>
+      <p class="page-lead">
+        Panduan lengkap belajar <strong>Git</strong> dari nol sampai level kerja profesional
+        sehari-hari: konsep dasar, alur perpindahan file, branching, kolaborasi lewat remote,
+        sampai teknik dan kebiasaan yang dipakai tim engineering berpengalaman.
+      </p>
+
+      <h2>Apa itu Git &amp; Kenapa Penting?</h2>
+      <p>
+        <strong>Git</strong> adalah <em>distributed version control system</em> (DVCS) yang
+        merekam setiap perubahan pada file project sebagai riwayat (history) yang bisa dilihat,
+        dibandingkan, dan dikembalikan kapan saja. Setiap developer punya salinan penuh riwayat
+        project di komputernya sendiri &mdash; tidak wajib selalu online seperti sistem versi lama.
+      </p>
+      <table>
+        <thead><tr><th>Tanpa Git</th><th>Dengan Git</th></tr></thead>
+        <tbody>
+          <tr><td>Backup manual: <code>project-final-fix2.zip</code></td><td>Riwayat perubahan tercatat rapi dengan pesan commit</td></tr>
+          <tr><td>Sulit kerja bareng tanpa saling menimpa file</td><td>Banyak orang bisa kerja paralel lewat branch</td></tr>
+          <tr><td>Susah tahu siapa mengubah baris kode mana</td><td><code>git blame</code> menunjukkan penulis tiap baris</td></tr>
+          <tr><td>Sulit kembali ke versi sebelumnya</td><td><code>git checkout</code> / <code>git revert</code> ke commit manapun</td></tr>
+        </tbody>
+      </table>
+      <div class="callout">
+        <div class="callout-title">Analogi Sederhana</div>
+        Git seperti fitur <em>"track changes"</em> pada Word, tapi jauh lebih kuat: bisa
+        mencabang jadi beberapa versi paralel (branch), menggabungkan lagi (merge), dan
+        menyimpan seluruh riwayat itu di banyak komputer sekaligus (distributed).
+      </div>
+    </div>
+
+    <!-- INSTALASI -->
+    <div class="section" id="git-install">
+      <h2>Instalasi &amp; Konfigurasi Awal</h2>
+
+      <h3>Langkah 1 &mdash; Install Git</h3>
+      <p>Di Windows, unduh installer dari situs resmi Git lalu jalankan, atau pakai Git Bash
+        yang biasanya sudah terpasang bersama XAMPP/tools developer lain. Cek instalasi lewat
+        terminal:</p>
+      <div class="pre-label">Terminal</div>
+      <pre><code>git --version</code></pre>
+
+      <h3>Langkah 2 &mdash; Konfigurasi Identitas</h3>
+      <p>Setiap commit menyimpan nama &amp; email pembuatnya &mdash; wajib diisi sekali saja
+        per komputer.</p>
+      <div class="pre-label">Terminal</div>
+      <pre><code>git config --global user.name "Nama Kamu"
+git config --global user.email "kamu@email.com"</code></pre>
+
+      <h3>Langkah 3 &mdash; Cek Konfigurasi</h3>
+      <div class="pre-label">Terminal</div>
+      <pre><code>git config --list</code></pre>
+      <div class="callout success">
+        <div class="callout-title">Tips</div>
+        Gunakan email yang sama dengan akun GitHub/GitLab kamu supaya commit otomatis
+        terhubung ke profil kamu di sana.
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- ========== KONSEP & ALUR KERJA ========== -->
+    <div class="section" id="git-konsep">
+      <h2>Konsep Dasar &amp; Alur Perpindahan File</h2>
+      <p>
+        Inti dari Git ada di <strong>tiga area</strong> di komputer kamu, ditambah satu area
+        di server (remote). Memahami perpindahan file antar area ini adalah kunci supaya tidak
+        bingung dengan istilah <code>add</code>, <code>commit</code>, <code>push</code>, dan
+        <code>pull</code>.
+      </p>
+      <table>
+        <thead><tr><th>Area</th><th>Fungsi</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Working Directory</strong></td><td>Folder project asli tempat kamu mengedit file sehari-hari</td></tr>
+          <tr><td><strong>Staging Area (Index)</strong></td><td>"Ruang tunggu" berisi perubahan yang sudah ditandai siap untuk di-commit</td></tr>
+          <tr><td><strong>Local Repository</strong></td><td>Database riwayat commit tersimpan di folder <code>.git</code> di komputer kamu</td></tr>
+          <tr><td><strong>Remote Repository</strong></td><td>Salinan repository di server (GitHub/GitLab/Bitbucket) untuk berbagi dengan tim</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Diagram Alur Perpindahan File</h3>
+      <div class="diagram-wrap">
+        <div class="mermaid">
+flowchart LR
+    WD["Working Directory<br/>(file yang diedit)"]
+    STG["Staging Area<br/>(index)"]
+    REPO["Local Repository<br/>(.git)"]
+    REMOTE[("Remote Repository<br/>(GitHub / GitLab)")]
+
+    WD -- "git add" --> STG
+    STG -- "git commit" --> REPO
+    REPO -- "git push" --> REMOTE
+    REMOTE -- "git pull / fetch + merge" --> REPO
+    REPO -- "git checkout / restore" --> WD
+    STG -- "git restore --staged" --> WD
+        </div>
+      </div>
+      <p>
+        Baca diagram di atas seperti ini: file yang kamu edit di <strong>Working Directory</strong>
+        ditandai siap-simpan dengan <code>git add</code> ke <strong>Staging Area</strong>,
+        lalu <code>git commit</code> menyimpannya permanen ke <strong>Local Repository</strong>
+        sebagai satu titik riwayat baru. Setelah itu <code>git push</code> mengirim riwayat itu
+        ke <strong>Remote Repository</strong> supaya tim lain bisa mengambilnya dengan
+        <code>git pull</code>.
+      </p>
+      <div class="callout warning">
+        <div class="callout-title">Kesalahan Umum Pemula</div>
+        Lupa <code>git add</code> sebelum <code>git commit</code> membuat perubahan tidak ikut
+        tersimpan, dan lupa <code>git push</code> membuat perubahan hanya ada di komputer sendiri
+        &mdash; tidak terlihat oleh tim.
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- ========== PERINTAH DASAR ========== -->
+    <div class="section" id="git-dasar">
+      <h2>Perintah Dasar Git</h2>
+
+      <h3>Memulai Repository</h3>
+      <div class="pre-label">Terminal &mdash; project baru</div>
+      <pre><code>git init</code></pre>
+      <div class="pre-label">Terminal &mdash; clone project yang sudah ada</div>
+      <pre><code>git clone https://github.com/username/nama-repo.git</code></pre>
+
+      <h3>Melihat Status &amp; Riwayat</h3>
+      <div class="pre-label">Terminal</div>
+      <pre><code>git status
+git log
+git log --oneline --graph --all</code></pre>
+      <table>
+        <thead><tr><th>Perintah</th><th>Kegunaan</th></tr></thead>
+        <tbody>
+          <tr><td><code>git status</code></td><td>Lihat file mana yang berubah, belum di-add, atau sudah staged</td></tr>
+          <tr><td><code>git log</code></td><td>Lihat riwayat commit lengkap dengan hash, penulis, dan pesan</td></tr>
+          <tr><td><code>git diff</code></td><td>Lihat detail baris yang berubah, sebelum di-add</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Menyimpan Perubahan</h3>
+      <div class="pre-label">Terminal</div>
+      <pre><code>git add nama-file.php
+git add .
+git commit -m "Tambah fitur login"</code></pre>
+      <div class="callout">
+        <div class="callout-title">Pesan Commit yang Baik</div>
+        Tulis dalam kalimat perintah singkat &amp; jelas, misal <code>"Tambah validasi email
+        di form registrasi"</code> &mdash; bukan sekadar <code>"update"</code> atau <code>"fix"</code>.
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- ========== BRANCHING & MERGING ========== -->
+    <div class="section" id="git-branch">
+      <h2>Branching &mdash; Bekerja Paralel Tanpa Saling Tabrak</h2>
+      <p>
+        <strong>Branch</strong> adalah "cabang" riwayat yang terpisah dari branch utama
+        (biasanya <code>main</code>), sehingga kamu bisa mengembangkan fitur baru tanpa
+        mengganggu kode yang sudah stabil.
+      </p>
+      <div class="pre-label">Terminal</div>
+      <pre><code>git branch feature/login
+git switch feature/login
+git switch -c feature/login   <span class="cm"># buat sekaligus pindah branch</span>
+git branch                    <span class="cm"># lihat daftar branch</span></code></pre>
+      <div class="callout">
+        <div class="callout-title"><code>switch</code> vs <code>checkout</code></div>
+        <code>git switch</code> adalah perintah modern khusus berpindah branch (lebih jelas),
+        sedangkan <code>git checkout</code> lebih lama dan serba-bisa (branch, file, maupun commit).
+        Keduanya masih umum dipakai di tim manapun.
+      </div>
+    </div>
+
+    <!-- MERGE -->
+    <div class="section" id="git-merge">
+      <h2>Merging &amp; Menyelesaikan Conflict</h2>
+      <p>Setelah fitur di branch selesai, gabungkan kembali ke branch utama dengan <code>merge</code>.</p>
+      <div class="pre-label">Terminal</div>
+      <pre><code>git switch main
+git merge feature/login</code></pre>
+
+      <h3>Diagram Branch &amp; Merge</h3>
+      <div class="diagram-wrap">
+        <div class="mermaid">
+gitGraph
+   commit id: "init project"
+   commit id: "setup struktur"
+   branch feature/login
+   checkout feature/login
+   commit id: "buat form login"
+   commit id: "tambah validasi"
+   checkout main
+   commit id: "perbaiki README"
+   merge feature/login id: "merge fitur login"
+   branch hotfix/bug-123
+   checkout hotfix/bug-123
+   commit id: "perbaiki bug kritis"
+   checkout main
+   merge hotfix/bug-123 id: "merge hotfix"
+        </div>
+      </div>
+
+      <h3>Menyelesaikan Merge Conflict</h3>
+      <p>Conflict terjadi kalau dua branch mengubah baris yang sama. Git menandai bagian yang
+        bentrok langsung di dalam file:</p>
+      <div class="pre-label">nama-file.php</div>
+      <pre><code>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD
+kode versi branch main
+=======
+kode versi branch feature/login
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; feature/login</code></pre>
+      <p>Edit manual bagian tersebut sampai jadi satu versi yang benar, hapus penanda
+        <code>&lt;&lt;&lt;&lt;&lt;&lt;&lt;</code>/<code>=======</code>/<code>&gt;&gt;&gt;&gt;&gt;&gt;&gt;</code>,
+        lalu selesaikan dengan:</p>
+      <div class="pre-label">Terminal</div>
+      <pre><code>git add nama-file.php
+git commit -m "Resolve conflict merge feature/login"</code></pre>
+      <div class="callout danger">
+        <div class="callout-title">Jangan Panik Saat Conflict</div>
+        Conflict adalah hal normal saat kolaborasi, bukan tanda kesalahan. Baca konteks kedua
+        versi kode dengan tenang sebelum memutuskan versi mana yang dipakai.
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- ========== REMOTE ========== -->
+    <div class="section" id="git-remote">
+      <h2>Remote &amp; Kolaborasi Tim</h2>
+      <p>
+        <strong>Remote</strong> adalah alamat repository di server (GitHub, GitLab, dsb.) yang
+        jadi titik pertemuan seluruh tim.
+      </p>
+      <div class="pre-label">Terminal</div>
+      <pre><code>git remote add origin https://github.com/username/nama-repo.git
+git push -u origin main
+git pull origin main
+git fetch origin</code></pre>
+      <table>
+        <thead><tr><th>Perintah</th><th>Kegunaan</th></tr></thead>
+        <tbody>
+          <tr><td><code>git push</code></td><td>Kirim commit lokal ke remote</td></tr>
+          <tr><td><code>git fetch</code></td><td>Ambil riwayat terbaru dari remote <em>tanpa</em> menggabungkannya ke branch lokal</td></tr>
+          <tr><td><code>git pull</code></td><td>Sama seperti <code>fetch</code> lalu langsung <code>merge</code> ke branch aktif</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Diagram Push, Pull, Fetch</h3>
+      <div class="diagram-wrap">
+        <div class="mermaid">
+sequenceDiagram
+    participant WD as Working Directory
+    participant Staging as Staging Area
+    participant Local as Local Repository
+    participant Remote as Remote (GitHub)
+
+    WD->>Staging: git add file.php
+    Staging->>Local: git commit -m "pesan"
+    Local->>Remote: git push origin main
+    Note over Remote: Rekan tim push commit lain
+    Remote-->>Local: git pull origin main
+    Local-->>WD: hasil merge diterapkan
+        </div>
+      </div>
+      <div class="callout">
+        <div class="callout-title">Kebiasaan Tim Profesional</div>
+        Biasakan <code>git pull</code> sebelum mulai kerja dan sebelum <code>push</code>, supaya
+        selalu bekerja di atas kode terbaru dan meminimalkan conflict besar.
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- ========== STRATEGI BRANCHING ========== -->
+    <div class="section" id="git-strategi">
+      <h2>Strategi Branching Profesional</h2>
+      <p>
+        Tim profesional biasanya menyepakati aturan penamaan &amp; alur branch supaya rilis
+        tetap rapi. Tiga strategi paling umum:
+      </p>
+      <table>
+        <thead><tr><th>Strategi</th><th>Karakteristik</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Git Flow</strong></td><td>Branch <code>main</code>, <code>develop</code>, <code>feature/*</code>, <code>release/*</code>, <code>hotfix/*</code> &mdash; cocok untuk rilis terjadwal</td></tr>
+          <tr><td><strong>GitHub Flow</strong></td><td>Hanya <code>main</code> + <code>feature/*</code>, deploy langsung setelah merge &mdash; cocok untuk continuous deployment</td></tr>
+          <tr><td><strong>Trunk-based</strong></td><td>Semua developer commit langsung ke <code>main</code> dengan branch berumur sangat pendek, dibantu feature flag</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Diagram Git Flow</h3>
+      <div class="diagram-wrap">
+        <div class="mermaid">
+flowchart TD
+    main(("main"))
+    develop(("develop"))
+    feature["feature/xyz"]
+    release["release/1.2.0"]
+    hotfix["hotfix/1.2.1"]
+
+    develop -- "branch" --> feature
+    feature -- "merge" --> develop
+    develop -- "branch saat siap rilis" --> release
+    release -- "merge + tag" --> main
+    release -- "merge balik" --> develop
+    main -- "branch saat bug production" --> hotfix
+    hotfix -- "merge" --> main
+    hotfix -- "merge balik" --> develop
+        </div>
+      </div>
+      <div class="callout success">
+        <div class="callout-title">Pilih Sesuai Kebutuhan Tim</div>
+        Tim kecil dengan deploy sering biasanya cocok dengan GitHub Flow; tim besar dengan
+        jadwal rilis tetap sering pakai Git Flow.
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- ========== TEKNIK LANJUTAN ========== -->
+    <div class="section" id="git-rebase">
+      <h2>Teknik Tingkat Lanjut &mdash; Rebase &amp; Cherry-pick</h2>
+
+      <h3>Rebase &mdash; Merapikan Riwayat</h3>
+      <p>
+        <code>git rebase</code> memindahkan commit branch kamu supaya seolah dibuat di atas
+        commit terbaru <code>main</code>, menghasilkan riwayat yang lurus tanpa banyak titik
+        merge.
+      </p>
+      <div class="pre-label">Terminal</div>
+      <pre><code>git switch feature/login
+git rebase main</code></pre>
+      <div class="callout warning">
+        <div class="callout-title">Golden Rule Rebase</div>
+        Jangan pernah <code>rebase</code> branch yang sudah di-push dan dipakai bersama orang
+        lain &mdash; itu mengubah hash commit dan bisa merusak riwayat rekan tim.
+      </div>
+
+      <h3>Cherry-pick &mdash; Ambil Satu Commit Spesifik</h3>
+      <p>Mengambil satu commit tertentu dari branch lain tanpa ikut merge seluruh branch.</p>
+      <div class="pre-label">Terminal</div>
+      <pre><code>git cherry-pick a1b2c3d</code></pre>
+    </div>
+
+    <!-- STASH, RESET, TAG, REFLOG -->
+    <div class="section" id="git-stash">
+      <h2>Stash, Reset vs Revert, Tag, Reflog</h2>
+
+      <h3>Stash &mdash; Simpan Sementara</h3>
+      <p>Menyimpan perubahan yang belum selesai tanpa commit, supaya bisa pindah branch dulu.</p>
+      <div class="pre-label">Terminal</div>
+      <pre><code>git stash
+git stash pop</code></pre>
+
+      <h3>Reset vs Revert</h3>
+      <table>
+        <thead><tr><th>Perintah</th><th>Efek</th></tr></thead>
+        <tbody>
+          <tr><td><code>git reset --hard HEAD~1</code></td><td>Menghapus commit terakhir dari riwayat (mengubah sejarah) &mdash; hindari di branch bersama</td></tr>
+          <tr><td><code>git revert HEAD</code></td><td>Membuat commit baru yang membatalkan efek commit sebelumnya (riwayat tetap utuh) &mdash; aman untuk branch bersama</td></tr>
+        </tbody>
+      </table>
+      <div class="callout danger">
+        <div class="callout-title">Aturan Tim Profesional</div>
+        Di branch yang sudah di-push dan dipakai bersama, selalu gunakan <code>revert</code>,
+        bukan <code>reset --hard</code>.
+      </div>
+
+      <h3>Tag &mdash; Menandai Versi Rilis</h3>
+      <div class="pre-label">Terminal</div>
+      <pre><code>git tag v1.0.0
+git push origin v1.0.0</code></pre>
+
+      <h3>Reflog &mdash; Menyelamatkan Commit yang "Hilang"</h3>
+      <p>Reflog mencatat setiap perpindahan HEAD, termasuk commit yang tampak hilang setelah
+        <code>reset --hard</code> yang salah.</p>
+      <div class="pre-label">Terminal</div>
+      <pre><code>git reflog
+git reset --hard HEAD@{2}</code></pre>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- ========== BEST PRACTICE ========== -->
+    <div class="section" id="git-best-practice">
+      <h2>Best Practice Profesional</h2>
+
+      <h3>Konvensi Pesan Commit &mdash; Conventional Commits</h3>
+      <div class="pre-label">Terminal</div>
+      <pre><code>feat: tambah fitur login dengan Google OAuth
+fix: perbaiki validasi email kosong
+docs: update panduan instalasi
+refactor: pindahkan logic ke ProdukService
+test: tambah unit test untuk CartService</code></pre>
+      <table>
+        <thead><tr><th>Prefix</th><th>Kapan Dipakai</th></tr></thead>
+        <tbody>
+          <tr><td><code>feat</code></td><td>Fitur baru</td></tr>
+          <tr><td><code>fix</code></td><td>Perbaikan bug</td></tr>
+          <tr><td><code>docs</code></td><td>Perubahan dokumentasi saja</td></tr>
+          <tr><td><code>refactor</code></td><td>Rapikan kode tanpa mengubah perilaku</td></tr>
+          <tr><td><code>test</code></td><td>Menambah/memperbaiki test</td></tr>
+        </tbody>
+      </table>
+
+      <h3>.gitignore &mdash; Jangan Commit File yang Tidak Perlu</h3>
+      <div class="pre-label">.gitignore</div>
+      <pre><code>/vendor
+/node_modules
+.env
+/storage/*.key
+/public/hot</code></pre>
+      <div class="callout warning">
+        <div class="callout-title">Jangan Pernah Commit Secret</div>
+        File <code>.env</code> berisi kredensial database/API key &mdash; wajib masuk
+        <code>.gitignore</code> sejak commit pertama project.
+      </div>
+
+      <h3>Pull Request &amp; Code Review</h3>
+      <p>
+        Alih-alih langsung <code>push</code> ke <code>main</code>, tim profesional membuka
+        <strong>Pull Request (PR)</strong> dari branch fitur, meminta review rekan tim, baru
+        merge setelah disetujui &mdash; menjaga kualitas kode dan berbagi pengetahuan antar tim.
+      </p>
+    </div>
+
+    <!-- TROUBLESHOOTING -->
+    <div class="section" id="git-troubleshooting">
+      <h2>Troubleshooting Umum</h2>
+      <table>
+        <thead><tr><th>Masalah</th><th>Solusi</th></tr></thead>
+        <tbody>
+          <tr><td>Salah pesan commit terakhir</td><td><code>git commit --amend -m "Pesan baru"</code></td></tr>
+          <tr><td>Ingin batalkan <code>git add</code></td><td><code>git restore --staged nama-file.php</code></td></tr>
+          <tr><td>Ingin buang perubahan di working directory</td><td><code>git restore nama-file.php</code></td></tr>
+          <tr><td>Merge salah &amp; ingin batal</td><td><code>git merge --abort</code></td></tr>
+          <tr><td>Rebase bermasalah &amp; ingin batal</td><td><code>git rebase --abort</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- RINGKASAN -->
+    <div class="section" id="git-ringkasan">
+      <h2>Ringkasan &mdash; Roadmap Pemula ke Profesional</h2>
+      <ul class="step-list">
+        <li>
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <h4>Level Pemula</h4>
+            <p>Paham alur <code>Working Directory &rarr; Staging &rarr; Local Repo</code>,
+              kuasai <code>init</code>, <code>clone</code>, <code>add</code>, <code>commit</code>,
+              <code>status</code>, <code>log</code>.</p>
+          </div>
+        </li>
+        <li>
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <h4>Level Menengah</h4>
+            <p>Nyaman dengan <code>branch</code>, <code>merge</code>, resolve conflict, serta
+              kolaborasi lewat <code>remote</code>, <code>push</code>, <code>pull</code>.</p>
+          </div>
+        </li>
+        <li>
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <h4>Level Lanjutan</h4>
+            <p>Mahir <code>rebase</code>, <code>cherry-pick</code>, <code>stash</code>, paham
+              kapan pakai <code>reset</code> vs <code>revert</code>, serta menerapkan salah satu
+              strategi branching (Git Flow / GitHub Flow / Trunk-based).</p>
+          </div>
+        </li>
+        <li>
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <h4>Level Profesional</h4>
+            <p>Konsisten memakai konvensi commit message, <code>.gitignore</code> yang rapi,
+              selalu lewat Pull Request &amp; code review, serta percaya diri memakai
+              <code>reflog</code> untuk menyelamatkan kesalahan.</p>
+          </div>
+        </li>
+      </ul>
+
+      <div class="callout success">
+        <div class="callout-title">Selamat! Modul Git Selesai</div>
+        Kombinasikan kebiasaan di modul ini dengan alur kerja Laravel di
+        <a href="index.html">roadmap utama</a> &mdash; setiap fitur yang kamu kerjakan di
+        project Laravel sebaiknya melewati alur branch &amp; PR yang sudah dipelajari di sini.
+      </div>
+    </div>
+
+   </div>
+  </main>
+
+  <!-- RIGHT TOC -->
+  <aside class="toc">
+    <div class="toc-title">Daftar Isi</div>
+
+    <a href="#git-intro">Pengenalan Git</a>
+    <a class="sub" href="#git-intro">Apa itu &amp; Kenapa Penting</a>
+    <a class="sub" href="#git-install">Instalasi &amp; Konfigurasi</a>
+
+    <a href="#git-konsep" style="margin-top:12px;display:block">Konsep &amp; Alur Kerja</a>
+    <a class="sub" href="#git-konsep">Working Dir, Staging, Repo</a>
+
+    <a href="#git-dasar" style="margin-top:12px;display:block">Perintah Dasar</a>
+
+    <a href="#git-branch" style="margin-top:12px;display:block">Branching &amp; Merging</a>
+    <a class="sub" href="#git-branch">Membuat Branch</a>
+    <a class="sub" href="#git-merge">Merge &amp; Conflict</a>
+
+    <a href="#git-remote" style="margin-top:12px;display:block">Remote &amp; Kolaborasi</a>
+
+    <a href="#git-strategi" style="margin-top:12px;display:block">Strategi Branching</a>
+
+    <a href="#git-rebase" style="margin-top:12px;display:block">Teknik Lanjutan</a>
+    <a class="sub" href="#git-rebase">Rebase &amp; Cherry-pick</a>
+    <a class="sub" href="#git-stash">Stash, Reset/Revert, Tag</a>
+
+    <a href="#git-best-practice" style="margin-top:12px;display:block">Best Practice</a>
+    <a class="sub" href="#git-troubleshooting">Troubleshooting</a>
+
+    <a href="#git-ringkasan" style="margin-top:12px;display:block">Ringkasan</a>
+  </aside>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'base',
+    themeVariables: {
+      primaryColor: '#e7f1ff',
+      primaryTextColor: '#212529',
+      primaryBorderColor: '#0d6efd',
+      lineColor: '#6c757d',
+      secondaryColor: '#f8f9fa',
+      tertiaryColor: '#ffffff',
+      fontSize: '14px'
+    }
+  });
+</script>
+<script>
+  // Sidebar accordion
+  document.querySelectorAll('.nav-group-title').forEach(title => {
+    title.addEventListener('click', () => {
+      title.parentElement.classList.toggle('open');
+    });
+  });
+
+  // Nav bar — sub navbar (dropdown) toggle, applies to Laravel and GIT dropdowns
+  document.querySelectorAll('.laravel-nav-trigger').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      btn.closest('.laravel-nav').classList.toggle('open');
+    });
+  });
+  document.addEventListener('click', (e) => {
+    document.querySelectorAll('.laravel-nav.open').forEach(nav => {
+      if (!nav.contains(e.target)) nav.classList.remove('open');
+    });
+  });
+
+  // Mobile sidebar toggle
+  const sidebarEl = document.querySelector('.sidebar');
+  const overlayEl = document.getElementById('sidebarOverlay');
+  const menuToggleBtn = document.getElementById('menuToggle');
+  function closeSidebar() {
+    sidebarEl.classList.remove('open');
+    overlayEl.classList.remove('show');
+  }
+  if (menuToggleBtn) {
+    menuToggleBtn.addEventListener('click', () => {
+      sidebarEl.classList.toggle('open');
+      overlayEl.classList.toggle('show');
+    });
+  }
+  if (overlayEl) overlayEl.addEventListener('click', closeSidebar);
+  document.querySelectorAll('.sidebar a').forEach(a => a.addEventListener('click', closeSidebar));
+
+  // Wrap tables so they scroll horizontally instead of breaking layout on small screens
+  document.querySelectorAll('.main table').forEach(t => {
+    if (t.closest('.table-scroll')) return;
+    const wrap = document.createElement('div');
+    wrap.className = 'table-scroll';
+    t.parentNode.insertBefore(wrap, t);
+    wrap.appendChild(t);
+  });
+
+  // Copy button on every code block
+  function copyText(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+      return navigator.clipboard.writeText(text);
+    }
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); } catch (err) {}
+    document.body.removeChild(ta);
+    return Promise.resolve();
+  }
+  document.querySelectorAll('pre').forEach(pre => {
+    const codeEl = pre.querySelector('code');
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'copy-btn';
+    btn.textContent = 'Copy';
+    btn.setAttribute('aria-label', 'Salin kode');
+    btn.addEventListener('click', () => {
+      const text = (codeEl ? codeEl.textContent : pre.textContent).trim();
+      copyText(text).then(() => {
+        btn.textContent = 'Copied!';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = 'Copy';
+          btn.classList.remove('copied');
+        }, 1500);
+      });
+    });
+    pre.appendChild(btn);
+  });
+
+  // Scroll spy for sidebar + TOC + both navbar dropdowns
+  const sections = document.querySelectorAll('.section[id]');
+  const navLinks = document.querySelectorAll('.nav-link');
+  const tocLinks = document.querySelectorAll('.toc a');
+  const dropdownLinks = document.querySelectorAll('.laravel-nav-item');
+
+  function setActive(links, id) {
+    links.forEach(l => {
+      l.classList.toggle('active', l.getAttribute('href') === '#' + id);
+    });
+  }
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        setActive(navLinks, entry.target.id);
+        setActive(tocLinks, entry.target.id);
+        setActive(dropdownLinks, entry.target.id);
+        const activeLink = document.querySelector('.nav-link.active');
+        if (activeLink) {
+          const group = activeLink.closest('.nav-group');
+          if (group) group.classList.add('open');
+        }
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+
+  sections.forEach(s => observer.observe(s));
+</script>
+
+</body>
+</html>

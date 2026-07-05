@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Roadmap Belajar Laravel &mdash; E-Catatan</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --sidebar-w: 260px;
+      --toc-w: 220px;
+      --accent: #0d6efd;
+      --accent-light: #e7f1ff;
+      --text: #212529;
+      --muted: #6c757d;
+      --border: #dee2e6;
+      --code-bg: #f8f9fa;
+      --code-border: #e9ecef;
+      --sidebar-bg: #f8f9fa;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 15px;
+      line-height: 1.7;
+      color: var(--text);
+      background: #fff;
+    }
+
+    /* TOP BAR */
+    .topbar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      height: 56px;
+      background: #fff;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; padding: 0 24px;
+      gap: 16px;
+    }
+    .topbar-brand {
+      font-weight: 700; font-size: 17px; color: var(--accent);
+      text-decoration: none;
+    }
+    .topbar-version {
+      background: var(--accent-light); color: var(--accent);
+      font-size: 11px; font-weight: 600; padding: 2px 8px;
+      border-radius: 20px;
+    }
+    .topbar-subtitle {
+      color: var(--muted); font-size: 13px; margin-left: auto;
+      white-space: nowrap;
+    }
+    /* LARAVEL NAV BAR + SUB NAVBAR (dropdown by Fokus Utama) */
+    .laravel-nav { position: relative; margin-left: 24px; }
+    .laravel-nav-trigger {
+      display: flex; align-items: center; gap: 6px;
+      background: none; border: 1px solid var(--border); border-radius: 6px;
+      padding: 6px 14px; font-size: 13px; font-weight: 600;
+      color: var(--text); cursor: pointer; font-family: inherit;
+    }
+    .laravel-nav-trigger:hover { background: var(--accent-light); color: var(--accent); border-color: var(--accent); }
+    .laravel-nav.open .laravel-nav-trigger { background: var(--accent-light); color: var(--accent); border-color: var(--accent); }
+    .laravel-nav-trigger .caret { font-size: 10px; transition: transform .15s; }
+    .laravel-nav.open .laravel-nav-trigger .caret { transform: rotate(180deg); }
+    .laravel-nav-menu {
+      display: none;
+      position: absolute; top: calc(100% + 8px); left: 0;
+      width: 360px; max-height: 75vh; overflow-y: auto;
+      background: #fff; border: 1px solid var(--border); border-radius: 10px;
+      box-shadow: 0 12px 32px rgba(0,0,0,.14);
+      padding: 8px; z-index: 200;
+    }
+    .laravel-nav.open .laravel-nav-menu { display: block; }
+    .laravel-nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 12px; border-radius: 8px;
+      text-decoration: none; color: var(--text); font-size: 13px;
+    }
+    .laravel-nav-item:hover { background: var(--accent-light); }
+    .laravel-nav-item.active { background: var(--accent-light); color: var(--accent); font-weight: 600; }
+    .laravel-nav-item .lni-week {
+      flex-shrink: 0; width: 34px; font-size: 11px; font-weight: 700; color: var(--muted);
+    }
+    .laravel-nav-item.active .lni-week { color: var(--accent); }
+    .laravel-nav-item .lni-title { flex: 1; }
+    .laravel-nav-item .lni-soon {
+      flex-shrink: 0; font-size: 10px; font-weight: 700; text-transform: uppercase;
+      background: #e9ecef; color: #495057; padding: 2px 6px; border-radius: 20px;
+    }
+
+    /* LAYOUT */
+    .layout {
+      display: flex;
+      padding-top: 56px;
+      min-height: 100vh;
+    }
+
+    /* LEFT SIDEBAR */
+    .sidebar {
+      width: var(--sidebar-w);
+      flex-shrink: 0;
+      position: fixed;
+      top: 56px; bottom: 0; left: 0;
+      overflow-y: auto;
+      background: var(--sidebar-bg);
+      border-right: 1px solid var(--border);
+      padding: 20px 0 40px;
+    }
+    .sidebar::-webkit-scrollbar { width: 4px; }
+    .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    .nav-group { margin-bottom: 4px; }
+    .nav-group-title {
+      display: flex; align-items: center; gap: 8px;
+      padding: 6px 20px;
+      font-size: 12px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .06em;
+      color: var(--text);
+      cursor: pointer;
+      user-select: none;
+    }
+    .nav-group-title .arrow {
+      display: inline-block; transition: transform .2s;
+      font-size: 10px; color: var(--muted);
+    }
+    .nav-group.open .arrow { transform: rotate(90deg); }
+    .nav-group-items { display: none; }
+    .nav-group.open .nav-group-items { display: block; }
+
+    .nav-link {
+      display: flex; align-items: center; gap: 8px;
+      padding: 5px 20px 5px 36px;
+      font-size: 14px; color: var(--muted);
+      text-decoration: none;
+      border-left: 3px solid transparent;
+      transition: color .15s, border-color .15s, background .15s;
+    }
+    .nav-link:hover { color: var(--accent); background: var(--accent-light); }
+    .nav-link.active {
+      color: var(--accent); font-weight: 600;
+      border-left-color: var(--accent);
+      background: var(--accent-light);
+    }
+    .nav-link .dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--border); flex-shrink: 0;
+    }
+    .nav-link.done .dot { background: #198754; }
+
+    /* MAIN CONTENT */
+    .main {
+      margin-left: var(--sidebar-w);
+      margin-right: var(--toc-w);
+      flex: 1;
+      min-width: 0;
+    }
+    .main-inner {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 48px 56px;
+    }
+
+    /* MOBILE MENU TOGGLE */
+    .menu-toggle {
+      display: none;
+      align-items: center; justify-content: center;
+      width: 32px; height: 32px; flex-shrink: 0;
+      border: 1px solid var(--border); border-radius: 6px;
+      background: none; cursor: pointer; font-size: 16px;
+      color: var(--text);
+    }
+    .menu-toggle:hover { background: var(--accent-light); color: var(--accent); border-color: var(--accent); }
+    .sidebar-overlay {
+      display: none;
+      position: fixed; inset: 56px 0 0 0;
+      background: rgba(0,0,0,.35);
+      z-index: 95;
+    }
+    .sidebar-overlay.show { display: block; }
+
+    /* TABLES THAT OVERFLOW SCROLL INSTEAD OF BREAKING LAYOUT */
+    .table-scroll { overflow-x: auto; margin: 16px 0; -webkit-overflow-scrolling: touch; }
+    .table-scroll table { margin: 0; }
+
+    /* RESPONSIVE */
+    @media (max-width: 1300px) {
+      .toc { display: none; }
+      .main { margin-right: 0; }
+    }
+    @media (max-width: 900px) {
+      .menu-toggle { display: inline-flex; }
+      .topbar-subtitle { display: none; }
+      .sidebar {
+        transform: translateX(-100%);
+        transition: transform .2s ease;
+        z-index: 96;
+        box-shadow: 4px 0 24px rgba(0,0,0,.15);
+      }
+      .sidebar.open { transform: translateX(0); }
+      .main { margin-left: 0; }
+      .main-inner { padding: 32px 24px; }
+      .laravel-nav-menu { width: min(360px, 88vw); }
+    }
+    @media (max-width: 560px) {
+      .topbar { padding: 0 14px; gap: 10px; }
+      .topbar-brand { font-size: 15px; }
+      .topbar-version { display: none; }
+      .page-title { font-size: 28px; }
+      .page-lead { font-size: 15px; padding-bottom: 24px; margin-bottom: 28px; }
+      .main-inner { padding: 24px 16px; }
+      h2 { font-size: 21px; }
+    }
+
+    /* RIGHT TOC */
+    .toc {
+      width: var(--toc-w);
+      flex-shrink: 0;
+      position: fixed;
+      top: 56px; bottom: 0; right: 0;
+      overflow-y: auto;
+      padding: 24px 16px;
+      border-left: 1px solid var(--border);
+    }
+    .toc-title {
+      font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .06em;
+      color: var(--muted); margin-bottom: 12px;
+    }
+    .toc a {
+      display: block; font-size: 13px; color: var(--muted);
+      text-decoration: none; padding: 3px 0 3px 8px;
+      border-left: 2px solid transparent;
+      transition: color .15s, border-color .15s;
+    }
+    .toc a:hover, .toc a.active {
+      color: var(--accent); border-left-color: var(--accent);
+    }
+    .toc a.sub { padding-left: 20px; font-size: 12px; }
+
+    /* CONTENT TYPOGRAPHY */
+    .page-title {
+      font-size: 40px; font-weight: 700;
+      margin-bottom: 12px; line-height: 1.2;
+    }
+    .page-lead {
+      font-size: 18px; color: var(--muted);
+      margin-bottom: 40px; border-bottom: 1px solid var(--border);
+      padding-bottom: 32px;
+    }
+    .section { margin-bottom: 56px; }
+    h2 {
+      font-size: 26px; font-weight: 700;
+      margin-bottom: 16px; padding-top: 8px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 8px;
+      display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    }
+    h3 {
+      font-size: 18px; font-weight: 600;
+      margin: 24px 0 10px;
+    }
+    h4 {
+      font-size: 15px; font-weight: 600;
+      margin: 18px 0 8px; color: var(--text);
+    }
+    p { margin-bottom: 14px; }
+    ul, ol { padding-left: 24px; margin-bottom: 14px; }
+    li { margin-bottom: 6px; }
+    strong { font-weight: 600; }
+
+    code {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      font-size: 13px;
+      background: var(--code-bg);
+      border: 1px solid var(--code-border);
+      padding: 1px 5px; border-radius: 4px;
+      color: #d63384;
+    }
+
+    /* BADGES / CALLOUTS */
+    .badge {
+      display: inline-block; font-size: 11px; font-weight: 700;
+      padding: 2px 8px; border-radius: 4px;
+      text-transform: uppercase; letter-spacing: .04em;
+    }
+    .badge-blue  { background: #cfe2ff; color: #084298; }
+    .badge-green { background: #d1e7dd; color: #0a3622; }
+    .badge-red   { background: #f8d7da; color: #842029; }
+    .badge-yellow{ background: #fff3cd; color: #664d03; }
+    .badge-purple{ background: #e8d5fb; color: #5e2d91; }
+    .badge-orange{ background: #ffe5d0; color: #8a3800; }
+    .badge-muted { background: #e9ecef; color: #495057; }
+
+    .callout {
+      border-left: 4px solid var(--accent);
+      background: var(--accent-light);
+      padding: 14px 18px; border-radius: 0 6px 6px 0;
+      margin: 16px 0;
+    }
+    .callout.warning { border-left-color: #ffc107; background: #fff3cd; }
+    .callout.danger  { border-left-color: #dc3545; background: #f8d7da; }
+    .callout.success { border-left-color: #198754; background: #d1e7dd; }
+    .callout-title { font-weight: 700; margin-bottom: 4px; font-size: 13px; }
+
+    /* TABLE */
+    table {
+      width: 100%; border-collapse: collapse;
+      margin: 16px 0; font-size: 14px;
+    }
+    th {
+      background: var(--code-bg); font-weight: 600;
+      padding: 10px 14px; border: 1px solid var(--border);
+      text-align: left;
+    }
+    td { padding: 9px 14px; border: 1px solid var(--border); }
+    tr:nth-child(even) td { background: #fafafa; }
+
+    .divider { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
+
+    /* PRINT */
+    @media print {
+      .topbar, .sidebar, .toc { display: none; }
+      .main { margin: 0; padding: 24px 32px; max-width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<header class="topbar">
+  <button class="menu-toggle" id="menuToggle" aria-label="Buka menu">&#9776;</button>
+  <a class="topbar-brand" href="index.html">Laravel Docs</a>
+  <span class="topbar-version">Roadmap</span>
+  <div class="laravel-nav" id="laravelNav">
+    <button class="laravel-nav-trigger" type="button">Laravel <span class="caret">&#9662;</span></button>
+    <div class="laravel-nav-menu">
+      <a class="laravel-nav-item" href="#minggu-1"><span class="lni-week">M1</span><span class="lni-title">Core Laravel &amp; Database</span></a>
+      <a class="laravel-nav-item" href="modul-arsitektur-otorisasi.html"><span class="lni-week">M2</span><span class="lni-title">Arsitektur Kode &amp; Otorisasi</span></a>
+      <a class="laravel-nav-item" href="#minggu-3"><span class="lni-week">M3</span><span class="lni-title">Testing &amp; Optimasi</span></a>
+      <a class="laravel-nav-item" href="modul-observability.html"><span class="lni-week">M4</span><span class="lni-title">Observability</span></a>
+      <a class="laravel-nav-item" href="modul-api-design-realtime.html"><span class="lni-week">M5</span><span class="lni-title">API Design &amp; Real-time</span></a>
+      <a class="laravel-nav-item" href="modul-security-deepdive.html"><span class="lni-week">M6</span><span class="lni-title">Security Deep-dive</span></a>
+      <a class="laravel-nav-item" href="modul-capstone-ecommerce.html"><span class="lni-week">M7</span><span class="lni-title">Capstone Project: E-commerce</span></a>
+      <a class="laravel-nav-item" href="modul-containerization-deployment.html"><span class="lni-week">M8</span><span class="lni-title">Containerization &amp; Deployment</span></a>
+      <a class="laravel-nav-item" href="modul-cloud-infrastructure.html"><span class="lni-week">M9</span><span class="lni-title">Cloud &amp; Infrastructure</span></a>
+      <a class="laravel-nav-item" href="modul-skala-besar.html"><span class="lni-week">M10</span><span class="lni-title">Skala Besar</span></a>
+      <a class="laravel-nav-item" href="modul-system-design.html"><span class="lni-week">M11</span><span class="lni-title">System Design</span></a>
+    </div>
+  </div>
+  <div class="laravel-nav" id="gitNav">
+    <button class="laravel-nav-trigger" type="button">GIT <span class="caret">&#9662;</span></button>
+    <div class="laravel-nav-menu">
+      <a class="laravel-nav-item" href="modul-git.html#git-intro"><span class="lni-week">G1</span><span class="lni-title">Pengenalan Git</span></a>
+      <a class="laravel-nav-item" href="modul-git.html#git-konsep"><span class="lni-week">G2</span><span class="lni-title">Konsep &amp; Alur Kerja</span></a>
+      <a class="laravel-nav-item" href="modul-git.html#git-dasar"><span class="lni-week">G3</span><span class="lni-title">Perintah Dasar</span></a>
+      <a class="laravel-nav-item" href="modul-git.html#git-branch"><span class="lni-week">G4</span><span class="lni-title">Branching &amp; Merging</span></a>
+      <a class="laravel-nav-item" href="modul-git.html#git-remote"><span class="lni-week">G5</span><span class="lni-title">Remote &amp; Kolaborasi</span></a>
+      <a class="laravel-nav-item" href="modul-git.html#git-strategi"><span class="lni-week">G6</span><span class="lni-title">Strategi Branching</span></a>
+      <a class="laravel-nav-item" href="modul-git.html#git-rebase"><span class="lni-week">G7</span><span class="lni-title">Teknik Lanjutan</span></a>
+      <a class="laravel-nav-item" href="modul-git.html#git-best-practice"><span class="lni-week">G8</span><span class="lni-title">Best Practice</span></a>
+      <a class="laravel-nav-item" href="modul-git.html#git-ringkasan"><span class="lni-week">G9</span><span class="lni-title">Ringkasan</span></a>
+    </div>
+  </div>
+  <span class="topbar-subtitle">Roadmap Belajar Laravel &mdash; E-Catatan</span>
+</header>
+
+<div class="layout">
+
+  <!-- LEFT SIDEBAR -->
+  <nav class="sidebar">
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Laravel</div>
+      <div class="nav-group-items">
+        <a class="nav-link done active" href="#minggu-1"><span class="dot"></span> Minggu 1 &mdash; Core &amp; Database</a>
+        <a class="nav-link done" href="#minggu-2"><span class="dot"></span> Minggu 2 &mdash; Arsitektur &amp; Otorisasi</a>
+        <a class="nav-link done" href="#minggu-3"><span class="dot"></span> Minggu 3 &mdash; Testing &amp; Optimasi</a>
+        <a class="nav-link done" href="#minggu-4"><span class="dot"></span> Minggu 4 &mdash; Observability</a>
+        <a class="nav-link done" href="#minggu-5"><span class="dot"></span> Minggu 5 &mdash; API Design &amp; Real-time</a>
+        <a class="nav-link done" href="#minggu-6"><span class="dot"></span> Minggu 6 &mdash; Security Deep-dive</a>
+        <a class="nav-link done" href="#minggu-7"><span class="dot"></span> Minggu 7 &mdash; Capstone E-commerce</a>
+        <a class="nav-link done" href="#minggu-8"><span class="dot"></span> Minggu 8 &mdash; Containerization</a>
+        <a class="nav-link done" href="#minggu-9"><span class="dot"></span> Minggu 9 &mdash; Cloud &amp; Infrastructure</a>
+        <a class="nav-link done" href="#minggu-10"><span class="dot"></span> Minggu 10 &mdash; Skala Besar</a>
+        <a class="nav-link done" href="#minggu-11"><span class="dot"></span> Minggu 11 &mdash; System Design</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Git</div>
+      <div class="nav-group-items">
+        <a class="nav-link done" href="#modul-git"><span class="dot"></span> Version Control Pemula &mdash; Profesional</a>
+      </div>
+    </div>
+
+  </nav>
+
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- MAIN CONTENT -->
+  <main class="main">
+   <div class="main-inner">
+
+    <div class="section" id="ringkasan-roadmap">
+      <h1 class="page-title">Roadmap Belajar Laravel</h1>
+      <p class="page-lead">
+        E-catatan ini berisi modul belajar Laravel dari dasar sampai skala besar, disusun
+        per minggu. Setiap modul ditulis sebagai halaman HTML statis yang responsif &mdash;
+        bisa dibuka langsung di browser (lokal via XAMPP) maupun online lewat GitHub Pages.
+      </p>
+
+      <table>
+        <thead><tr><th>Minggu</th><th>Fokus Utama</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>Core Laravel &amp; Database</td><td><span class="badge badge-green">Tersedia</span></td></tr>
+          <tr><td>2</td><td>Arsitektur Kode &amp; Otorisasi</td><td><span class="badge badge-green">Tersedia</span></td></tr>
+          <tr><td>3</td><td>Testing &amp; Optimasi</td><td><span class="badge badge-green">Tersedia</span></td></tr>
+          <tr><td>4</td><td>Observability</td><td><span class="badge badge-green">Tersedia</span></td></tr>
+          <tr><td>5</td><td>API Design &amp; Real-time</td><td><span class="badge badge-green">Tersedia</span></td></tr>
+          <tr><td>6</td><td>Security Deep-dive</td><td><span class="badge badge-green">Tersedia</span></td></tr>
+          <tr><td>7</td><td>Capstone Project: E-commerce</td><td><span class="badge badge-green">Tersedia</span></td></tr>
+          <tr><td>8</td><td>Containerization &amp; Deployment</td><td><span class="badge badge-green">Tersedia</span></td></tr>
+          <tr><td>9</td><td>Cloud &amp; Infrastructure</td><td><span class="badge badge-green">Tersedia</span></td></tr>
+          <tr><td>10</td><td>Skala Besar</td><td><span class="badge badge-green">Tersedia</span></td></tr>
+          <tr><td>11</td><td>System Design</td><td><span class="badge badge-green">Tersedia</span></td></tr>
+          <tr><td>Git</td><td>Version Control &mdash; Pemula sampai Profesional</td><td><span class="badge badge-green">Tersedia</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- MINGGU 1 -->
+    <div class="section" id="minggu-1">
+      <h2>Minggu 1 &mdash; Core Laravel &amp; Database <span class="badge badge-green">Tersedia</span></h2>
+      <p>Instalasi Laravel (XAMPP &amp; WSL), Eloquent &amp; relasi model, migration, optimasi
+        query dasar (N+1 &amp; indexing), keamanan dasar (CSRF, XSS, SQL Injection), REST API,
+        dan autentikasi JWT.</p>
+      <ul>
+        <li><a href="modul-rest-api-sanctum.html"><strong>Modul utama</strong> &mdash; Instalasi (XAMPP/WSL), CRUD, Eloquent &amp; Relasi, Query Optimization, REST API + Sanctum, Keamanan</a></li>
+        <li><a href="modul-rest-api-jwt.html"><strong>Lanjutan</strong> &mdash; Workshop autentikasi API dengan JWT</a></li>
+      </ul>
+    </div>
+
+    <!-- MINGGU 2 -->
+    <div class="section" id="minggu-2">
+      <h2>Minggu 2 &mdash; Arsitektur Kode &amp; Otorisasi <span class="badge badge-green">Tersedia</span></h2>
+      <p>Repository/Service Pattern, Middleware &amp; Validation, Roles &amp; Permission (Spatie), Rate Limiting.</p>
+      <ul>
+        <li><a href="modul-arsitektur-otorisasi.html"><strong>Modul</strong> &mdash; Repository/Service Pattern, Custom Middleware &amp; Form Request, Spatie Roles &amp; Permission, Rate Limiting</a></li>
+      </ul>
+    </div>
+
+    <!-- MINGGU 3 -->
+    <div class="section" id="minggu-3">
+      <h2>Minggu 3 &mdash; Testing &amp; Optimasi <span class="badge badge-green">Tersedia</span></h2>
+      <p>Pest/PHPUnit, Redis (cache &amp; session), Laravel Horizon (queue).</p>
+      <ul>
+        <li><a href="modul-optimasi.html"><strong>Modul</strong> &mdash; Redis, Laravel Horizon, Pest/PHPUnit</a></li>
+      </ul>
+    </div>
+
+    <!-- MINGGU 4 -->
+    <div class="section" id="minggu-4">
+      <h2>Minggu 4 &mdash; Observability <span class="badge badge-green">Tersedia</span></h2>
+      <p>Laravel Telescope, Logging (Monolog), Error Tracking (Sentry).</p>
+      <ul>
+        <li><a href="modul-observability.html"><strong>Modul</strong> &mdash; Laravel Telescope, Logging &amp; Monolog Channel, Error Tracking dengan Sentry</a></li>
+      </ul>
+    </div>
+
+    <!-- MINGGU 5 -->
+    <div class="section" id="minggu-5">
+      <h2>Minggu 5 &mdash; API Design &amp; Real-time <span class="badge badge-green">Tersedia</span></h2>
+      <p>OpenAPI/Swagger, API Versioning, WebSocket/Broadcasting (Laravel Reverb).</p>
+      <ul>
+        <li><a href="modul-api-design-realtime.html"><strong>Modul</strong> &mdash; API Versioning, Dokumentasi OpenAPI/Swagger, Real-time dengan Laravel Reverb</a></li>
+      </ul>
+    </div>
+
+    <!-- MINGGU 6 -->
+    <div class="section" id="minggu-6">
+      <h2>Minggu 6 &mdash; Security Deep-dive <span class="badge badge-green">Tersedia</span></h2>
+      <p>OWASP Top 10, Encryption &amp; Secrets Management, API Security Hardening.</p>
+      <ul>
+        <li><a href="modul-security-deepdive.html"><strong>Modul</strong> &mdash; OWASP Top 10, Encryption &amp; Secrets Management, API Security Hardening</a></li>
+      </ul>
+    </div>
+
+    <!-- MINGGU 7 -->
+    <div class="section" id="minggu-7">
+      <h2>Minggu 7 &mdash; Capstone Project: E-commerce <span class="badge badge-green">Tersedia</span></h2>
+      <p>Bangun API e-commerce lengkap (produk, cart, checkout, payment gateway, order management) menerapkan skill Minggu 1&ndash;6.</p>
+      <ul>
+        <li><a href="modul-capstone-ecommerce.html"><strong>Modul</strong> &mdash; Shopping Cart, Checkout &amp; Order State Machine, Payment Gateway (Midtrans), menggabungkan skill Minggu 1&ndash;6</a></li>
+      </ul>
+    </div>
+
+    <!-- MINGGU 8 -->
+    <div class="section" id="minggu-8">
+      <h2>Minggu 8 &mdash; Containerization &amp; Deployment <span class="badge badge-green">Tersedia</span></h2>
+      <p>Docker, CI/CD (GitHub Actions), k6 (Load Testing) &mdash; diterapkan ke project e-commerce.</p>
+      <ul>
+        <li><a href="modul-containerization-deployment.html"><strong>Modul</strong> &mdash; Install Docker Desktop, Dockerize Laravel, CI/CD dengan GitHub Actions, Install &amp; jalankan k6 Load Testing</a></li>
+      </ul>
+    </div>
+
+    <!-- MINGGU 9 -->
+    <div class="section" id="minggu-9">
+      <h2>Minggu 9 &mdash; Cloud &amp; Infrastructure <span class="badge badge-green">Tersedia</span></h2>
+      <p>Nginx/Supervisor, Cloud (AWS/GCP), Infrastructure as Code (Terraform) &mdash; deploy project e-commerce.</p>
+      <ul>
+        <li><a href="modul-cloud-infrastructure.html"><strong>Modul</strong> &mdash; Install &amp; konfigurasi Nginx/Supervisor, Install CLI AWS/GCP, Install Terraform, Deploy E-commerce ke Cloud</a></li>
+      </ul>
+    </div>
+
+    <!-- MINGGU 10 -->
+    <div class="section" id="minggu-10">
+      <h2>Minggu 10 &mdash; Skala Besar <span class="badge badge-green">Tersedia</span></h2>
+      <p>Microservices Architecture, Message Brokers (Kafka/RabbitMQ), CQRS &amp; Event Sourcing, Kubernetes.</p>
+      <ul>
+        <li><a href="modul-skala-besar.html"><strong>Modul</strong> &mdash; Microservices, Install RabbitMQ/Kafka, CQRS &amp; Event Sourcing, Install kubectl/Minikube</a></li>
+      </ul>
+    </div>
+
+    <!-- MINGGU 11 -->
+    <div class="section" id="minggu-11">
+      <h2>Minggu 11 &mdash; System Design <span class="badge badge-green">Tersedia</span></h2>
+      <p>Database Sharding &amp; Replication, Load Balancing, Distributed Systems (CAP Theorem).</p>
+      <ul>
+        <li><a href="modul-system-design.html"><strong>Modul</strong> &mdash; Database Replication &amp; Sharding, Load Balancing (Nginx), Distributed Systems &amp; CAP Theorem</a></li>
+      </ul>
+
+      <div class="callout success">
+        <div class="callout-title">&#127881; Roadmap 11 Minggu Selesai!</div>
+        Semua modul dari Minggu 1 sampai Minggu 11 sudah tersedia &mdash; dari instalasi
+        Laravel pertama sampai memahami CAP Theorem. Mulai dari
+        <a href="modul-rest-api-sanctum.html"><strong>Minggu 1</strong></a> kalau baru mulai,
+        atau langsung ke modul mana pun lewat menu <strong>Laravel</strong> di atas.
+      </div>
+
+      <div class="callout success">
+        <div class="callout-title">Cara Membaca Online via GitHub</div>
+        Push folder ini ke repository GitHub, lalu aktifkan <strong>GitHub Pages</strong>
+        (Settings &rarr; Pages &rarr; Deploy from branch) supaya semua modul <code>.html</code>
+        bisa dibuka langsung dari browser tanpa server lokal. Lihat <code>README.md</code>
+        untuk detailnya.
+      </div>
+    </div>
+
+    <!-- MODUL GIT -->
+    <div class="section" id="modul-git">
+      <h2>Git &mdash; Version Control <span class="badge badge-green">Tersedia</span></h2>
+      <p>Panduan lengkap Git dari pemula sampai profesional: konsep dasar &amp; alur
+        perpindahan file (dengan visualisasi Mermaid.js), branching &amp; merging, kolaborasi
+        lewat remote, strategi branching (Git Flow/GitHub Flow/Trunk-based), teknik lanjutan
+        (rebase, cherry-pick, stash), sampai best practice tim profesional.</p>
+      <ul>
+        <li><a href="modul-git.html"><strong>Modul</strong> &mdash; Instalasi &amp; Konfigurasi, Alur Kerja, Branching &amp; Merging, Remote &amp; Kolaborasi, Strategi Branching, Teknik Lanjutan, Best Practice</a></li>
+      </ul>
+    </div>
+
+   </div>
+  </main>
+
+  <!-- RIGHT TOC -->
+  <aside class="toc">
+    <div class="toc-title">Daftar Minggu</div>
+    <a href="#minggu-1">Minggu 1 &mdash; Core &amp; Database</a>
+    <a href="#minggu-2">Minggu 2 &mdash; Arsitektur</a>
+    <a href="#minggu-3">Minggu 3 &mdash; Testing &amp; Optimasi</a>
+    <a href="#minggu-4">Minggu 4 &mdash; Observability</a>
+    <a href="#minggu-5">Minggu 5 &mdash; API &amp; Real-time</a>
+    <a href="#minggu-6">Minggu 6 &mdash; Security</a>
+    <a href="#minggu-7">Minggu 7 &mdash; Capstone</a>
+    <a href="#minggu-8">Minggu 8 &mdash; Containerization</a>
+    <a href="#minggu-9">Minggu 9 &mdash; Cloud</a>
+    <a href="#minggu-10">Minggu 10 &mdash; Skala Besar</a>
+    <a href="#minggu-11">Minggu 11 &mdash; System Design</a>
+    <a href="#modul-git">Git &mdash; Version Control</a>
+  </aside>
+
+</div>
+
+<script>
+  document.querySelectorAll('.nav-group-title').forEach(title => {
+    title.addEventListener('click', () => {
+      title.closest('.nav-group').classList.toggle('open');
+    });
+  });
+
+  // Laravel nav bar — sub navbar (dropdown) toggle
+  document.querySelectorAll('.laravel-nav-trigger').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      btn.closest('.laravel-nav').classList.toggle('open');
+    });
+  });
+  document.addEventListener('click', (e) => {
+    document.querySelectorAll('.laravel-nav.open').forEach(nav => {
+      if (!nav.contains(e.target)) nav.classList.remove('open');
+    });
+  });
+
+  // Mobile sidebar toggle
+  const sidebarEl = document.querySelector('.sidebar');
+  const overlayEl = document.getElementById('sidebarOverlay');
+  const menuToggleBtn = document.getElementById('menuToggle');
+  function closeSidebar() {
+    sidebarEl.classList.remove('open');
+    overlayEl.classList.remove('show');
+  }
+  if (menuToggleBtn) {
+    menuToggleBtn.addEventListener('click', () => {
+      sidebarEl.classList.toggle('open');
+      overlayEl.classList.toggle('show');
+    });
+  }
+  if (overlayEl) overlayEl.addEventListener('click', closeSidebar);
+  document.querySelectorAll('.sidebar a').forEach(a => a.addEventListener('click', closeSidebar));
+
+  // Wrap tables so they scroll horizontally instead of breaking layout on small screens
+  document.querySelectorAll('.main table').forEach(t => {
+    if (t.closest('.table-scroll')) return;
+    const wrap = document.createElement('div');
+    wrap.className = 'table-scroll';
+    t.parentNode.insertBefore(wrap, t);
+    wrap.appendChild(t);
+  });
+
+  const sections = document.querySelectorAll('.section[id]');
+  const navLinks = document.querySelectorAll('.nav-link');
+  const tocLinks = document.querySelectorAll('.toc a');
+  const laravelNavLinks = document.querySelectorAll('.laravel-nav-item');
+
+  function onScroll() {
+    let current = '';
+    sections.forEach(sec => {
+      if (window.scrollY >= sec.offsetTop - 80) current = sec.id;
+    });
+    navLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + current));
+    tocLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + current));
+    laravelNavLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + current));
+  }
+
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+</script>
+
+</body>
+</html>

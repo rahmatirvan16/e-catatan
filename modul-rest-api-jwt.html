@@ -1,0 +1,1467 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Workshop JWT &mdash; Laravel REST API</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --sidebar-w: 270px;
+      --toc-w: 220px;
+      --accent: #0d6efd;
+      --accent-light: #e7f1ff;
+      --text: #212529;
+      --muted: #6c757d;
+      --border: #dee2e6;
+      --code-bg: #f8f9fa;
+      --code-border: #e9ecef;
+      --sidebar-bg: #f8f9fa;
+      --step-done: #198754;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 15px;
+      line-height: 1.7;
+      color: var(--text);
+      background: #fff;
+    }
+
+    /* TOP BAR */
+    .topbar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      height: 56px; background: #fff;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; padding: 0 24px; gap: 16px;
+    }
+    .topbar-brand { font-weight: 700; font-size: 17px; color: var(--accent); text-decoration: none; }
+    .topbar-version { background: var(--accent-light); color: var(--accent); font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 20px; }
+    .topbar-subtitle { color: var(--muted); font-size: 13px; margin-left: auto; }
+    /* LARAVEL NAV BAR + SUB NAVBAR (dropdown by Fokus Utama) */
+    .laravel-nav { position: relative; margin-left: 24px; }
+    .laravel-nav-trigger { display: flex; align-items: center; gap: 6px; background: none; border: 1px solid var(--border); border-radius: 6px; padding: 6px 14px; font-size: 13px; font-weight: 600; color: var(--text); cursor: pointer; font-family: inherit; }
+    .laravel-nav-trigger:hover { background: var(--accent-light); color: var(--accent); border-color: var(--accent); }
+    .laravel-nav.open .laravel-nav-trigger { background: var(--accent-light); color: var(--accent); border-color: var(--accent); }
+    .laravel-nav-trigger .caret { font-size: 10px; transition: transform .15s; }
+    .laravel-nav.open .laravel-nav-trigger .caret { transform: rotate(180deg); }
+    .laravel-nav-menu { display: none; position: absolute; top: calc(100% + 8px); left: 0; width: 360px; max-height: 75vh; overflow-y: auto; background: #fff; border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 12px 32px rgba(0,0,0,.14); padding: 8px; z-index: 200; }
+    .laravel-nav.open .laravel-nav-menu { display: block; }
+    .laravel-nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 8px; text-decoration: none; color: var(--text); font-size: 13px; }
+    .laravel-nav-item:hover { background: var(--accent-light); }
+    .laravel-nav-item.active { background: var(--accent-light); color: var(--accent); font-weight: 600; }
+    .laravel-nav-item .lni-week { flex-shrink: 0; width: 34px; font-size: 11px; font-weight: 700; color: var(--muted); }
+    .laravel-nav-item.active .lni-week { color: var(--accent); }
+    .laravel-nav-item .lni-title { flex: 1; }
+    .laravel-nav-item .lni-soon { flex-shrink: 0; font-size: 10px; font-weight: 700; text-transform: uppercase; background: #e9ecef; color: #495057; padding: 2px 6px; border-radius: 20px; }
+
+    /* LAYOUT */
+    .layout { display: flex; padding-top: 56px; min-height: 100vh; }
+
+    /* LEFT SIDEBAR */
+    .sidebar {
+      width: var(--sidebar-w); flex-shrink: 0;
+      position: fixed; top: 56px; bottom: 0; left: 0;
+      overflow-y: auto; background: var(--sidebar-bg);
+      border-right: 1px solid var(--border); padding: 20px 0 40px;
+    }
+    .sidebar::-webkit-scrollbar { width: 4px; }
+    .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    .nav-group { margin-bottom: 4px; }
+    .nav-group-title { display: flex; align-items: center; gap: 8px; padding: 6px 20px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--text); cursor: pointer; user-select: none; }
+    .nav-group-title .arrow { display: inline-block; transition: transform .2s; font-size: 10px; color: var(--muted); }
+    .nav-group.open .arrow { transform: rotate(90deg); }
+    .nav-group-items { display: none; }
+    .nav-group.open .nav-group-items { display: block; }
+    .nav-link { display: block; padding: 5px 20px 5px 36px; font-size: 14px; color: var(--muted); text-decoration: none; border-left: 3px solid transparent; transition: color .15s, border-color .15s, background .15s; }
+    .nav-link:hover { color: var(--accent); background: var(--accent-light); }
+    .nav-link.active { color: var(--accent); font-weight: 600; border-left-color: var(--accent); background: var(--accent-light); }
+
+    /* MAIN */
+    .main { margin-left: var(--sidebar-w); margin-right: var(--toc-w); flex: 1; min-width: 0; }
+    .main-inner { max-width: 860px; margin: 0 auto; padding: 48px 56px; }
+
+    /* MOBILE MENU TOGGLE */
+    .menu-toggle { display: none; align-items: center; justify-content: center; width: 32px; height: 32px; flex-shrink: 0; border: 1px solid var(--border); border-radius: 6px; background: none; cursor: pointer; font-size: 16px; color: var(--text); }
+    .menu-toggle:hover { background: var(--accent-light); color: var(--accent); border-color: var(--accent); }
+    .sidebar-overlay { display: none; position: fixed; inset: 56px 0 0 0; background: rgba(0,0,0,.35); z-index: 95; }
+    .sidebar-overlay.show { display: block; }
+
+    /* TABLES THAT OVERFLOW SCROLL INSTEAD OF BREAKING LAYOUT */
+    .table-scroll { overflow-x: auto; margin: 16px 0; -webkit-overflow-scrolling: touch; }
+    .table-scroll table { margin: 0; }
+
+    /* RESPONSIVE */
+    @media (max-width: 1300px) {
+      .toc { display: none; }
+      .main { margin-right: 0; }
+    }
+    @media (max-width: 900px) {
+      .menu-toggle { display: inline-flex; }
+      .topbar-subtitle { display: none; }
+      .sidebar { transform: translateX(-100%); transition: transform .2s ease; z-index: 96; box-shadow: 4px 0 24px rgba(0,0,0,.15); }
+      .sidebar.open { transform: translateX(0); }
+      .main { margin-left: 0; }
+      .main-inner { padding: 32px 24px; }
+      .laravel-nav-menu { width: min(360px, 88vw); }
+    }
+    @media (max-width: 560px) {
+      .topbar { padding: 0 14px; gap: 10px; }
+      .topbar-brand { font-size: 15px; }
+      .topbar-version { display: none; }
+      .page-title { font-size: 28px; }
+      .page-lead { font-size: 15px; padding-bottom: 24px; margin-bottom: 28px; }
+      .main-inner { padding: 24px 16px; }
+      h2 { font-size: 21px; }
+    }
+
+    /* TOC */
+    .toc { width: var(--toc-w); flex-shrink: 0; position: fixed; top: 56px; bottom: 0; right: 0; overflow-y: auto; padding: 24px 16px; border-left: 1px solid var(--border); }
+    .toc-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-bottom: 12px; }
+    .toc a { display: block; font-size: 13px; color: var(--muted); text-decoration: none; padding: 3px 0 3px 8px; border-left: 2px solid transparent; transition: color .15s, border-color .15s; }
+    .toc a:hover, .toc a.active { color: var(--accent); border-left-color: var(--accent); }
+    .toc a.sub { padding-left: 20px; font-size: 12px; }
+
+    /* TYPOGRAPHY */
+    .page-title { font-size: 38px; font-weight: 700; margin-bottom: 12px; line-height: 1.2; }
+    .page-lead { font-size: 17px; color: var(--muted); margin-bottom: 40px; border-bottom: 1px solid var(--border); padding-bottom: 32px; }
+    .section { margin-bottom: 60px; }
+    h2 { font-size: 26px; font-weight: 700; margin-bottom: 16px; padding-top: 8px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+    h3 { font-size: 18px; font-weight: 600; margin: 24px 0 10px; }
+    h4 { font-size: 15px; font-weight: 600; margin: 16px 0 8px; }
+    p { margin-bottom: 14px; }
+    ul, ol { padding-left: 24px; margin-bottom: 14px; }
+    li { margin-bottom: 6px; }
+    strong { font-weight: 600; }
+    a { color: var(--accent); }
+
+    /* CODE */
+    code { font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace; font-size: 13px; background: var(--code-bg); border: 1px solid var(--code-border); padding: 1px 5px; border-radius: 4px; color: #d63384; }
+    pre { background: #1e1e2e; border-radius: 8px; padding: 20px 24px; overflow-x: auto; margin: 10px 0 16px; position: relative; }
+    pre code { background: none; border: none; padding: 0; color: #cdd6f4; font-size: 13px; line-height: 1.65; }
+    .pre-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-bottom: 4px; margin-top: 14px; }
+
+    /* COPY BUTTON */
+    .copy-btn { position: absolute; top: 10px; right: 10px; display: flex; align-items: center; gap: 5px; background: rgba(255,255,255,.08); color: #cdd6f4; border: 1px solid rgba(255,255,255,.18); border-radius: 6px; font-family: inherit; font-size: 11px; font-weight: 600; padding: 4px 9px; cursor: pointer; opacity: .55; transition: opacity .15s, background .15s; }
+    pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
+    .copy-btn:hover { background: rgba(255,255,255,.2); }
+    .copy-btn.copied { opacity: 1; background: #198754; border-color: #198754; color: #fff; }
+    @media (max-width: 900px) { .copy-btn { opacity: .8; } }
+    @media print { .copy-btn { display: none; } }
+    .kw  { color: #cba6f7; }
+    .fn  { color: #89b4fa; }
+    .str { color: #a6e3a1; }
+    .cm  { color: #6c7086; }
+    .cl  { color: #fab387; }
+    .nb  { color: #89dceb; }
+    .op  { color: #89dceb; }
+    .key { color: #f38ba8; }
+    .out { color: #a6e3a1; }
+
+    /* BADGES */
+    .badge { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; letter-spacing: .04em; }
+    .badge-blue   { background: #cfe2ff; color: #084298; }
+    .badge-green  { background: #d1e7dd; color: #0a3622; }
+    .badge-red    { background: #f8d7da; color: #842029; }
+    .badge-yellow { background: #fff3cd; color: #664d03; }
+
+    /* CALLOUTS */
+    .callout { border-left: 4px solid var(--accent); background: var(--accent-light); padding: 14px 18px; border-radius: 0 6px 6px 0; margin: 16px 0; }
+    .callout.warning { border-left-color: #ffc107; background: #fff3cd; }
+    .callout.danger  { border-left-color: #dc3545; background: #f8d7da; }
+    .callout.success { border-left-color: #198754; background: #d1e7dd; }
+    .callout-title { font-weight: 700; margin-bottom: 4px; font-size: 13px; }
+
+    /* TABLE */
+    table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 14px; }
+    th { background: var(--code-bg); font-weight: 600; padding: 10px 14px; border: 1px solid var(--border); text-align: left; }
+    td { padding: 9px 14px; border: 1px solid var(--border); }
+    tr:nth-child(even) td { background: #fafafa; }
+
+    /* STEP CARD — inti dari modul ini */
+    .step-card {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin: 24px 0;
+      overflow: hidden;
+    }
+    .step-header {
+      display: flex; align-items: center; gap: 16px;
+      padding: 16px 20px;
+      background: var(--code-bg);
+      border-bottom: 1px solid var(--border);
+    }
+    .step-number {
+      width: 36px; height: 36px; flex-shrink: 0;
+      background: var(--accent); color: #fff;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px; font-weight: 700;
+    }
+    .step-title { font-size: 16px; font-weight: 700; }
+    .step-subtitle { font-size: 13px; color: var(--muted); margin-top: 2px; }
+    .step-body { padding: 20px 24px; }
+    .step-body > *:last-child { margin-bottom: 0; }
+
+    /* ACTION BOXES */
+    .action {
+      border: 1px solid var(--border);
+      border-radius: 8px; margin: 14px 0; overflow: hidden;
+    }
+    .action-label {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 14px;
+      font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em;
+      border-bottom: 1px solid var(--border);
+    }
+    .action-label.cmd   { background: #212529; color: #fff; }
+    .action-label.edit  { background: #0d6efd; color: #fff; }
+    .action-label.check { background: #198754; color: #fff; }
+    .action-label.out   { background: #495057; color: #fff; }
+    .action-label .icon { font-size: 14px; }
+    .action pre { margin: 0; border-radius: 0; }
+    .action-check-body { padding: 12px 16px; font-size: 14px; }
+    .action-check-body ul { margin: 6px 0 0; }
+
+    /* CONCEPT BOX */
+    .concept {
+      background: #f8f9ff;
+      border: 1px solid #c5d3ff;
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin: 16px 0;
+    }
+    .concept-title { font-weight: 700; color: var(--accent); margin-bottom: 8px; font-size: 14px; }
+
+    /* JWT TOKEN VISUAL */
+    .jwt-visual { display: flex; gap: 4px; margin: 16px 0; flex-wrap: wrap; }
+    .jwt-part { padding: 6px 12px; border-radius: 6px; font-family: "SFMono-Regular", Consolas, monospace; font-size: 12px; font-weight: 600; word-break: break-all; }
+    .jwt-header-p  { background: #ff6b6b22; border: 2px solid #ff6b6b; color: #cc0000; }
+    .jwt-payload-p { background: #ffd93d22; border: 2px solid #e6c200; color: #664d03; }
+    .jwt-sig-p     { background: #6bcb7722; border: 2px solid #198754; color: #0a3622; }
+    .jwt-dot-p     { display: flex; align-items: center; font-weight: 900; font-size: 20px; color: var(--muted); }
+
+    /* DIVIDER */
+    .divider { border: none; border-top: 2px solid var(--border); margin: 56px 0; }
+
+    /* PROGRESS CHECKLIST */
+    .checklist { list-style: none; padding: 0; }
+    .checklist li { display: flex; align-items: flex-start; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
+    .checklist li:last-child { border-bottom: none; }
+    .checklist .box { width: 18px; height: 18px; border: 2px solid var(--border); border-radius: 4px; flex-shrink: 0; margin-top: 2px; }
+    .checklist .num { color: var(--muted); font-size: 12px; font-weight: 700; width: 24px; flex-shrink: 0; margin-top: 2px; }
+
+    @media print {
+      .topbar, .sidebar, .toc { display: none; }
+      .main { margin: 0; }
+      .main-inner { padding: 24px 32px; max-width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<header class="topbar">
+  <button class="menu-toggle" id="menuToggle" aria-label="Buka menu">&#9776;</button>
+  <a class="topbar-brand" href="index.html">Laravel Docs</a>
+  <span class="topbar-version">v12.x</span>
+  <div class="laravel-nav" id="laravelNav">
+    <button class="laravel-nav-trigger" type="button">Laravel <span class="caret">&#9662;</span></button>
+    <div class="laravel-nav-menu">
+      <a class="laravel-nav-item active" href="modul-rest-api-sanctum.html"><span class="lni-week">M1</span><span class="lni-title">Core Laravel &amp; Database</span></a>
+      <a class="laravel-nav-item" href="modul-arsitektur-otorisasi.html"><span class="lni-week">M2</span><span class="lni-title">Arsitektur Kode &amp; Otorisasi</span></a>
+      <a class="laravel-nav-item" href="modul-optimasi.html"><span class="lni-week">M3</span><span class="lni-title">Testing &amp; Optimasi</span></a>
+      <a class="laravel-nav-item" href="modul-observability.html"><span class="lni-week">M4</span><span class="lni-title">Observability</span></a>
+      <a class="laravel-nav-item" href="modul-api-design-realtime.html"><span class="lni-week">M5</span><span class="lni-title">API Design &amp; Real-time</span></a>
+      <a class="laravel-nav-item" href="modul-security-deepdive.html"><span class="lni-week">M6</span><span class="lni-title">Security Deep-dive</span></a>
+      <a class="laravel-nav-item" href="modul-capstone-ecommerce.html"><span class="lni-week">M7</span><span class="lni-title">Capstone Project: E-commerce</span></a>
+      <a class="laravel-nav-item" href="modul-containerization-deployment.html"><span class="lni-week">M8</span><span class="lni-title">Containerization &amp; Deployment</span></a>
+      <a class="laravel-nav-item" href="modul-cloud-infrastructure.html"><span class="lni-week">M9</span><span class="lni-title">Cloud &amp; Infrastructure</span></a>
+      <a class="laravel-nav-item" href="modul-skala-besar.html"><span class="lni-week">M10</span><span class="lni-title">Skala Besar</span></a>
+      <a class="laravel-nav-item" href="modul-system-design.html"><span class="lni-week">M11</span><span class="lni-title">System Design</span></a>
+    </div>
+  </div>
+  <span class="topbar-subtitle">Minggu 1 Lanjutan &mdash; Workshop JWT Authentication</span>
+</header>
+
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Pendahuluan</div>
+      <div class="nav-group-items">
+        <a class="nav-link active" href="#intro">Apa yang Akan Dibangun</a>
+        <a class="nav-link" href="#konsep-jwt">Konsep JWT</a>
+        <a class="nav-link" href="#persiapan">Persiapan</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Setup (5 Langkah)</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#langkah-1">1 — Install Package</a>
+        <a class="nav-link" href="#langkah-2">2 — Register Provider</a>
+        <a class="nav-link" href="#langkah-3">3 — Publish &amp; Secret</a>
+        <a class="nav-link" href="#langkah-4">4 — Setup Auth Guard</a>
+        <a class="nav-link" href="#langkah-5">5 — Update User Model</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Implementasi (3 Langkah)</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#langkah-6">6 — JwtAuthController</a>
+        <a class="nav-link" href="#langkah-7">7 — ProdukApiController</a>
+        <a class="nav-link" href="#langkah-8">8 — API Routes</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Testing (2 Langkah)</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#langkah-9">9 — Test di Postman</a>
+        <a class="nav-link" href="#langkah-10">10 — Test Refresh Token</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Penutup</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#error-umum">Error Umum</a>
+        <a class="nav-link" href="#ringkasan">Ringkasan</a>
+      </div>
+    </div>
+
+  </nav>
+
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- MAIN CONTENT -->
+  <main class="main">
+   <div class="main-inner">
+
+    <!-- ==================== PENDAHULUAN ==================== -->
+    <div class="section" id="intro">
+      <h1 class="page-title">Workshop JWT Authentication</h1>
+      <p class="page-lead">
+        Tutorial hands-on implementasi JWT di Laravel &mdash; kamu yang mengetik setiap perintah
+        dan kode, sehingga benar-benar paham apa yang terjadi di setiap langkah.
+      </p>
+
+      <h2>Apa yang Akan Dibangun</h2>
+      <p>Di workshop ini kamu akan menambahkan <strong>JWT Authentication</strong> ke project
+        <code>laravel-crud-app</code> yang sudah punya CRUD produk dan Sanctum.</p>
+
+      <div class="callout">
+        <div class="callout-title">Bagian dari Minggu 1 &mdash; Core Laravel &amp; Database</div>
+        Halaman ini adalah lanjutan dari modul utama
+        <a href="modul-rest-api-sanctum.html"><strong>Minggu 1: CRUD, Eloquent &amp; REST API Sanctum</strong></a>.
+        Selesaikan modul itu dulu sebelum lanjut ke JWT sebagai alternatif autentikasi.
+      </div>
+
+      <p>Hasil akhir: REST API dengan endpoint JWT di prefix <code>/api/v2/</code>:</p>
+      <table>
+        <thead><tr><th>Method</th><th>Endpoint</th><th>Fungsi</th></tr></thead>
+        <tbody>
+          <tr><td><span class="badge badge-green">POST</span></td><td><code>/api/v2/register</code></td><td>Daftar &amp; dapat JWT token</td></tr>
+          <tr><td><span class="badge badge-green">POST</span></td><td><code>/api/v2/login</code></td><td>Login &amp; dapat JWT token</td></tr>
+          <tr><td><span class="badge badge-green">POST</span></td><td><code>/api/v2/logout</code></td><td>Logout &amp; invalidasi token</td></tr>
+          <tr><td><span class="badge badge-green">POST</span></td><td><code>/api/v2/refresh</code></td><td>Perbarui token yang hampir expired</td></tr>
+          <tr><td><span class="badge badge-blue">GET</span></td><td><code>/api/v2/me</code></td><td>Info user yang sedang login</td></tr>
+          <tr><td><span class="badge badge-blue">GET</span></td><td><code>/api/v2/produk</code></td><td>Daftar semua produk</td></tr>
+          <tr><td><span class="badge badge-green">POST</span></td><td><code>/api/v2/produk</code></td><td>Tambah produk baru</td></tr>
+          <tr><td><span class="badge badge-yellow">PUT</span></td><td><code>/api/v2/produk/{id}</code></td><td>Update produk</td></tr>
+          <tr><td><span class="badge badge-red">DELETE</span></td><td><code>/api/v2/produk/{id}</code></td><td>Hapus produk</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Checklist Progress Workshop</h3>
+      <ul class="checklist">
+        <li><span class="box"></span><span class="num">1</span> Install package <code>php-open-source-saver/jwt-auth</code></li>
+        <li><span class="box"></span><span class="num">2</span> Register service provider di <code>bootstrap/providers.php</code></li>
+        <li><span class="box"></span><span class="num">3</span> Publish config &amp; generate JWT secret</li>
+        <li><span class="box"></span><span class="num">4</span> Tambah guard <code>api</code> di <code>config/auth.php</code></li>
+        <li><span class="box"></span><span class="num">5</span> Update <code>User</code> model — implements <code>JWTSubject</code></li>
+        <li><span class="box"></span><span class="num">6</span> Buat <code>JwtAuthController</code></li>
+        <li><span class="box"></span><span class="num">7</span> Buat <code>ProdukApiController</code></li>
+        <li><span class="box"></span><span class="num">8</span> Update <code>routes/api.php</code></li>
+        <li><span class="box"></span><span class="num">9</span> Test login &amp; CRUD di Postman</li>
+        <li><span class="box"></span><span class="num">10</span> Test refresh token</li>
+      </ul>
+    </div>
+
+    <!-- KONSEP JWT -->
+    <div class="section" id="konsep-jwt">
+      <h2>Konsep JWT — Baca Sebelum Mulai</h2>
+
+      <p><strong>JWT (JSON Web Token)</strong> adalah token berbentuk string yang menyimpan informasi
+        user di dalamnya. Berbeda dengan Sanctum yang menyimpan token di database, JWT bersifat
+        <strong>stateless</strong> — server tidak perlu mengecek database untuk memvalidasi token.</p>
+
+      <h3>Struktur Token JWT</h3>
+      <p>Token JWT terdiri dari 3 bagian, dipisah oleh titik (<code>.</code>):</p>
+
+      <div class="jwt-visual">
+        <div class="jwt-part jwt-header-p">eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9</div>
+        <div class="jwt-dot-p">.</div>
+        <div class="jwt-part jwt-payload-p">eyJzdWIiOjEsImV4cCI6MTcyMDAwMzYwMH0</div>
+        <div class="jwt-dot-p">.</div>
+        <div class="jwt-part jwt-sig-p">SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV</div>
+      </div>
+
+      <table>
+        <thead><tr><th>Bagian</th><th>Isi</th><th>Catatan</th></tr></thead>
+        <tbody>
+          <tr><td style="color:#cc0000"><strong>Header</strong></td><td>Algoritma &amp; tipe token</td><td>Base64 encoded, bisa dibaca siapapun</td></tr>
+          <tr><td style="color:#664d03"><strong>Payload</strong></td><td>Data user (id, expiry, dll)</td><td>Base64 encoded, bisa dibaca siapapun</td></tr>
+          <tr><td style="color:#0a3622"><strong>Signature</strong></td><td>Hash kriptografi</td><td>Tidak bisa dipalsukan tanpa <code>JWT_SECRET</code></td></tr>
+        </tbody>
+      </table>
+
+      <div class="concept">
+        <div class="concept-title">&#128161; Kenapa Aman?</div>
+        <p style="margin:0">Meski payload bisa dibaca, payload <strong>tidak bisa diubah</strong>.
+          Kalau payload diubah, signature-nya tidak cocok lagi → server tolak token.
+          Ibaratnya seperti segel pada amplop: orang bisa baca tulisan di luar, tapi kalau segel rusak, tahu sudah dibuka.</p>
+      </div>
+
+      <h3>Alur JWT di Laravel</h3>
+      <pre><code><span class="cm">1. Login  →  Auth::guard('api')->attempt(['email'=>..., 'password'=>...])</span>
+<span class="cm">              ↓ cek password di database</span>
+<span class="cm">              ↓ buat JWT token (signed dengan JWT_SECRET)</span>
+<span class="cm">           ← return token string ke client</span>
+
+<span class="cm">2. Request →  GET /api/v2/produk</span>
+<span class="cm">              Header: Authorization: Bearer eyJhbGci...</span>
+<span class="cm">              ↓ middleware auth:api</span>
+<span class="cm">              ↓ verify signature JWT (TANPA query database)</span>
+<span class="cm">              ↓ extract user ID dari payload</span>
+<span class="cm">              ↓ load user dari database (1 query)</span>
+<span class="cm">           ← return data produk</span></code></pre>
+
+      <div class="concept">
+        <div class="concept-title">&#128208; JWT vs Sanctum — Singkat</div>
+        <table style="margin:8px 0 0">
+          <thead><tr><th>Sanctum</th><th>JWT</th></tr></thead>
+          <tbody>
+            <tr><td>Token disimpan di DB (2 query/request)</td><td>Token tidak disimpan di DB (1 query/request)</td></tr>
+            <tr><td>Revoke mudah: hapus row DB</td><td>Ada fitur refresh token bawaan</td></tr>
+            <tr><td>Cocok: SPA, app sederhana</td><td>Cocok: mobile app, microservices, multi-platform</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- PERSIAPAN -->
+    <div class="section" id="persiapan">
+      <h2>Persiapan</h2>
+      <p>Pastikan kondisi berikut sudah terpenuhi sebelum mulai:</p>
+      <ul>
+        <li>Project <code>laravel-crud-app</code> berjalan (<code>php artisan serve</code>)</li>
+        <li>Database sudah terkoneksi dan migration sudah dijalankan</li>
+        <li>CRUD produk &amp; Sanctum (Minggu 1) sudah berfungsi</li>
+        <li>Postman sudah terinstall</li>
+      </ul>
+
+      <div class="action">
+        <div class="action-label cmd"><span class="icon">&#9654;</span> Jalankan di terminal — cek PHP version</div>
+        <pre><code>php -v</code></pre>
+      </div>
+      <div class="action">
+        <div class="action-label out"><span class="icon">&#10003;</span> Output yang diharapkan</div>
+        <pre><code><span class="out">PHP 8.2.x (atau lebih baru)</span></code></pre>
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- ==================== LANGKAH 1 ==================== -->
+    <div class="section" id="langkah-1">
+      <div class="step-card">
+        <div class="step-header">
+          <div class="step-number">1</div>
+          <div>
+            <div class="step-title">Install Package JWT</div>
+            <div class="step-subtitle">Tambahkan library jwt-auth ke project via Composer</div>
+          </div>
+        </div>
+        <div class="step-body">
+
+          <p>Package yang digunakan adalah <strong>php-open-source-saver/jwt-auth</strong> —
+            fork aktif dari <code>tymon/jwt-auth</code> yang lebih tidak diupdate.</p>
+
+          <div class="action">
+            <div class="action-label cmd"><span class="icon">&#9654;</span> Jalankan di terminal (dalam folder project)</div>
+            <pre><code>composer require php-open-source-saver/jwt-auth</code></pre>
+          </div>
+
+          <div class="action">
+            <div class="action-label out"><span class="icon">&#10003;</span> Output yang diharapkan</div>
+            <pre><code><span class="out">Installing dependencies from lock file...
+  - Installing lcobucci/jwt (5.x.x)
+  - Installing php-open-source-saver/jwt-auth (v2.x.x)
+
+Generating optimized autoload files</span></code></pre>
+          </div>
+
+          <div class="concept">
+            <div class="concept-title">&#128161; Apa yang baru saja terjadi?</div>
+            Composer mendownload package JWT dan dependensinya ke folder <code>vendor/</code>,
+            lalu memperbarui <code>composer.json</code> dan <code>composer.lock</code>.
+          </div>
+
+          <div class="action">
+            <div class="action-label check"><span class="icon">&#10003;</span> Verifikasi berhasil</div>
+            <div class="action-check-body">
+              Cek apakah package sudah masuk:
+              <ul>
+                <li>Buka <code>composer.json</code> → lihat di bagian <code>"require"</code></li>
+                <li>Harus ada: <code>"php-open-source-saver/jwt-auth": "^2.x"</code></li>
+              </ul>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== LANGKAH 2 ==================== -->
+    <div class="section" id="langkah-2">
+      <div class="step-card">
+        <div class="step-header">
+          <div class="step-number">2</div>
+          <div>
+            <div class="step-title">Register Service Provider</div>
+            <div class="step-subtitle">Daftarkan JWT ke dalam framework Laravel 12</div>
+          </div>
+        </div>
+        <div class="step-body">
+
+          <p>Di Laravel 12, package yang tidak auto-discover harus didaftarkan manual.
+            Buka file <code>bootstrap/providers.php</code> dan tambahkan satu baris:</p>
+
+          <div class="action">
+            <div class="action-label edit"><span class="icon">&#9998;</span> Edit file: bootstrap/providers.php</div>
+            <pre><code><span class="op">&lt;?php</span>
+
+<span class="kw">use</span> App\Providers\AppServiceProvider;
+
+<span class="kw">return</span> [
+    <span class="cl">AppServiceProvider</span>::class,
+    <span class="cl">PHPOpenSourceSaver\JWTAuth\Providers\LaravelServiceProvider</span>::class,  <span class="cm">// ← tambahkan baris ini</span>
+];</code></pre>
+          </div>
+
+          <div class="callout warning">
+            <div class="callout-title">Jangan lupa koma setelah AppServiceProvider::class</div>
+            PHP array membutuhkan koma di antara setiap elemen.
+          </div>
+
+          <div class="concept">
+            <div class="concept-title">&#128161; Apa itu Service Provider?</div>
+            Service Provider adalah "bootstrapper" — kode yang dijalankan saat Laravel pertama kali
+            start. JWT Service Provider mendaftarkan driver <code>jwt</code> ke dalam sistem
+            autentikasi Laravel sehingga bisa digunakan di <code>config/auth.php</code>.
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== LANGKAH 3 ==================== -->
+    <div class="section" id="langkah-3">
+      <div class="step-card">
+        <div class="step-header">
+          <div class="step-number">3</div>
+          <div>
+            <div class="step-title">Publish Config &amp; Generate Secret</div>
+            <div class="step-subtitle">Salin file konfigurasi JWT dan buat kunci rahasia</div>
+          </div>
+        </div>
+        <div class="step-body">
+
+          <h4>3a — Publish file konfigurasi</h4>
+          <p>Perintah ini menyalin file <code>config/jwt.php</code> dari vendor ke folder <code>config/</code> project kamu.</p>
+
+          <div class="action">
+            <div class="action-label cmd"><span class="icon">&#9654;</span> Jalankan di terminal</div>
+            <pre><code>php artisan vendor:publish --provider="PHPOpenSourceSaver\JWTAuth\Providers\LaravelServiceProvider"</code></pre>
+          </div>
+
+          <div class="action">
+            <div class="action-label out"><span class="icon">&#10003;</span> Output yang diharapkan</div>
+            <pre><code><span class="out">INFO  Publishing assets.
+Copying file [.../config/config.php] to [.../config/jwt.php]  DONE</span></code></pre>
+          </div>
+
+          <h4>3b — Generate JWT Secret Key</h4>
+          <p>Perintah ini membuat kunci rahasia acak dan menyimpannya ke file <code>.env</code>.</p>
+
+          <div class="action">
+            <div class="action-label cmd"><span class="icon">&#9654;</span> Jalankan di terminal</div>
+            <pre><code>php artisan jwt:secret</code></pre>
+          </div>
+
+          <div class="action">
+            <div class="action-label out"><span class="icon">&#10003;</span> Output yang diharapkan</div>
+            <pre><code><span class="out">jwt-auth secret set successfully.</span></code></pre>
+          </div>
+
+          <div class="action">
+            <div class="action-label check"><span class="icon">&#10003;</span> Verifikasi berhasil</div>
+            <div class="action-check-body">
+              Buka file <code>.env</code> — harus ada baris baru seperti ini:
+              <pre style="margin:8px 0 0"><code>JWT_SECRET=base64:xyzAbcDefGhi...panjang_sekali...</code></pre>
+            </div>
+          </div>
+
+          <div class="callout danger">
+            <div class="callout-title">PENTING — Jangan commit .env ke Git!</div>
+            File <code>.env</code> berisi secret key. Pastikan ada di <code>.gitignore</code>.
+            Jika JWT_SECRET bocor, semua token bisa dipalsukan.
+          </div>
+
+          <div class="concept">
+            <div class="concept-title">&#128161; Apa itu JWT_SECRET?</div>
+            Secret ini digunakan untuk membuat <strong>Signature</strong> (bagian ketiga token JWT).
+            Server menggunakan secret ini untuk memverifikasi bahwa token tidak diubah oleh siapapun.
+            Hanya server yang tahu secret ini.
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== LANGKAH 4 ==================== -->
+    <div class="section" id="langkah-4">
+      <div class="step-card">
+        <div class="step-header">
+          <div class="step-number">4</div>
+          <div>
+            <div class="step-title">Setup Auth Guard</div>
+            <div class="step-subtitle">Tambahkan guard "api" dengan driver JWT ke config/auth.php</div>
+          </div>
+        </div>
+        <div class="step-body">
+
+          <p>Buka <code>config/auth.php</code>, temukan bagian <code>'guards'</code>,
+            dan tambahkan guard <code>api</code>:</p>
+
+          <div class="action">
+            <div class="action-label edit"><span class="icon">&#9998;</span> Edit file: config/auth.php</div>
+            <pre><code><span class="str">'guards'</span> =&gt; [
+    <span class="str">'web'</span> =&gt; [
+        <span class="str">'driver'</span>   =&gt; <span class="str">'session'</span>,
+        <span class="str">'provider'</span> =&gt; <span class="str">'users'</span>,
+    ],
+
+    <span class="str">'api'</span> =&gt; [             <span class="cm">// ← tambahkan blok ini</span>
+        <span class="str">'driver'</span>   =&gt; <span class="str">'jwt'</span>,
+        <span class="str">'provider'</span> =&gt; <span class="str">'users'</span>,
+    ],
+],</code></pre>
+          </div>
+
+          <div class="concept">
+            <div class="concept-title">&#128161; Apa itu Guard?</div>
+            Guard adalah cara Laravel mengautentikasi user. Guard <code>web</code> pakai session
+            (untuk website biasa). Guard <code>api</code> yang baru kamu tambahkan pakai driver
+            <code>jwt</code> — digunakan saat kamu menulis middleware <code>auth:api</code> di routes.
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== LANGKAH 5 ==================== -->
+    <div class="section" id="langkah-5">
+      <div class="step-card">
+        <div class="step-header">
+          <div class="step-number">5</div>
+          <div>
+            <div class="step-title">Update User Model</div>
+            <div class="step-subtitle">Implementasikan interface JWTSubject di app/Models/User.php</div>
+          </div>
+        </div>
+        <div class="step-body">
+
+          <p>JWT perlu mengetahui cara mengidentifikasi user. Kamu harus membuat model
+            <code>User</code> mengimplementasikan interface <code>JWTSubject</code> dengan 2 method.</p>
+
+          <div class="action">
+            <div class="action-label edit"><span class="icon">&#9998;</span> Edit file: app/Models/User.php</div>
+            <pre><code><span class="op">&lt;?php</span>
+
+<span class="kw">namespace</span> App\Models;
+
+<span class="kw">use</span> Database\Factories\UserFactory;
+<span class="kw">use</span> Illuminate\Database\Eloquent\Factories\HasFactory;
+<span class="kw">use</span> Illuminate\Foundation\Auth\User <span class="kw">as</span> Authenticatable;
+<span class="kw">use</span> Illuminate\Notifications\Notifiable;
+<span class="kw">use</span> Laravel\Sanctum\HasApiTokens;
+<span class="kw">use</span> PHPOpenSourceSaver\JWTAuth\Contracts\JWTSubject;  <span class="cm">// ← tambahkan ini</span>
+
+<span class="kw">class</span> <span class="cl">User</span> <span class="kw">extends</span> <span class="cl">Authenticatable</span> <span class="kw">implements</span> <span class="cl">JWTSubject</span>  <span class="cm">// ← tambahkan implements</span>
+{
+    <span class="kw">use</span> HasFactory, Notifiable, HasApiTokens;
+
+    <span class="kw">protected</span> $fillable = [<span class="str">'name'</span>, <span class="str">'email'</span>, <span class="str">'password'</span>];
+
+    <span class="kw">protected</span> $hidden = [<span class="str">'password'</span>, <span class="str">'remember_token'</span>];
+
+    <span class="kw">protected function</span> <span class="fn">casts</span>(): <span class="kw">array</span>
+    {
+        <span class="kw">return</span> [
+            <span class="str">'email_verified_at'</span> =&gt; <span class="str">'datetime'</span>,
+            <span class="str">'password'</span>          =&gt; <span class="str">'hashed'</span>,
+        ];
+    }
+
+    <span class="cm">// ─── Tambahkan 2 method ini di bawah ───────────────────</span>
+
+    <span class="cm">// Mengembalikan identifier unik user (biasanya primary key)</span>
+    <span class="kw">public function</span> <span class="fn">getJWTIdentifier</span>(): <span class="kw">mixed</span>
+    {
+        <span class="kw">return</span> $this-&gt;<span class="fn">getKey</span>();  <span class="cm">// return $this->id</span>
+    }
+
+    <span class="cm">// Data tambahan yang disimpan di payload JWT</span>
+    <span class="kw">public function</span> <span class="fn">getJWTCustomClaims</span>(): <span class="kw">array</span>
+    {
+        <span class="kw">return</span> [];  <span class="cm">// kosong = hanya simpan user ID</span>
+    }
+}</code></pre>
+          </div>
+
+          <div class="concept">
+            <div class="concept-title">&#128161; Apa itu Interface JWTSubject?</div>
+            Interface adalah kontrak — kamu berjanji bahwa class <code>User</code> punya 2 method:
+            <ul style="margin-top:8px">
+              <li><code>getJWTIdentifier()</code> → JWT butuh tahu siapa "subject" token ini (user ID)</li>
+              <li><code>getJWTCustomClaims()</code> → data tambahan yang mau disimpan di payload (bisa kosong)</li>
+            </ul>
+          </div>
+
+          <div class="callout">
+            <div class="callout-title">Mau simpan role di token? Bisa!</div>
+            Ubah <code>getJWTCustomClaims()</code> menjadi:
+            <pre style="margin:8px 0 0"><code><span class="kw">return</span> [<span class="str">'role'</span> =&gt; $this-&gt;role];  <span class="cm">// role bisa dicek tanpa query DB</span></code></pre>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- ==================== LANGKAH 6 ==================== -->
+    <div class="section" id="langkah-6">
+      <div class="step-card">
+        <div class="step-header">
+          <div class="step-number">6</div>
+          <div>
+            <div class="step-title">Buat JwtAuthController</div>
+            <div class="step-subtitle">Controller untuk register, login, logout, refresh, dan me</div>
+          </div>
+        </div>
+        <div class="step-body">
+
+          <h4>6a — Generate file controller</h4>
+          <div class="action">
+            <div class="action-label cmd"><span class="icon">&#9654;</span> Jalankan di terminal</div>
+            <pre><code>php artisan make:controller Api/JwtAuthController</code></pre>
+          </div>
+          <div class="action">
+            <div class="action-label out"><span class="icon">&#10003;</span> Output yang diharapkan</div>
+            <pre><code><span class="out">INFO  Controller [app/Http/Controllers/Api/JwtAuthController.php] created successfully.</span></code></pre>
+          </div>
+
+          <h4>6b — Isi controller</h4>
+          <p>Buka file yang baru dibuat dan ganti seluruh isinya:</p>
+
+          <div class="action">
+            <div class="action-label edit"><span class="icon">&#9998;</span> Edit file: app/Http/Controllers/Api/JwtAuthController.php</div>
+            <pre><code><span class="op">&lt;?php</span>
+
+<span class="kw">namespace</span> App\Http\Controllers\Api;
+
+<span class="kw">use</span> App\Http\Controllers\Controller;
+<span class="kw">use</span> App\Models\User;
+<span class="kw">use</span> Illuminate\Http\JsonResponse;
+<span class="kw">use</span> Illuminate\Http\Request;
+<span class="kw">use</span> Illuminate\Support\Facades\Auth;
+<span class="kw">use</span> Illuminate\Support\Facades\Hash;
+
+<span class="kw">class</span> <span class="cl">JwtAuthController</span> <span class="kw">extends</span> <span class="cl">Controller</span>
+{
+    <span class="cm">// POST /api/v2/register</span>
+    <span class="kw">public function</span> <span class="fn">register</span>(<span class="cl">Request</span> $request): <span class="cl">JsonResponse</span>
+    {
+        $request-&gt;<span class="fn">validate</span>([
+            <span class="str">'name'</span>     =&gt; <span class="str">'required|string|max:255'</span>,
+            <span class="str">'email'</span>    =&gt; <span class="str">'required|email|unique:users'</span>,
+            <span class="str">'password'</span> =&gt; <span class="str">'required|min:8|confirmed'</span>,
+        ]);
+
+        $user = <span class="cl">User</span>::<span class="fn">create</span>([
+            <span class="str">'name'</span>     =&gt; $request-&gt;name,
+            <span class="str">'email'</span>    =&gt; $request-&gt;email,
+            <span class="str">'password'</span> =&gt; <span class="cl">Hash</span>::<span class="fn">make</span>($request-&gt;password),
+        ]);
+
+        <span class="cm">// Langsung login setelah register → dapat JWT token</span>
+        $token = <span class="cl">Auth</span>::<span class="fn">guard</span>(<span class="str">'api'</span>)-&gt;<span class="fn">login</span>($user);
+
+        <span class="kw">return</span> $this-&gt;<span class="fn">respondWithToken</span>($token, $user, <span class="nb">201</span>);
+    }
+
+    <span class="cm">// POST /api/v2/login</span>
+    <span class="kw">public function</span> <span class="fn">login</span>(<span class="cl">Request</span> $request): <span class="cl">JsonResponse</span>
+    {
+        <span class="cm">// attempt() otomatis cek email + Hash::check password</span>
+        <span class="cm">// return token jika berhasil, false jika gagal</span>
+        $credentials = $request-&gt;<span class="fn">validate</span>([
+            <span class="str">'email'</span>    =&gt; <span class="str">'required|email'</span>,
+            <span class="str">'password'</span> =&gt; <span class="str">'required'</span>,
+        ]);
+
+        <span class="kw">if</span> (! $token = <span class="cl">Auth</span>::<span class="fn">guard</span>(<span class="str">'api'</span>)-&gt;<span class="fn">attempt</span>($credentials)) {
+            <span class="kw">return</span> <span class="fn">response</span>()-&gt;<span class="fn">json</span>([
+                <span class="str">'success'</span> =&gt; <span class="kw">false</span>,
+                <span class="str">'message'</span> =&gt; <span class="str">'Email atau password salah.'</span>,
+            ], <span class="nb">401</span>);
+        }
+
+        <span class="kw">return</span> $this-&gt;<span class="fn">respondWithToken</span>($token, <span class="cl">Auth</span>::<span class="fn">guard</span>(<span class="str">'api'</span>)-&gt;<span class="fn">user</span>());
+    }
+
+    <span class="cm">// POST /api/v2/logout</span>
+    <span class="kw">public function</span> <span class="fn">logout</span>(): <span class="cl">JsonResponse</span>
+    {
+        <span class="cm">// Masukkan token ke blacklist → tidak bisa dipakai lagi</span>
+        <span class="cl">Auth</span>::<span class="fn">guard</span>(<span class="str">'api'</span>)-&gt;<span class="fn">logout</span>();
+
+        <span class="kw">return</span> <span class="fn">response</span>()-&gt;<span class="fn">json</span>([
+            <span class="str">'success'</span> =&gt; <span class="kw">true</span>,
+            <span class="str">'message'</span> =&gt; <span class="str">'Berhasil logout.'</span>,
+        ]);
+    }
+
+    <span class="cm">// POST /api/v2/refresh</span>
+    <span class="kw">public function</span> <span class="fn">refresh</span>(): <span class="cl">JsonResponse</span>
+    {
+        <span class="cm">// Invalidasi token lama → buat token baru dengan TTL fresh</span>
+        $token = <span class="cl">Auth</span>::<span class="fn">guard</span>(<span class="str">'api'</span>)-&gt;<span class="fn">refresh</span>();
+
+        <span class="kw">return</span> $this-&gt;<span class="fn">respondWithToken</span>($token, <span class="cl">Auth</span>::<span class="fn">guard</span>(<span class="str">'api'</span>)-&gt;<span class="fn">user</span>());
+    }
+
+    <span class="cm">// GET /api/v2/me</span>
+    <span class="kw">public function</span> <span class="fn">me</span>(): <span class="cl">JsonResponse</span>
+    {
+        <span class="kw">return</span> <span class="fn">response</span>()-&gt;<span class="fn">json</span>([
+            <span class="str">'success'</span> =&gt; <span class="kw">true</span>,
+            <span class="str">'data'</span>    =&gt; <span class="cl">Auth</span>::<span class="fn">guard</span>(<span class="str">'api'</span>)-&gt;<span class="fn">user</span>(),
+        ]);
+    }
+
+    <span class="cm">// Helper — format response token yang konsisten</span>
+    <span class="kw">protected function</span> <span class="fn">respondWithToken</span>(string $token, $user, <span class="kw">int</span> $status = <span class="nb">200</span>): <span class="cl">JsonResponse</span>
+    {
+        <span class="kw">return</span> <span class="fn">response</span>()-&gt;<span class="fn">json</span>([
+            <span class="str">'success'</span>    =&gt; <span class="kw">true</span>,
+            <span class="str">'token'</span>      =&gt; $token,
+            <span class="str">'token_type'</span> =&gt; <span class="str">'bearer'</span>,
+            <span class="str">'expires_in'</span> =&gt; <span class="cl">Auth</span>::<span class="fn">guard</span>(<span class="str">'api'</span>)-&gt;<span class="fn">factory</span>()-&gt;<span class="fn">getTTL</span>() * <span class="nb">60</span>,
+            <span class="str">'user'</span>       =&gt; $user,
+        ], $status);
+    }
+}</code></pre>
+          </div>
+
+          <div class="concept">
+            <div class="concept-title">&#128161; Perbedaan attempt() vs Sanctum</div>
+            <table style="margin:8px 0 0;font-size:13px">
+              <tr><th>Sanctum</th><th>JWT</th></tr>
+              <tr><td>Cek password manual dengan <code>Hash::check()</code></td><td><code>attempt()</code> otomatis cek password</td></tr>
+              <tr><td><code>$user->createToken('name')->plainTextToken</code></td><td><code>Auth::guard('api')->attempt($credentials)</code></td></tr>
+              <tr><td>Token disimpan ke tabel <code>personal_access_tokens</code></td><td>Token tidak disimpan ke database</td></tr>
+            </table>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== LANGKAH 7 ==================== -->
+    <div class="section" id="langkah-7">
+      <div class="step-card">
+        <div class="step-header">
+          <div class="step-number">7</div>
+          <div>
+            <div class="step-title">Buat ProdukApiController</div>
+            <div class="step-subtitle">Controller CRUD produk yang return JSON (khusus API)</div>
+          </div>
+        </div>
+        <div class="step-body">
+
+          <h4>7a — Generate file controller</h4>
+          <div class="action">
+            <div class="action-label cmd"><span class="icon">&#9654;</span> Jalankan di terminal</div>
+            <pre><code>php artisan make:controller Api/ProdukApiController --api</code></pre>
+          </div>
+
+          <p>Flag <code>--api</code> membuat controller dengan 5 method (tanpa <code>create</code>
+            dan <code>edit</code> karena API tidak punya form HTML).</p>
+
+          <h4>7b — Isi controller</h4>
+          <div class="action">
+            <div class="action-label edit"><span class="icon">&#9998;</span> Edit file: app/Http/Controllers/Api/ProdukApiController.php</div>
+            <pre><code><span class="op">&lt;?php</span>
+
+<span class="kw">namespace</span> App\Http\Controllers\Api;
+
+<span class="kw">use</span> App\Http\Controllers\Controller;
+<span class="kw">use</span> App\Models\Produk;
+<span class="kw">use</span> Illuminate\Http\JsonResponse;
+<span class="kw">use</span> Illuminate\Http\Request;
+
+<span class="kw">class</span> <span class="cl">ProdukApiController</span> <span class="kw">extends</span> <span class="cl">Controller</span>
+{
+    <span class="cm">// GET /api/v2/produk</span>
+    <span class="kw">public function</span> <span class="fn">index</span>(): <span class="cl">JsonResponse</span>
+    {
+        <span class="kw">return</span> <span class="fn">response</span>()-&gt;<span class="fn">json</span>([
+            <span class="str">'success'</span> =&gt; <span class="kw">true</span>,
+            <span class="str">'data'</span>    =&gt; <span class="cl">Produk</span>::<span class="fn">all</span>(),
+        ]);
+    }
+
+    <span class="cm">// GET /api/v2/produk/{id}</span>
+    <span class="kw">public function</span> <span class="fn">show</span>(<span class="cl">Produk</span> $produk): <span class="cl">JsonResponse</span>
+    {
+        <span class="kw">return</span> <span class="fn">response</span>()-&gt;<span class="fn">json</span>([<span class="str">'success'</span> =&gt; <span class="kw">true</span>, <span class="str">'data'</span> =&gt; $produk]);
+    }
+
+    <span class="cm">// POST /api/v2/produk</span>
+    <span class="kw">public function</span> <span class="fn">store</span>(<span class="cl">Request</span> $request): <span class="cl">JsonResponse</span>
+    {
+        $validated = $request-&gt;<span class="fn">validate</span>([
+            <span class="str">'nama_produk'</span> =&gt; <span class="str">'required|string|max:255'</span>,
+            <span class="str">'harga'</span>       =&gt; <span class="str">'required|numeric|min:1'</span>,
+            <span class="str">'stok'</span>        =&gt; <span class="str">'required|integer|min:0'</span>,
+            <span class="str">'deskripsi'</span>   =&gt; <span class="str">'nullable|string|max:500'</span>,
+        ]);
+
+        $produk = <span class="cl">Produk</span>::<span class="fn">create</span>($validated);
+
+        <span class="kw">return</span> <span class="fn">response</span>()-&gt;<span class="fn">json</span>([
+            <span class="str">'success'</span> =&gt; <span class="kw">true</span>,
+            <span class="str">'data'</span>    =&gt; $produk,
+        ], <span class="nb">201</span>);
+    }
+
+    <span class="cm">// PUT /api/v2/produk/{id}</span>
+    <span class="kw">public function</span> <span class="fn">update</span>(<span class="cl">Request</span> $request, <span class="cl">Produk</span> $produk): <span class="cl">JsonResponse</span>
+    {
+        $validated = $request-&gt;<span class="fn">validate</span>([
+            <span class="str">'nama_produk'</span> =&gt; <span class="str">'required|string|max:255'</span>,
+            <span class="str">'harga'</span>       =&gt; <span class="str">'required|numeric|min:1'</span>,
+            <span class="str">'stok'</span>        =&gt; <span class="str">'required|integer|min:0'</span>,
+            <span class="str">'deskripsi'</span>   =&gt; <span class="str">'nullable|string|max:500'</span>,
+        ]);
+
+        $produk-&gt;<span class="fn">update</span>($validated);
+
+        <span class="kw">return</span> <span class="fn">response</span>()-&gt;<span class="fn">json</span>([<span class="str">'success'</span> =&gt; <span class="kw">true</span>, <span class="str">'data'</span> =&gt; $produk]);
+    }
+
+    <span class="cm">// DELETE /api/v2/produk/{id}</span>
+    <span class="kw">public function</span> <span class="fn">destroy</span>(<span class="cl">Produk</span> $produk): <span class="cl">JsonResponse</span>
+    {
+        $produk-&gt;<span class="fn">delete</span>();
+
+        <span class="kw">return</span> <span class="fn">response</span>()-&gt;<span class="fn">json</span>([
+            <span class="str">'success'</span> =&gt; <span class="kw">true</span>,
+            <span class="str">'message'</span> =&gt; <span class="str">'Produk berhasil dihapus.'</span>,
+        ]);
+    }
+}</code></pre>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== LANGKAH 8 ==================== -->
+    <div class="section" id="langkah-8">
+      <div class="step-card">
+        <div class="step-header">
+          <div class="step-number">8</div>
+          <div>
+            <div class="step-title">Update API Routes</div>
+            <div class="step-subtitle">Daftarkan semua endpoint JWT di routes/api.php</div>
+          </div>
+        </div>
+        <div class="step-body">
+
+          <div class="action">
+            <div class="action-label edit"><span class="icon">&#9998;</span> Edit file: routes/api.php</div>
+            <pre><code><span class="op">&lt;?php</span>
+
+<span class="kw">use</span> App\Http\Controllers\Api\JwtAuthController;
+<span class="kw">use</span> App\Http\Controllers\Api\ProdukApiController;
+<span class="kw">use</span> App\Http\Controllers\AuthController;
+<span class="kw">use</span> Illuminate\Support\Facades\Route;
+
+<span class="cm">// ── Sanctum (v1) ─────────────────────────────────────────</span>
+<span class="cl">Route</span>::<span class="fn">prefix</span>(<span class="str">'v1'</span>)-&gt;<span class="fn">group</span>(<span class="kw">function</span> () {
+    <span class="cl">Route</span>::<span class="fn">post</span>(<span class="str">'/register'</span>, [<span class="cl">AuthController</span>::class, <span class="str">'register'</span>]);
+    <span class="cl">Route</span>::<span class="fn">post</span>(<span class="str">'/login'</span>,    [<span class="cl">AuthController</span>::class, <span class="str">'login'</span>]);
+
+    <span class="cl">Route</span>::<span class="fn">middleware</span>(<span class="str">'auth:sanctum'</span>)-&gt;<span class="fn">group</span>(<span class="kw">function</span> () {
+        <span class="cl">Route</span>::<span class="fn">post</span>(<span class="str">'/logout'</span>, [<span class="cl">AuthController</span>::class, <span class="str">'logout'</span>]);
+        <span class="cl">Route</span>::<span class="fn">get</span>(<span class="str">'/me'</span>,      [<span class="cl">AuthController</span>::class, <span class="str">'me'</span>]);
+    });
+});
+
+<span class="cm">// ── JWT (v2) ──────────────────────────────────────────────</span>
+<span class="cl">Route</span>::<span class="fn">prefix</span>(<span class="str">'v2'</span>)-&gt;<span class="fn">group</span>(<span class="kw">function</span> () {
+
+    <span class="cm">// Public — tidak perlu token</span>
+    <span class="cl">Route</span>::<span class="fn">post</span>(<span class="str">'/register'</span>, [<span class="cl">JwtAuthController</span>::class, <span class="str">'register'</span>]);
+    <span class="cl">Route</span>::<span class="fn">post</span>(<span class="str">'/login'</span>,    [<span class="cl">JwtAuthController</span>::class, <span class="str">'login'</span>]);
+
+    <span class="cm">// Protected — harus kirim JWT token di header</span>
+    <span class="cl">Route</span>::<span class="fn">middleware</span>(<span class="str">'auth:api'</span>)-&gt;<span class="fn">group</span>(<span class="kw">function</span> () {
+        <span class="cl">Route</span>::<span class="fn">post</span>(<span class="str">'/logout'</span>,  [<span class="cl">JwtAuthController</span>::class, <span class="str">'logout'</span>]);
+        <span class="cl">Route</span>::<span class="fn">post</span>(<span class="str">'/refresh'</span>, [<span class="cl">JwtAuthController</span>::class, <span class="str">'refresh'</span>]);
+        <span class="cl">Route</span>::<span class="fn">get</span>(<span class="str">'/me'</span>,       [<span class="cl">JwtAuthController</span>::class, <span class="str">'me'</span>]);
+
+        <span class="cl">Route</span>::<span class="fn">apiResource</span>(<span class="str">'produk'</span>, <span class="cl">ProdukApiController</span>::class);
+    });
+});</code></pre>
+          </div>
+
+          <h4>Verifikasi Routes</h4>
+          <div class="action">
+            <div class="action-label cmd"><span class="icon">&#9654;</span> Jalankan di terminal — cek semua routes terdaftar</div>
+            <pre><code>php artisan route:list --path=api</code></pre>
+          </div>
+
+          <div class="action">
+            <div class="action-label out"><span class="icon">&#10003;</span> Output yang diharapkan — harus ada 14 routes</div>
+            <pre><code><span class="out">POST  api/v1/login     AuthController@login
+POST  api/v1/logout    AuthController@logout
+GET   api/v1/me        AuthController@me
+POST  api/v1/register  AuthController@register
+POST  api/v2/login     Api\JwtAuthController@login
+POST  api/v2/logout    Api\JwtAuthController@logout
+GET   api/v2/me        Api\JwtAuthController@me
+GET   api/v2/produk    Api\ProdukApiController@index
+POST  api/v2/produk    Api\ProdukApiController@store
+...dan seterusnya</span></code></pre>
+          </div>
+
+          <div class="concept">
+            <div class="concept-title">&#128161; Perbedaan middleware auth:sanctum vs auth:api</div>
+            <ul>
+              <li><code>auth:sanctum</code> → pakai guard <code>sanctum</code> → cek token di tabel database</li>
+              <li><code>auth:api</code> → pakai guard <code>api</code> yang kita set driver <code>jwt</code> → verifikasi signature JWT</li>
+            </ul>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- ==================== LANGKAH 9 ==================== -->
+    <div class="section" id="langkah-9">
+      <div class="step-card">
+        <div class="step-header">
+          <div class="step-number">9</div>
+          <div>
+            <div class="step-title">Test di Postman</div>
+            <div class="step-subtitle">Jalankan server lalu test setiap endpoint JWT</div>
+          </div>
+        </div>
+        <div class="step-body">
+
+          <h4>9a — Jalankan server</h4>
+          <div class="action">
+            <div class="action-label cmd"><span class="icon">&#9654;</span> Terminal</div>
+            <pre><code>php artisan serve</code></pre>
+          </div>
+
+          <h4>9b — Setup Postman</h4>
+          <ol>
+            <li>Buat <strong>Collection</strong> baru → nama: <code>Laravel JWT API</code></li>
+            <li>Buat <strong>Environment</strong> baru → nama: <code>JWT Local</code><br>
+              Tambahkan variable: <code>base_url</code> = <code>http://localhost:8000</code> dan <code>jwt_token</code> = (kosong)</li>
+            <li>Aktifkan environment <code>JWT Local</code> di pojok kanan atas Postman</li>
+          </ol>
+
+          <h4>9c — Test Register</h4>
+          <p>Buat request baru di collection:</p>
+          <ul>
+            <li>Method: <code>POST</code></li>
+            <li>URL: <code>{{base_url}}/api/v2/register</code></li>
+            <li>Tab <strong>Headers</strong>: tambah <code>Accept: application/json</code></li>
+            <li>Tab <strong>Body</strong> → raw → JSON:</li>
+          </ul>
+          <pre><code>{
+  <span class="key">"name"</span>: <span class="str">"Budi Santoso"</span>,
+  <span class="key">"email"</span>: <span class="str">"budi@example.com"</span>,
+  <span class="key">"password"</span>: <span class="str">"password123"</span>,
+  <span class="key">"password_confirmation"</span>: <span class="str">"password123"</span>
+}</code></pre>
+
+          <p>Klik <strong>Send</strong> → harusnya dapat response:</p>
+          <pre><code>{
+  <span class="key">"success"</span>: <span class="kw">true</span>,
+  <span class="key">"token"</span>: <span class="str">"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."</span>,
+  <span class="key">"token_type"</span>: <span class="str">"bearer"</span>,
+  <span class="key">"expires_in"</span>: <span class="nb">3600</span>,
+  <span class="key">"user"</span>: { <span class="key">"id"</span>: <span class="nb">1</span>, <span class="key">"name"</span>: <span class="str">"Budi Santoso"</span>, ... }
+}</code></pre>
+
+          <h4>9d — Auto-save Token (Postman Script)</h4>
+          <p>Di request Login/Register, tab <strong>Scripts</strong> → <strong>Post-response</strong>, tambahkan:</p>
+          <pre><code><span class="kw">const</span> response = pm.response.<span class="fn">json</span>();
+<span class="kw">if</span> (response.token) {
+    pm.environment.<span class="fn">set</span>(<span class="str">"jwt_token"</span>, response.token);
+    console.<span class="fn">log</span>(<span class="str">"Token tersimpan:"</span>, response.token);
+}</code></pre>
+          <p>Sekarang setiap kali login, token otomatis tersimpan ke variable <code>jwt_token</code>.</p>
+
+          <h4>9e — Test Endpoint Protected</h4>
+          <p>Buat request GET <code>{{base_url}}/api/v2/produk</code>:</p>
+          <ul>
+            <li>Tab <strong>Headers</strong>: <code>Accept: application/json</code></li>
+            <li>Tab <strong>Auth</strong> → Type: <strong>Bearer Token</strong> → Token: <code>{{jwt_token}}</code></li>
+          </ul>
+
+          <h4>9f — Urutan Testing Lengkap</h4>
+          <table>
+            <thead><tr><th>#</th><th>Request</th><th>Yang Diperiksa</th></tr></thead>
+            <tbody>
+              <tr><td>1</td><td><span class="badge badge-green">POST</span> <code>/api/v2/register</code></td><td>Status 201, ada <code>token</code> di response</td></tr>
+              <tr><td>2</td><td><span class="badge badge-green">POST</span> <code>/api/v2/login</code></td><td>Status 200, token baru tersimpan</td></tr>
+              <tr><td>3</td><td><span class="badge badge-blue">GET</span> <code>/api/v2/me</code></td><td>Status 200, data user muncul</td></tr>
+              <tr><td>4</td><td><span class="badge badge-blue">GET</span> <code>/api/v2/produk</code></td><td>Status 200, array produk</td></tr>
+              <tr><td>5</td><td><span class="badge badge-green">POST</span> <code>/api/v2/produk</code></td><td>Status 201, produk tersimpan</td></tr>
+              <tr><td>6</td><td><span class="badge badge-yellow">PUT</span> <code>/api/v2/produk/1</code></td><td>Status 200, data terupdate</td></tr>
+              <tr><td>7</td><td><span class="badge badge-red">DELETE</span> <code>/api/v2/produk/1</code></td><td>Status 200, <code>success: true</code></td></tr>
+              <tr><td>8</td><td><span class="badge badge-green">POST</span> <code>/api/v2/logout</code></td><td>Status 200, "Berhasil logout"</td></tr>
+              <tr><td>9</td><td><span class="badge badge-blue">GET</span> <code>/api/v2/me</code> (pakai token lama)</td><td>Status 401, "Token is invalid"</td></tr>
+            </tbody>
+          </table>
+
+          <div class="callout success">
+            <div class="callout-title">Langkah 9 selesai jika...</div>
+            Kamu berhasil register, login, mengakses produk dengan token, dan setelah logout
+            token tidak bisa dipakai lagi (status 401).
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== LANGKAH 10 ==================== -->
+    <div class="section" id="langkah-10">
+      <div class="step-card">
+        <div class="step-header">
+          <div class="step-number">10</div>
+          <div>
+            <div class="step-title">Test Refresh Token</div>
+            <div class="step-subtitle">Fitur unik JWT — perbarui token tanpa harus login ulang</div>
+          </div>
+        </div>
+        <div class="step-body">
+
+          <p>Refresh token adalah fitur yang membedakan JWT dari Sanctum.
+            Kamu bisa memperbarui token yang hampir expired <em>tanpa meminta user login ulang</em>.</p>
+
+          <div class="concept">
+            <div class="concept-title">&#128161; Konsep TTL (Time To Live)</div>
+            <ul>
+              <li><strong>TTL</strong> = berapa lama access token berlaku (default: <strong>60 menit</strong>)</li>
+              <li><strong>Refresh TTL</strong> = berapa lama kamu masih bisa refresh (default: <strong>2 minggu</strong>)</li>
+              <li>Selama masih dalam refresh TTL, kamu bisa terus refresh token meski TTL habis</li>
+            </ul>
+          </div>
+
+          <h4>Test Refresh di Postman</h4>
+          <ol>
+            <li>Login dulu → dapat token A</li>
+            <li>Buat request: <code>POST {{base_url}}/api/v2/refresh</code></li>
+            <li>Kirim token A di header: <code>Authorization: Bearer {{jwt_token}}</code></li>
+            <li>Klik Send → dapat <strong>token B baru</strong></li>
+            <li>Coba pakai token A lagi → <strong>401 Token is invalid</strong> (token lama di-blacklist)</li>
+            <li>Pakai token B → berhasil ✓</li>
+          </ol>
+
+          <h4>Ubah TTL untuk Eksperimen</h4>
+          <p>Buka <code>.env</code>, tambahkan:</p>
+          <pre><code>JWT_TTL=1        <span class="cm"># token expired setelah 1 menit (untuk coba-coba)</span>
+JWT_REFRESH_TTL=20160  <span class="cm"># refresh window: 2 minggu</span></code></pre>
+
+          <div class="action">
+            <div class="action-label cmd"><span class="icon">&#9654;</span> Clear config cache setelah ubah .env</div>
+            <pre><code>php artisan config:clear</code></pre>
+          </div>
+
+          <p>Sekarang coba: login → tunggu 1 menit → akses produk → dapat <code>Token has expired</code>
+            → kirim ke <code>/refresh</code> → dapat token baru → akses produk lagi → berhasil!</p>
+
+          <div class="callout success">
+            <div class="callout-title">Workshop Selesai!</div>
+            Kamu sudah mengimplementasikan JWT Authentication dari awal sampai selesai.
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- ERROR UMUM -->
+    <div class="section" id="error-umum">
+      <h2>Error Umum &amp; Cara Mengatasi</h2>
+      <table>
+        <thead><tr><th>Pesan Error</th><th>Penyebab</th><th>Solusi</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><code>There are no commands defined in the "jwt" namespace</code></td>
+            <td>Service provider belum didaftarkan</td>
+            <td>Tambahkan <code>LaravelServiceProvider</code> di <code>bootstrap/providers.php</code> (Langkah 2)</td>
+          </tr>
+          <tr>
+            <td><code>Class "JWTSubject" not found</code></td>
+            <td>Namespace import salah atau provider belum terdaftar</td>
+            <td>Pastikan <code>use PHPOpenSourceSaver\JWTAuth\Contracts\JWTSubject;</code> ada di User model</td>
+          </tr>
+          <tr>
+            <td><code>Token has expired</code> (401)</td>
+            <td>TTL sudah habis</td>
+            <td>Kirim request ke <code>POST /api/v2/refresh</code> dengan token lama</td>
+          </tr>
+          <tr>
+            <td><code>Token is invalid</code> (401)</td>
+            <td>Token sudah di-blacklist (setelah logout atau refresh)</td>
+            <td>Login ulang untuk mendapat token baru</td>
+          </tr>
+          <tr>
+            <td><code>Token not provided</code> (401)</td>
+            <td>Header Authorization tidak dikirim</td>
+            <td>Tambahkan header <code>Authorization: Bearer {token}</code></td>
+          </tr>
+          <tr>
+            <td>Response HTML bukan JSON</td>
+            <td>Header <code>Accept</code> tidak dikirim</td>
+            <td>Tambahkan header <code>Accept: application/json</code> di semua request</td>
+          </tr>
+          <tr>
+            <td><code>Unauthenticated</code> meski token benar</td>
+            <td>Guard <code>api</code> belum dikonfigurasi</td>
+            <td>Cek <code>config/auth.php</code> → harus ada guard <code>api</code> dengan driver <code>jwt</code> (Langkah 4)</td>
+          </tr>
+          <tr>
+            <td>Token tidak berubah setelah <code>jwt:secret</code></td>
+            <td>Config cache masih menyimpan secret lama</td>
+            <td>Jalankan <code>php artisan config:clear</code></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- RINGKASAN -->
+    <div class="section" id="ringkasan">
+      <h2>Ringkasan &mdash; JWT Authentication</h2>
+      <p>Berikut semua file yang kamu buat atau ubah di workshop ini:</p>
+
+      <table>
+        <thead><tr><th>File</th><th>Aksi</th><th>Yang Ditambahkan</th></tr></thead>
+        <tbody>
+          <tr><td><code>bootstrap/providers.php</code></td><td>Edit</td><td>Register <code>LaravelServiceProvider</code> JWT</td></tr>
+          <tr><td><code>config/jwt.php</code></td><td>Baru (publish)</td><td>Konfigurasi TTL, algoritma, blacklist</td></tr>
+          <tr><td><code>.env</code></td><td>Edit (auto)</td><td><code>JWT_SECRET</code> digenerate otomatis</td></tr>
+          <tr><td><code>config/auth.php</code></td><td>Edit</td><td>Guard <code>api</code> dengan driver <code>jwt</code></td></tr>
+          <tr><td><code>app/Models/User.php</code></td><td>Edit</td><td><code>implements JWTSubject</code> + 2 method</td></tr>
+          <tr><td><code>app/Http/Controllers/Api/JwtAuthController.php</code></td><td>Baru</td><td>register, login, logout, refresh, me</td></tr>
+          <tr><td><code>app/Http/Controllers/Api/ProdukApiController.php</code></td><td>Baru</td><td>CRUD produk return JSON</td></tr>
+          <tr><td><code>routes/api.php</code></td><td>Edit</td><td>v1 (Sanctum) + v2 (JWT) routes</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Konsep yang Sudah Kamu Kuasai</h3>
+      <table>
+        <thead><tr><th>Konsep</th><th>Implementasinya</th></tr></thead>
+        <tbody>
+          <tr><td>Stateless Authentication</td><td>JWT tidak simpan session di server</td></tr>
+          <tr><td>Token Structure</td><td>Header + Payload + Signature</td></tr>
+          <tr><td>Service Provider</td><td>Mendaftarkan driver ke Laravel</td></tr>
+          <tr><td>Auth Guard</td><td>Guard <code>api</code> dengan driver <code>jwt</code></td></tr>
+          <tr><td>Interface</td><td><code>JWTSubject</code> kontrak di User model</td></tr>
+          <tr><td>attempt() method</td><td>Cek kredensial + buat token sekaligus</td></tr>
+          <tr><td>Refresh Token</td><td>Perbarui token tanpa login ulang</td></tr>
+          <tr><td>API Versioning</td><td>Prefix <code>/v1</code> (Sanctum) dan <code>/v2</code> (JWT)</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout success">
+        <div class="callout-title">&#127942; Selamat, Minggu 1 (Lanjutan JWT) Selesai!</div>
+        <p>Kamu sudah membangun JWT Authentication dari nol. Skill ini dipakai di hampir semua
+          perusahaan yang punya REST API untuk mobile app atau sistem yang diakses dari banyak platform.</p>
+        <p style="margin-bottom:0">Tantangan berikutnya: coba implementasi <strong>Role-Based Access Control (RBAC)</strong>
+          — simpan <code>role</code> user di custom claims JWT, lalu buat middleware yang
+          mengecek role sebelum mengizinkan akses ke endpoint tertentu. Lanjutkan ke
+          <a href="index.html">roadmap</a> untuk Minggu 3 (Testing &amp; Optimasi).</p>
+      </div>
+    </div>
+
+   </div>
+  </main>
+
+  <!-- TOC -->
+  <aside class="toc">
+    <div class="toc-title">Daftar Isi</div>
+
+    <a href="#intro">Pendahuluan</a>
+    <a class="sub" href="#intro">Yang Akan Dibangun</a>
+    <a class="sub" href="#konsep-jwt">Konsep JWT</a>
+    <a class="sub" href="#persiapan">Persiapan</a>
+
+    <a href="#langkah-1" style="margin-top:10px;display:block">Setup</a>
+    <a class="sub" href="#langkah-1">1 — Install Package</a>
+    <a class="sub" href="#langkah-2">2 — Register Provider</a>
+    <a class="sub" href="#langkah-3">3 — Publish &amp; Secret</a>
+    <a class="sub" href="#langkah-4">4 — Auth Guard</a>
+    <a class="sub" href="#langkah-5">5 — User Model</a>
+
+    <a href="#langkah-6" style="margin-top:10px;display:block">Implementasi</a>
+    <a class="sub" href="#langkah-6">6 — JwtAuthController</a>
+    <a class="sub" href="#langkah-7">7 — ProdukApiController</a>
+    <a class="sub" href="#langkah-8">8 — API Routes</a>
+
+    <a href="#langkah-9" style="margin-top:10px;display:block">Testing</a>
+    <a class="sub" href="#langkah-9">9 — Test Postman</a>
+    <a class="sub" href="#langkah-10">10 — Refresh Token</a>
+
+    <a href="#error-umum" style="margin-top:10px;display:block">Penutup</a>
+    <a class="sub" href="#error-umum">Error Umum</a>
+    <a class="sub" href="#ringkasan">Ringkasan</a>
+  </aside>
+
+</div>
+
+<script>
+  document.querySelectorAll('.nav-group-title').forEach(title => {
+    title.addEventListener('click', () => title.parentElement.classList.toggle('open'));
+  });
+
+  // Laravel nav bar — sub navbar (dropdown) toggle
+  document.querySelectorAll('.laravel-nav-trigger').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      btn.closest('.laravel-nav').classList.toggle('open');
+    });
+  });
+  document.addEventListener('click', (e) => {
+    document.querySelectorAll('.laravel-nav.open').forEach(nav => {
+      if (!nav.contains(e.target)) nav.classList.remove('open');
+    });
+  });
+
+  // Mobile sidebar toggle
+  const sidebarEl = document.querySelector('.sidebar');
+  const overlayEl = document.getElementById('sidebarOverlay');
+  const menuToggleBtn = document.getElementById('menuToggle');
+  function closeSidebar() {
+    sidebarEl.classList.remove('open');
+    overlayEl.classList.remove('show');
+  }
+  if (menuToggleBtn) {
+    menuToggleBtn.addEventListener('click', () => {
+      sidebarEl.classList.toggle('open');
+      overlayEl.classList.toggle('show');
+    });
+  }
+  if (overlayEl) overlayEl.addEventListener('click', closeSidebar);
+  document.querySelectorAll('.sidebar a').forEach(a => a.addEventListener('click', closeSidebar));
+
+  // Wrap tables so they scroll horizontally instead of breaking layout on small screens
+  document.querySelectorAll('.main table').forEach(t => {
+    if (t.closest('.table-scroll')) return;
+    const wrap = document.createElement('div');
+    wrap.className = 'table-scroll';
+    t.parentNode.insertBefore(wrap, t);
+    wrap.appendChild(t);
+  });
+
+  // Copy button on every code block
+  function copyText(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+      return navigator.clipboard.writeText(text);
+    }
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); } catch (err) {}
+    document.body.removeChild(ta);
+    return Promise.resolve();
+  }
+  document.querySelectorAll('pre').forEach(pre => {
+    const codeEl = pre.querySelector('code');
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'copy-btn';
+    btn.textContent = 'Copy';
+    btn.setAttribute('aria-label', 'Salin kode');
+    btn.addEventListener('click', () => {
+      const text = (codeEl ? codeEl.textContent : pre.textContent).trim();
+      copyText(text).then(() => {
+        btn.textContent = 'Copied!';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = 'Copy';
+          btn.classList.remove('copied');
+        }, 1500);
+      });
+    });
+    pre.appendChild(btn);
+  });
+
+  const sections = document.querySelectorAll('.section[id]');
+  const navLinks = document.querySelectorAll('.nav-link');
+  const tocLinks = document.querySelectorAll('.toc a');
+
+  function setActive(links, id) {
+    links.forEach(l => l.classList.toggle('active', l.getAttribute('href') === '#' + id));
+  }
+
+  new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        setActive(navLinks, entry.target.id);
+        setActive(tocLinks, entry.target.id);
+        const a = document.querySelector('.nav-link.active');
+        if (a) { const g = a.closest('.nav-group'); if (g) g.classList.add('open'); }
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' }).observe
+    ? (() => { const o = new IntersectionObserver(cb => cb.forEach(e => e.isIntersecting && (setActive(navLinks,e.target.id),setActive(tocLinks,e.target.id))), { rootMargin:'-20% 0px -70% 0px' }); sections.forEach(s=>o.observe(s)); })()
+    : null;
+</script>
+
+</body>
+</html>

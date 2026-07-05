@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Modul Observability &mdash; Laravel</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --sidebar-w: 260px;
+      --toc-w: 220px;
+      --accent: #0d6efd;
+      --accent-light: #e7f1ff;
+      --text: #212529;
+      --muted: #6c757d;
+      --border: #dee2e6;
+      --code-bg: #f8f9fa;
+      --code-border: #e9ecef;
+      --sidebar-bg: #f8f9fa;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 15px;
+      line-height: 1.7;
+      color: var(--text);
+      background: #fff;
+    }
+
+    /* TOP BAR */
+    .topbar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      height: 56px;
+      background: #fff;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; padding: 0 24px;
+      gap: 16px;
+    }
+    .topbar-brand {
+      font-weight: 700; font-size: 17px; color: var(--accent);
+      text-decoration: none;
+    }
+    .topbar-version {
+      background: var(--accent-light); color: var(--accent);
+      font-size: 11px; font-weight: 600; padding: 2px 8px;
+      border-radius: 20px;
+    }
+    .topbar-subtitle {
+      color: var(--muted); font-size: 13px; margin-left: auto;
+    }
+    /* LARAVEL NAV BAR + SUB NAVBAR (dropdown by Fokus Utama) */
+    .laravel-nav { position: relative; margin-left: 24px; }
+    .laravel-nav-trigger {
+      display: flex; align-items: center; gap: 6px;
+      background: none; border: 1px solid var(--border); border-radius: 6px;
+      padding: 6px 14px; font-size: 13px; font-weight: 600;
+      color: var(--text); cursor: pointer; font-family: inherit;
+    }
+    .laravel-nav-trigger:hover { background: var(--accent-light); color: var(--accent); border-color: var(--accent); }
+    .laravel-nav.open .laravel-nav-trigger { background: var(--accent-light); color: var(--accent); border-color: var(--accent); }
+    .laravel-nav-trigger .caret { font-size: 10px; transition: transform .15s; }
+    .laravel-nav.open .laravel-nav-trigger .caret { transform: rotate(180deg); }
+    .laravel-nav-menu {
+      display: none;
+      position: absolute; top: calc(100% + 8px); left: 0;
+      width: 360px; max-height: 75vh; overflow-y: auto;
+      background: #fff; border: 1px solid var(--border); border-radius: 10px;
+      box-shadow: 0 12px 32px rgba(0,0,0,.14);
+      padding: 8px; z-index: 200;
+    }
+    .laravel-nav.open .laravel-nav-menu { display: block; }
+    .laravel-nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 12px; border-radius: 8px;
+      text-decoration: none; color: var(--text); font-size: 13px;
+    }
+    .laravel-nav-item:hover { background: var(--accent-light); }
+    .laravel-nav-item.active { background: var(--accent-light); color: var(--accent); font-weight: 600; }
+    .laravel-nav-item .lni-week {
+      flex-shrink: 0; width: 34px; font-size: 11px; font-weight: 700; color: var(--muted);
+    }
+    .laravel-nav-item.active .lni-week { color: var(--accent); }
+    .laravel-nav-item .lni-title { flex: 1; }
+    .laravel-nav-item .lni-soon {
+      flex-shrink: 0; font-size: 10px; font-weight: 700; text-transform: uppercase;
+      background: #e9ecef; color: #495057; padding: 2px 6px; border-radius: 20px;
+    }
+
+    /* LAYOUT */
+    .layout {
+      display: flex;
+      padding-top: 56px;
+      min-height: 100vh;
+    }
+
+    /* LEFT SIDEBAR */
+    .sidebar {
+      width: var(--sidebar-w);
+      flex-shrink: 0;
+      position: fixed;
+      top: 56px; bottom: 0; left: 0;
+      overflow-y: auto;
+      background: var(--sidebar-bg);
+      border-right: 1px solid var(--border);
+      padding: 20px 0 40px;
+    }
+    .sidebar::-webkit-scrollbar { width: 4px; }
+    .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    .nav-group { margin-bottom: 4px; }
+    .nav-group-title {
+      display: flex; align-items: center; gap: 8px;
+      padding: 6px 20px;
+      font-size: 12px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .06em;
+      color: var(--text);
+      cursor: pointer;
+      user-select: none;
+    }
+    .nav-group-title .arrow {
+      display: inline-block; transition: transform .2s;
+      font-size: 10px; color: var(--muted);
+    }
+    .nav-group.open .arrow { transform: rotate(90deg); }
+    .nav-group-items { display: none; }
+    .nav-group.open .nav-group-items { display: block; }
+
+    .nav-link {
+      display: block;
+      padding: 5px 20px 5px 36px;
+      font-size: 14px; color: var(--muted);
+      text-decoration: none;
+      border-left: 3px solid transparent;
+      transition: color .15s, border-color .15s, background .15s;
+    }
+    .nav-link:hover { color: var(--accent); background: var(--accent-light); }
+    .nav-link.active {
+      color: var(--accent); font-weight: 600;
+      border-left-color: var(--accent);
+      background: var(--accent-light);
+    }
+
+    /* MAIN CONTENT */
+    .main {
+      margin-left: var(--sidebar-w);
+      margin-right: var(--toc-w);
+      flex: 1;
+      min-width: 0;
+    }
+    .main-inner {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 48px 56px;
+    }
+
+    /* MOBILE MENU TOGGLE */
+    .menu-toggle {
+      display: none;
+      align-items: center; justify-content: center;
+      width: 32px; height: 32px; flex-shrink: 0;
+      border: 1px solid var(--border); border-radius: 6px;
+      background: none; cursor: pointer; font-size: 16px;
+      color: var(--text);
+    }
+    .menu-toggle:hover { background: var(--accent-light); color: var(--accent); border-color: var(--accent); }
+    .sidebar-overlay {
+      display: none;
+      position: fixed; inset: 56px 0 0 0;
+      background: rgba(0,0,0,.35);
+      z-index: 95;
+    }
+    .sidebar-overlay.show { display: block; }
+
+    /* TABLES THAT OVERFLOW SCROLL INSTEAD OF BREAKING LAYOUT */
+    .table-scroll { overflow-x: auto; margin: 16px 0; -webkit-overflow-scrolling: touch; }
+    .table-scroll table { margin: 0; }
+
+    /* RESPONSIVE */
+    @media (max-width: 1300px) {
+      .toc { display: none; }
+      .main { margin-right: 0; }
+    }
+    @media (max-width: 900px) {
+      .menu-toggle { display: inline-flex; }
+      .topbar-subtitle { display: none; }
+      .sidebar {
+        transform: translateX(-100%);
+        transition: transform .2s ease;
+        z-index: 96;
+        box-shadow: 4px 0 24px rgba(0,0,0,.15);
+      }
+      .sidebar.open { transform: translateX(0); }
+      .main { margin-left: 0; }
+      .main-inner { padding: 32px 24px; }
+      .laravel-nav-menu { width: min(360px, 88vw); }
+    }
+    @media (max-width: 560px) {
+      .topbar { padding: 0 14px; gap: 10px; }
+      .topbar-brand { font-size: 15px; }
+      .topbar-version { display: none; }
+      .page-title { font-size: 28px; }
+      .page-lead { font-size: 15px; padding-bottom: 24px; margin-bottom: 28px; }
+      .main-inner { padding: 24px 16px; }
+      h2 { font-size: 21px; }
+    }
+
+    /* RIGHT TOC */
+    .toc {
+      width: var(--toc-w);
+      flex-shrink: 0;
+      position: fixed;
+      top: 56px; bottom: 0; right: 0;
+      overflow-y: auto;
+      padding: 24px 16px;
+      border-left: 1px solid var(--border);
+    }
+    .toc-title {
+      font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .06em;
+      color: var(--muted); margin-bottom: 12px;
+    }
+    .toc a {
+      display: block; font-size: 13px; color: var(--muted);
+      text-decoration: none; padding: 3px 0 3px 8px;
+      border-left: 2px solid transparent;
+      transition: color .15s, border-color .15s;
+    }
+    .toc a:hover, .toc a.active {
+      color: var(--accent); border-left-color: var(--accent);
+    }
+    .toc a.sub { padding-left: 20px; font-size: 12px; }
+
+    /* CONTENT TYPOGRAPHY */
+    .page-title {
+      font-size: 40px; font-weight: 700;
+      margin-bottom: 12px; line-height: 1.2;
+    }
+    .page-lead {
+      font-size: 18px; color: var(--muted);
+      margin-bottom: 40px; border-bottom: 1px solid var(--border);
+      padding-bottom: 32px;
+    }
+    .section { margin-bottom: 56px; }
+    h2 {
+      font-size: 26px; font-weight: 700;
+      margin-bottom: 16px; padding-top: 8px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 8px;
+    }
+    h3 {
+      font-size: 18px; font-weight: 600;
+      margin: 24px 0 10px;
+    }
+    h4 {
+      font-size: 15px; font-weight: 600;
+      margin: 18px 0 8px; color: var(--text);
+    }
+    p { margin-bottom: 14px; }
+    ul, ol { padding-left: 24px; margin-bottom: 14px; }
+    li { margin-bottom: 6px; }
+    strong { font-weight: 600; }
+
+    /* CODE */
+    code {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      font-size: 13px;
+      background: var(--code-bg);
+      border: 1px solid var(--code-border);
+      padding: 1px 5px; border-radius: 4px;
+      color: #d63384;
+    }
+    pre {
+      background: #1e1e2e;
+      border-radius: 8px;
+      padding: 20px 24px;
+      overflow-x: auto;
+      margin: 16px 0 20px;
+      position: relative;
+    }
+    pre code {
+      background: none; border: none; padding: 0;
+      color: #cdd6f4; font-size: 13px; line-height: 1.65;
+    }
+    .pre-label {
+      font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .06em;
+      color: #6c757d; margin-bottom: 6px;
+    }
+
+    /* COPY BUTTON */
+    .copy-btn {
+      position: absolute; top: 10px; right: 10px;
+      display: flex; align-items: center; gap: 5px;
+      background: rgba(255,255,255,.08);
+      color: #cdd6f4;
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 6px;
+      font-family: inherit; font-size: 11px; font-weight: 600;
+      padding: 4px 9px;
+      cursor: pointer;
+      opacity: .55;
+      transition: opacity .15s, background .15s;
+    }
+    pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
+    .copy-btn:hover { background: rgba(255,255,255,.2); }
+    .copy-btn.copied {
+      opacity: 1; background: #198754; border-color: #198754; color: #fff;
+    }
+    @media (max-width: 900px) { .copy-btn { opacity: .8; } }
+    @media print { .copy-btn { display: none; } }
+
+    .kw  { color: #cba6f7; }
+    .fn  { color: #89b4fa; }
+    .str { color: #a6e3a1; }
+    .cm  { color: #6c7086; }
+    .cl  { color: #fab387; }
+    .nb  { color: #89dceb; }
+    .op  { color: #89dceb; }
+
+    /* BADGES / CALLOUTS */
+    .badge {
+      display: inline-block; font-size: 11px; font-weight: 700;
+      padding: 2px 8px; border-radius: 4px;
+      text-transform: uppercase; letter-spacing: .04em;
+    }
+    .badge-blue  { background: #cfe2ff; color: #084298; }
+    .badge-green { background: #d1e7dd; color: #0a3622; }
+    .badge-red   { background: #f8d7da; color: #842029; }
+    .badge-yellow{ background: #fff3cd; color: #664d03; }
+    .badge-purple{ background: #e8d5fb; color: #5e2d91; }
+    .badge-orange{ background: #ffe5d0; color: #8a3800; }
+
+    .callout {
+      border-left: 4px solid var(--accent);
+      background: var(--accent-light);
+      padding: 14px 18px; border-radius: 0 6px 6px 0;
+      margin: 16px 0;
+    }
+    .callout.warning { border-left-color: #ffc107; background: #fff3cd; }
+    .callout.danger  { border-left-color: #dc3545; background: #f8d7da; }
+    .callout.success { border-left-color: #198754; background: #d1e7dd; }
+    .callout-title { font-weight: 700; margin-bottom: 4px; font-size: 13px; }
+
+    /* TABLE */
+    table {
+      width: 100%; border-collapse: collapse;
+      margin: 16px 0; font-size: 14px;
+    }
+    th {
+      background: var(--code-bg); font-weight: 600;
+      padding: 10px 14px; border: 1px solid var(--border);
+      text-align: left;
+    }
+    td { padding: 9px 14px; border: 1px solid var(--border); }
+    tr:nth-child(even) td { background: #fafafa; }
+
+    /* STEP LIST */
+    .step-list { list-style: none; padding: 0; }
+    .step-list li { display: flex; gap: 16px; margin-bottom: 20px; }
+    .step-num {
+      flex-shrink: 0;
+      width: 28px; height: 28px;
+      background: var(--accent); color: #fff;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700; margin-top: 2px;
+    }
+    .step-body h4 { margin-top: 0; }
+
+    /* DIVIDER */
+    .divider { border: none; border-top: 2px solid var(--border); margin: 56px 0; }
+
+    /* PRINT */
+    @media print {
+      .topbar, .sidebar, .toc { display: none; }
+      .main { margin: 0; }
+      .main-inner { padding: 24px 32px; max-width: 100%; }
+      pre { background: #f8f9fa !important; }
+      pre code { color: #212529 !important; }
+      .kw,.fn,.str,.cm,.cl,.nb,.op { color: #212529 !important; }
+      h2 { page-break-before: always; }
+      .section:first-of-type h2 { page-break-before: avoid; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<header class="topbar">
+  <button class="menu-toggle" id="menuToggle" aria-label="Buka menu">&#9776;</button>
+  <a class="topbar-brand" href="index.html">Laravel Docs</a>
+  <span class="topbar-version">v12.x</span>
+  <div class="laravel-nav" id="laravelNav">
+    <button class="laravel-nav-trigger" type="button">Laravel <span class="caret">&#9662;</span></button>
+    <div class="laravel-nav-menu">
+      <a class="laravel-nav-item" href="modul-rest-api-sanctum.html"><span class="lni-week">M1</span><span class="lni-title">Core Laravel &amp; Database</span></a>
+      <a class="laravel-nav-item" href="modul-arsitektur-otorisasi.html"><span class="lni-week">M2</span><span class="lni-title">Arsitektur Kode &amp; Otorisasi</span></a>
+      <a class="laravel-nav-item" href="modul-optimasi.html"><span class="lni-week">M3</span><span class="lni-title">Testing &amp; Optimasi</span></a>
+      <a class="laravel-nav-item active" href="modul-observability.html"><span class="lni-week">M4</span><span class="lni-title">Observability</span></a>
+      <a class="laravel-nav-item" href="modul-api-design-realtime.html"><span class="lni-week">M5</span><span class="lni-title">API Design &amp; Real-time</span></a>
+      <a class="laravel-nav-item" href="modul-security-deepdive.html"><span class="lni-week">M6</span><span class="lni-title">Security Deep-dive</span></a>
+      <a class="laravel-nav-item" href="modul-capstone-ecommerce.html"><span class="lni-week">M7</span><span class="lni-title">Capstone Project: E-commerce</span></a>
+      <a class="laravel-nav-item" href="modul-containerization-deployment.html"><span class="lni-week">M8</span><span class="lni-title">Containerization &amp; Deployment</span></a>
+      <a class="laravel-nav-item" href="modul-cloud-infrastructure.html"><span class="lni-week">M9</span><span class="lni-title">Cloud &amp; Infrastructure</span></a>
+      <a class="laravel-nav-item" href="modul-skala-besar.html"><span class="lni-week">M10</span><span class="lni-title">Skala Besar</span></a>
+      <a class="laravel-nav-item" href="modul-system-design.html"><span class="lni-week">M11</span><span class="lni-title">System Design</span></a>
+    </div>
+  </div>
+  <span class="topbar-subtitle">Telescope, Logging (Monolog), Sentry &mdash; Modul Belajar</span>
+</header>
+
+<div class="layout">
+
+  <!-- LEFT SIDEBAR -->
+  <nav class="sidebar">
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Laravel Telescope</div>
+      <div class="nav-group-items">
+        <a class="nav-link active" href="#telescope-intro">Pengenalan Telescope</a>
+        <a class="nav-link" href="#telescope-install">Install &amp; Setup</a>
+        <a class="nav-link" href="#telescope-watchers">Watcher &amp; Fitur</a>
+        <a class="nav-link" href="#telescope-auth">Proteksi Production</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Logging (Monolog)</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#logging-intro">Level &amp; Channel Log</a>
+        <a class="nav-link" href="#logging-channel">Custom Channel</a>
+        <a class="nav-link" href="#logging-context">Contextual Logging</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Error Tracking (Sentry)</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#sentry-intro">Kenapa Butuh Sentry</a>
+        <a class="nav-link" href="#sentry-install">Install &amp; Konfigurasi</a>
+        <a class="nav-link" href="#sentry-context">Custom Context</a>
+        <a class="nav-link" href="#sentry-test">Testing Sentry</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Ringkasan</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#ringkasan">Ringkasan Minggu 4</a>
+      </div>
+    </div>
+
+  </nav>
+
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- MAIN CONTENT -->
+  <main class="main">
+   <div class="main-inner">
+
+    <!-- ========== TELESCOPE ========== -->
+    <div class="section" id="telescope-intro">
+      <h1 class="page-title">Observability</h1>
+      <p class="page-lead">
+        Kalau Minggu 1&ndash;3 fokus membangun fitur, Minggu 4 ini fokus supaya kamu bisa
+        <strong>melihat apa yang sebenarnya terjadi</strong> di dalam aplikasi &mdash; request
+        apa yang lambat, query apa yang berulang, dan error apa yang muncul di production,
+        sebelum user yang mengeluh duluan.
+      </p>
+
+      <h2>Pengenalan Laravel Telescope</h2>
+      <p>
+        <strong>Telescope</strong> adalah dashboard debugging bawaan Laravel untuk environment
+        <em>local/development</em>. Ia merekam semua request, query, job, exception, mail, dan
+        cache yang terjadi, lalu menampilkannya di halaman web yang mudah dibaca.
+      </p>
+      <table>
+        <thead><tr><th>Tanpa Telescope</th><th>Dengan Telescope</th></tr></thead>
+        <tbody>
+          <tr><td>Debug pakai <code>dd()</code> / <code>dump()</code> manual</td><td>Semua request &amp; query terekam otomatis</td></tr>
+          <tr><td>Cek query lambat lewat <code>DB::listen()</code> manual</td><td>Durasi tiap query langsung terlihat di dashboard</td></tr>
+          <tr><td>Sulit lacak job queue yang gagal</td><td>Tab khusus untuk failed jobs + stack trace</td></tr>
+          <tr><td>Tidak tahu email apa saja yang terkirim saat testing</td><td>Preview isi email yang dikirim, tanpa perlu inbox asli</td></tr>
+        </tbody>
+      </table>
+      <div class="callout">
+        <div class="callout-title">Analogi</div>
+        Kalau <code>storage/logs/laravel.log</code> itu seperti catatan tulisan tangan yang
+        harus dibaca baris per baris, Telescope itu seperti dashboard mobil &mdash; semua
+        indikator penting (request, query, error) tampil visual dan bisa difilter.
+      </div>
+    </div>
+
+    <!-- INSTALL TELESCOPE -->
+    <div class="section" id="telescope-install">
+      <h2>Install &amp; Setup Telescope</h2>
+
+      <h3>Langkah 1 &mdash; Install via Composer</h3>
+      <div class="pre-label">Terminal</div>
+      <pre><code>composer require laravel/telescope --dev</code></pre>
+      <p>Pakai flag <code>--dev</code> karena Telescope hanya dibutuhkan saat development,
+        tidak perlu ikut ter-install di server production.</p>
+
+      <h3>Langkah 2 &mdash; Install Assets &amp; Migration</h3>
+      <div class="pre-label">Terminal</div>
+      <pre><code>php artisan telescope:install
+php artisan migrate</code></pre>
+      <p>Perintah ini membuat <code>config/telescope.php</code> dan tabel-tabel
+        <code>telescope_entries</code> untuk menyimpan data yang direkam.</p>
+
+      <h3>Langkah 3 &mdash; Hanya Aktif di Local</h3>
+      <p>Supaya Telescope tidak jalan di production (dan tidak membebani server), daftarkan
+        provider-nya secara kondisional.</p>
+      <div class="pre-label">app/Providers/AppServiceProvider.php</div>
+      <pre><code><span class="kw">public function</span> <span class="fn">register</span>(): <span class="kw">void</span>
+{
+    <span class="kw">if</span> ($this-&gt;app-&gt;<span class="fn">environment</span>(<span class="str">'local'</span>)) {
+        $this-&gt;app-&gt;<span class="fn">register</span>(\Laravel\Telescope\TelescopeServiceProvider::class);
+        $this-&gt;app-&gt;<span class="fn">register</span>(\App\Providers\TelescopeServiceProvider::class);
+    }
+}</code></pre>
+
+      <h3>Langkah 4 &mdash; Akses Dashboard</h3>
+      <div class="pre-label">Terminal</div>
+      <pre><code>php artisan serve</code></pre>
+      <p>Buka <code>http://127.0.0.1:8000/telescope</code> &mdash; dashboard langsung
+        menampilkan aktivitas aplikasi begitu ada request masuk.</p>
+    </div>
+
+    <!-- WATCHERS -->
+    <div class="section" id="telescope-watchers">
+      <h2>Watcher &amp; Fitur Telescope</h2>
+      <p>Telescope merekam data lewat "watcher" &mdash; tiap jenis data punya watcher-nya
+        sendiri, bisa diaktif/nonaktifkan di <code>config/telescope.php</code>.</p>
+
+      <table>
+        <thead><tr><th>Watcher</th><th>Merekam</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Requests</strong></td><td>Setiap HTTP request: method, URL, status, durasi, payload</td></tr>
+          <tr><td><strong>Queries</strong></td><td>Semua query SQL beserta durasi &mdash; berguna untuk cari N+1</td></tr>
+          <tr><td><strong>Jobs</strong></td><td>Job queue: status, waktu proses, exception jika gagal</td></tr>
+          <tr><td><strong>Exceptions</strong></td><td>Semua exception yang terlempar beserta stack trace lengkap</td></tr>
+          <tr><td><strong>Mail</strong></td><td>Preview email yang dikirim, tanpa perlu SMTP asli</td></tr>
+          <tr><td><strong>Cache</strong></td><td>Cache hit/miss &mdash; berguna verifikasi <code>Cache::remember()</code> bekerja</td></tr>
+          <tr><td><strong>Scheduled Task</strong></td><td>Riwayat command terjadwal (<code>schedule:run</code>)</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Contoh Kasus &mdash; Cari Query Lambat</h3>
+      <p>Buka tab <strong>Queries</strong>, urutkan berdasarkan durasi. Query yang butuh
+        &gt;100ms biasanya kandidat untuk ditambahkan index (lihat kembali
+        <a href="modul-rest-api-sanctum.html#indexing">Indexing Dasar di Minggu 1</a>) atau
+        di-cache dengan Redis (lihat <a href="modul-optimasi.html#redis-cache">Minggu 3</a>).</p>
+
+      <h3>Batasi Data yang Disimpan</h3>
+      <div class="pre-label">config/telescope.php</div>
+      <pre><code><span class="str">'watchers'</span> => [
+    Watchers\QueryWatcher::class => [
+        <span class="str">'enabled'</span> => <span class="kw">true</span>,
+        <span class="str">'slow'</span>    => <span class="nb">50</span>,   <span class="cm">// tandai query > 50ms sebagai lambat</span>
+    ],
+],</code></pre>
+      <div class="callout warning">
+        <div class="callout-title">Jangan Biarkan Tabel Membengkak</div>
+        Telescope menyimpan semua data di database. Jadwalkan pembersihan data lama secara
+        rutin: <code>php artisan telescope:prune --hours=48</code> (bisa ditaruh di
+        <code>routes/console.php</code> sebagai scheduled task).
+      </div>
+    </div>
+
+    <!-- PROTEKSI PRODUCTION -->
+    <div class="section" id="telescope-auth">
+      <h2>Proteksi Akses Dashboard (Production)</h2>
+      <p>
+        Kalau Telescope tetap ingin diaktifkan di staging/production (misal untuk debug
+        masalah spesifik), wajib dibatasi hanya untuk user tertentu.
+      </p>
+      <div class="pre-label">app/Providers/TelescopeServiceProvider.php</div>
+      <pre><code><span class="kw">protected function</span> <span class="fn">gate</span>(): <span class="kw">void</span>
+{
+    Gate::<span class="fn">define</span>(<span class="str">'viewTelescope'</span>, <span class="kw">function</span> ($user) {
+        <span class="kw">return</span> $user-&gt;<span class="fn">hasRole</span>(<span class="str">'admin'</span>);   <span class="cm">// pakai Spatie Roles dari Minggu 2</span>
+    });
+}</code></pre>
+      <div class="callout danger">
+        <div class="callout-title">Jangan Pernah Publik di Production</div>
+        Dashboard Telescope menampilkan payload request, query SQL, bahkan isi email &mdash;
+        termasuk data sensitif. Kalau tidak yakin butuh di production, cukup aktifkan di
+        <code>local</code> saja seperti langkah sebelumnya.
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- ========== LOGGING ========== -->
+    <div class="section" id="logging-intro">
+      <h2>Logging &mdash; Level &amp; Channel</h2>
+      <p>
+        Laravel menggunakan <strong>Monolog</strong> di balik layar untuk semua penulisan log.
+        Berbeda dengan Telescope (untuk development), log adalah catatan permanen yang wajib
+        ada juga di production.
+      </p>
+
+      <h3>Level Log (dari Paling Ringan ke Paling Kritis)</h3>
+      <table>
+        <thead><tr><th>Level</th><th>Kapan Dipakai</th></tr></thead>
+        <tbody>
+          <tr><td><code>debug</code></td><td>Detail teknis untuk development, tidak perlu di production</td></tr>
+          <tr><td><code>info</code></td><td>Kejadian normal yang informatif, misal "user login"</td></tr>
+          <tr><td><code>notice</code></td><td>Kejadian normal tapi cukup penting untuk dicatat</td></tr>
+          <tr><td><code>warning</code></td><td>Sesuatu yang tidak ideal tapi belum error</td></tr>
+          <tr><td><code>error</code></td><td>Error yang perlu diperhatikan tapi aplikasi masih jalan</td></tr>
+          <tr><td><code>critical</code></td><td>Bagian penting aplikasi tidak berfungsi</td></tr>
+          <tr><td><code>alert</code> / <code>emergency</code></td><td>Butuh tindakan segera &mdash; aplikasi/sistem down</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Menulis Log</h3>
+      <pre><code><span class="kw">use</span> Illuminate\Support\Facades\Log;
+
+Log::<span class="fn">info</span>(<span class="str">'Produk baru dibuat'</span>, [<span class="str">'produk_id'</span> => $produk->id]);
+Log::<span class="fn">warning</span>(<span class="str">'Stok produk hampir habis'</span>, [<span class="str">'produk_id'</span> => $produk->id, <span class="str">'stok'</span> => $produk->stok]);
+Log::<span class="fn">error</span>(<span class="str">'Gagal memproses pembayaran'</span>, [<span class="str">'order_id'</span> => $order->id, <span class="str">'exception'</span> => $e->getMessage()]);</code></pre>
+
+      <h3>Konfigurasi Channel</h3>
+      <div class="pre-label">config/logging.php</div>
+      <pre><code><span class="str">'default'</span> => env(<span class="str">'LOG_CHANNEL'</span>, <span class="str">'stack'</span>),
+
+<span class="str">'channels'</span> => [
+    <span class="str">'stack'</span> => [
+        <span class="str">'driver'</span>            => <span class="str">'stack'</span>,
+        <span class="str">'channels'</span>          => [<span class="str">'single'</span>],
+        <span class="str">'ignore_exceptions'</span> => <span class="kw">false</span>,
+    ],
+    <span class="str">'daily'</span> => [
+        <span class="str">'driver'</span> => <span class="str">'daily'</span>,
+        <span class="str">'path'</span>   => storage_path(<span class="str">'logs/laravel.log'</span>),
+        <span class="str">'level'</span>  => env(<span class="str">'LOG_LEVEL'</span>, <span class="str">'debug'</span>),
+        <span class="str">'days'</span>   => <span class="nb">14</span>,   <span class="cm">// simpan 14 hari, hapus otomatis setelahnya</span>
+    ],
+],</code></pre>
+      <table>
+        <thead><tr><th>Driver</th><th>Karakteristik</th></tr></thead>
+        <tbody>
+          <tr><td><code>single</code></td><td>Semua log masuk ke satu file <code>laravel.log</code> yang terus membesar</td></tr>
+          <tr><td><code>daily</code></td><td>File log baru setiap hari, otomatis hapus file lama (direkomendasikan)</td></tr>
+          <tr><td><code>slack</code></td><td>Kirim log (biasanya level <code>critical</code> ke atas) ke channel Slack</td></tr>
+          <tr><td><code>stack</code></td><td>Gabungkan beberapa channel sekaligus, misal <code>daily</code> + <code>slack</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- CUSTOM CHANNEL -->
+    <div class="section" id="logging-channel">
+      <h2>Custom Log Channel</h2>
+      <p>Kadang butuh log terpisah untuk domain tertentu, misal semua aktivitas pembayaran
+        dicatat di file sendiri supaya mudah diaudit.</p>
+      <div class="pre-label">config/logging.php</div>
+      <pre><code><span class="str">'channels'</span> => [
+    <span class="cm">// ... channel bawaan ...</span>
+
+    <span class="str">'payment'</span> => [
+        <span class="str">'driver'</span> => <span class="str">'daily'</span>,
+        <span class="str">'path'</span>   => storage_path(<span class="str">'logs/payment.log'</span>),
+        <span class="str">'level'</span>  => <span class="str">'info'</span>,
+        <span class="str">'days'</span>   => <span class="nb">90</span>,   <span class="cm">// log pembayaran disimpan lebih lama</span>
+    ],
+],</code></pre>
+      <div class="pre-label">Penggunaan</div>
+      <pre><code>Log::<span class="fn">channel</span>(<span class="str">'payment'</span>)-&gt;<span class="fn">info</span>(<span class="str">'Pembayaran berhasil'</span>, [
+    <span class="str">'order_id'</span> => $order->id,
+    <span class="str">'amount'</span>   => $order->total,
+]);</code></pre>
+      <div class="callout success">
+        <div class="callout-title">Kapan Bikin Channel Terpisah?</div>
+        Kalau sebuah domain (pembayaran, keamanan, integrasi API eksternal) butuh retensi log
+        berbeda atau perlu diaudit terpisah dari log umum aplikasi.
+      </div>
+    </div>
+
+    <!-- CONTEXTUAL LOGGING -->
+    <div class="section" id="logging-context">
+      <h2>Contextual Logging</h2>
+      <p>
+        Log tanpa konteks (cuma teks) sulit ditelusuri saat production ramai. Selalu sertakan
+        data pendukung supaya satu baris log cukup untuk memahami kejadian, tanpa perlu
+        menebak-nebak.
+      </p>
+      <div class="pre-label">Kurang Baik</div>
+      <pre><code>Log::<span class="fn">error</span>(<span class="str">'Checkout gagal'</span>);</code></pre>
+      <div class="pre-label">Lebih Baik &mdash; Ada Konteks</div>
+      <pre><code>Log::<span class="fn">error</span>(<span class="str">'Checkout gagal'</span>, [
+    <span class="str">'user_id'</span>    => $user->id,
+    <span class="str">'order_id'</span>   => $order->id,
+    <span class="str">'total'</span>      => $order->total,
+    <span class="str">'payment_method'</span> => $order->payment_method,
+    <span class="str">'exception'</span>  => $e->getMessage(),
+]);</code></pre>
+
+      <h3>Context Global untuk Semua Log</h3>
+      <p>Sejak Laravel 11, ada helper <code>Context</code> untuk menempelkan data ke semua log
+        dalam satu request, tanpa perlu mengulang di setiap pemanggilan <code>Log::</code>.</p>
+      <div class="pre-label">app/Http/Middleware/AddRequestContext.php</div>
+      <pre><code><span class="kw">use</span> Illuminate\Support\Facades\Context;
+
+<span class="kw">public function</span> <span class="fn">handle</span>($request, Closure $next)
+{
+    Context::<span class="fn">add</span>(<span class="str">'request_id'</span>, (<span class="kw">string</span>) Str::uuid());
+    Context::<span class="fn">add</span>(<span class="str">'user_id'</span>, $request-&gt;<span class="fn">user</span>()?-&gt;id);
+
+    <span class="kw">return</span> $next($request);
+}</code></pre>
+      <p>Setelah ini, setiap <code>Log::info(...)</code> di request yang sama otomatis
+        menyertakan <code>request_id</code> dan <code>user_id</code> &mdash; sangat membantu
+        melacak satu alur request penuh di log yang ramai.</p>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- ========== SENTRY ========== -->
+    <div class="section" id="sentry-intro">
+      <h2>Kenapa Butuh Sentry?</h2>
+      <p>
+        File log dan Telescope bagus untuk debugging manual, tapi keduanya
+        <strong>pasif</strong> &mdash; kamu harus buka dan cek sendiri. <strong>Sentry</strong>
+        adalah layanan error tracking yang <strong>aktif memberi tahu</strong> begitu ada
+        exception baru di production, lengkap dengan stack trace, user yang terdampak, dan
+        seberapa sering error itu terjadi.
+      </p>
+      <table>
+        <thead><tr><th>Aspek</th><th><code>storage/logs/laravel.log</code></th><th>Sentry</th></tr></thead>
+        <tbody>
+          <tr><td>Notifikasi real-time</td><td>Tidak ada</td><td>Email/Slack begitu error terjadi</td></tr>
+          <tr><td>Grouping error serupa</td><td>Manual, baca satu-satu</td><td>Otomatis dikelompokkan per jenis error</td></tr>
+          <tr><td>Riwayat frekuensi</td><td>Sulit dilihat</td><td>Grafik kapan &amp; seberapa sering terjadi</td></tr>
+          <tr><td>Konteks user &amp; environment</td><td>Manual ditambahkan</td><td>Otomatis terekam (browser, OS, request)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- INSTALL SENTRY -->
+    <div class="section" id="sentry-install">
+      <h2>Install &amp; Konfigurasi Sentry</h2>
+
+      <h3>Langkah 1 &mdash; Buat Project di Sentry</h3>
+      <p>Daftar di <code>sentry.io</code>, buat project baru dengan platform "Laravel", lalu
+        salin <strong>DSN</strong> (alamat unik project kamu).</p>
+
+      <h3>Langkah 2 &mdash; Install Package</h3>
+      <div class="pre-label">Terminal</div>
+      <pre><code>composer require sentry/sentry-laravel
+php artisan sentry:publish --dsn=YOUR_DSN_HERE</code></pre>
+
+      <h3>Langkah 3 &mdash; Konfigurasi .env</h3>
+      <div class="pre-label">.env</div>
+      <pre><code>SENTRY_LARAVEL_DSN=https://xxxxxxxx@o000000.ingest.sentry.io/0000000
+SENTRY_TRACES_SAMPLE_RATE=0.2</code></pre>
+      <p><code>SENTRY_TRACES_SAMPLE_RATE</code> mengatur berapa persen request yang direkam
+        performanya (bukan cuma error) &mdash; 0.2 berarti 20% request untuk hemat kuota.</p>
+
+      <h3>Langkah 4 &mdash; Daftarkan sebagai Log Channel</h3>
+      <div class="pre-label">config/logging.php</div>
+      <pre><code><span class="str">'channels'</span> => [
+    <span class="str">'stack'</span> => [
+        <span class="str">'driver'</span>   => <span class="str">'stack'</span>,
+        <span class="str">'channels'</span> => [<span class="str">'daily'</span>, <span class="str">'sentry'</span>],
+    ],
+    <span class="str">'sentry'</span> => [
+        <span class="str">'driver'</span>    => <span class="str">'sentry'</span>,
+        <span class="str">'level'</span>     => <span class="str">'error'</span>,   <span class="cm">// hanya error ke atas yang dikirim ke Sentry</span>
+    ],
+],</code></pre>
+      <div class="callout">
+        <div class="callout-title">Kenapa Cuma Level <code>error</code> ke Atas?</div>
+        Kalau semua level (termasuk <code>debug</code>/<code>info</code>) dikirim ke Sentry,
+        kuota project cepat habis dan dashboard jadi ramai oleh noise yang tidak penting.
+      </div>
+    </div>
+
+    <!-- CUSTOM CONTEXT -->
+    <div class="section" id="sentry-context">
+      <h2>Custom Context &amp; Breadcrumbs</h2>
+      <p>Tambahkan informasi tambahan supaya laporan error di Sentry lebih mudah ditelusuri
+        akar masalahnya.</p>
+      <div class="pre-label">app/Exceptions/Handler.php atau Controller</div>
+      <pre><code><span class="kw">use</span> Sentry\State\Scope;
+<span class="kw">use function</span> Sentry\configureScope;
+
+configureScope(<span class="kw">function</span> (Scope $scope) <span class="kw">use</span> ($request) {
+    $scope-&gt;<span class="fn">setUser</span>([
+        <span class="str">'id'</span>    => $request-&gt;<span class="fn">user</span>()?-&gt;id,
+        <span class="str">'email'</span> => $request-&gt;<span class="fn">user</span>()?-&gt;email,
+    ]);
+    $scope-&gt;<span class="fn">setTag</span>(<span class="str">'environment'</span>, app()-&gt;<span class="fn">environment</span>());
+});</code></pre>
+
+      <p>Breadcrumb mencatat jejak langkah sebelum error terjadi &mdash; berguna untuk melihat
+        "apa yang dilakukan user sebelum crash".</p>
+      <div class="pre-label">ProdukService.php</div>
+      <pre><code><span class="kw">use function</span> Sentry\addBreadcrumb;
+<span class="kw">use</span> Sentry\Breadcrumb;
+
+addBreadcrumb(<span class="kw">new</span> Breadcrumb(
+    Breadcrumb::LEVEL_INFO,
+    Breadcrumb::TYPE_DEFAULT,
+    <span class="str">'produk'</span>,
+    <span class="str">'Produk mulai diproses'</span>,
+    [<span class="str">'produk_id'</span> => $data[<span class="str">'id'</span>] ?? <span class="kw">null</span>]
+));</code></pre>
+    </div>
+
+    <!-- TESTING SENTRY -->
+    <div class="section" id="sentry-test">
+      <h2>Testing Sentry</h2>
+      <p>Pastikan integrasi bekerja sebelum mengandalkannya di production.</p>
+      <div class="pre-label">Terminal</div>
+      <pre><code>php artisan sentry:test</code></pre>
+      <p>Perintah ini mengirim exception dummy &mdash; cek dashboard Sentry, error percobaan
+        harus muncul dalam beberapa detik.</p>
+
+      <h3>Kirim Error Manual dari Kode</h3>
+      <pre><code><span class="kw">use</span> Sentry\Laravel\Facade <span class="kw">as</span> Sentry;
+
+<span class="kw">try</span> {
+    $this-&gt;produkService-&gt;<span class="fn">store</span>($data);
+} <span class="kw">catch</span> (\Throwable $e) {
+    Sentry::<span class="fn">captureException</span>($e);
+    <span class="kw">throw</span> $e;   <span class="cm">// tetap lempar supaya error handler Laravel jalan normal</span>
+}</code></pre>
+
+      <div class="callout success">
+        <div class="callout-title">Alur Observability Lengkap</div>
+        <strong>Telescope</strong> untuk debugging saat development, <strong>Log</strong>
+        (Monolog) untuk catatan permanen di semua environment, <strong>Sentry</strong> untuk
+        notifikasi aktif saat error terjadi di production. Ketiganya saling melengkapi, bukan
+        saling menggantikan.
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- RINGKASAN -->
+    <div class="section" id="ringkasan">
+      <h2>Ringkasan Minggu 4</h2>
+      <p>Tiga pilar observability yang sudah dipelajari:</p>
+      <ul class="step-list">
+        <li>
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <h4>Laravel Telescope</h4>
+            <p>Dashboard debugging untuk local &mdash; lihat request, query, job, exception,
+              dan mail secara visual. Wajib dibatasi akses kalau diaktifkan di production.</p>
+          </div>
+        </li>
+        <li>
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <h4>Logging dengan Monolog</h4>
+            <p>Gunakan level log yang tepat, pisahkan channel untuk domain penting, dan selalu
+              sertakan context data supaya log mudah ditelusuri.</p>
+          </div>
+        </li>
+        <li>
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <h4>Error Tracking dengan Sentry</h4>
+            <p>Dapatkan notifikasi real-time saat error terjadi di production, lengkap dengan
+              grouping, custom context, dan breadcrumb untuk mempercepat root cause analysis.</p>
+          </div>
+        </li>
+      </ul>
+
+      <div class="callout success">
+        <div class="callout-title">Selamat! Minggu 4 Selesai</div>
+        Project <code>laravel-crud-app</code> sekarang punya visibilitas penuh &mdash; dari
+        debugging development sampai monitoring production. Lanjut ke
+        <a href="modul-api-design-realtime.html"><strong>Minggu 5</strong></a> untuk API Design
+        &amp; Real-time, atau lihat <a href="index.html">roadmap lengkap</a> untuk
+        minggu-minggu berikutnya.
+      </div>
+    </div>
+
+   </div>
+  </main>
+
+  <!-- RIGHT TOC -->
+  <aside class="toc">
+    <div class="toc-title">Daftar Isi</div>
+
+    <a href="#telescope-intro">Laravel Telescope</a>
+    <a class="sub" href="#telescope-intro">Pengenalan</a>
+    <a class="sub" href="#telescope-install">Install &amp; Setup</a>
+    <a class="sub" href="#telescope-watchers">Watcher &amp; Fitur</a>
+    <a class="sub" href="#telescope-auth">Proteksi Production</a>
+
+    <a href="#logging-intro" style="margin-top:12px;display:block">Logging (Monolog)</a>
+    <a class="sub" href="#logging-intro">Level &amp; Channel</a>
+    <a class="sub" href="#logging-channel">Custom Channel</a>
+    <a class="sub" href="#logging-context">Contextual Logging</a>
+
+    <a href="#sentry-intro" style="margin-top:12px;display:block">Error Tracking (Sentry)</a>
+    <a class="sub" href="#sentry-intro">Kenapa Sentry</a>
+    <a class="sub" href="#sentry-install">Install &amp; Konfigurasi</a>
+    <a class="sub" href="#sentry-context">Custom Context</a>
+    <a class="sub" href="#sentry-test">Testing Sentry</a>
+
+    <a href="#ringkasan" style="margin-top:12px;display:block">Ringkasan</a>
+  </aside>
+
+</div>
+
+<script>
+  // Sidebar accordion
+  document.querySelectorAll('.nav-group-title').forEach(title => {
+    title.addEventListener('click', () => {
+      title.parentElement.classList.toggle('open');
+    });
+  });
+
+  // Laravel nav bar — sub navbar (dropdown) toggle
+  document.querySelectorAll('.laravel-nav-trigger').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      btn.closest('.laravel-nav').classList.toggle('open');
+    });
+  });
+  document.addEventListener('click', (e) => {
+    document.querySelectorAll('.laravel-nav.open').forEach(nav => {
+      if (!nav.contains(e.target)) nav.classList.remove('open');
+    });
+  });
+
+  // Mobile sidebar toggle
+  const sidebarEl = document.querySelector('.sidebar');
+  const overlayEl = document.getElementById('sidebarOverlay');
+  const menuToggleBtn = document.getElementById('menuToggle');
+  function closeSidebar() {
+    sidebarEl.classList.remove('open');
+    overlayEl.classList.remove('show');
+  }
+  if (menuToggleBtn) {
+    menuToggleBtn.addEventListener('click', () => {
+      sidebarEl.classList.toggle('open');
+      overlayEl.classList.toggle('show');
+    });
+  }
+  if (overlayEl) overlayEl.addEventListener('click', closeSidebar);
+  document.querySelectorAll('.sidebar a').forEach(a => a.addEventListener('click', closeSidebar));
+
+  // Wrap tables so they scroll horizontally instead of breaking layout on small screens
+  document.querySelectorAll('.main table').forEach(t => {
+    if (t.closest('.table-scroll')) return;
+    const wrap = document.createElement('div');
+    wrap.className = 'table-scroll';
+    t.parentNode.insertBefore(wrap, t);
+    wrap.appendChild(t);
+  });
+
+  // Copy button on every code block
+  function copyText(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+      return navigator.clipboard.writeText(text);
+    }
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); } catch (err) {}
+    document.body.removeChild(ta);
+    return Promise.resolve();
+  }
+  document.querySelectorAll('pre').forEach(pre => {
+    const codeEl = pre.querySelector('code');
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'copy-btn';
+    btn.textContent = 'Copy';
+    btn.setAttribute('aria-label', 'Salin kode');
+    btn.addEventListener('click', () => {
+      const text = (codeEl ? codeEl.textContent : pre.textContent).trim();
+      copyText(text).then(() => {
+        btn.textContent = 'Copied!';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = 'Copy';
+          btn.classList.remove('copied');
+        }, 1500);
+      });
+    });
+    pre.appendChild(btn);
+  });
+
+  // Scroll spy for sidebar + TOC
+  const sections = document.querySelectorAll('.section[id]');
+  const navLinks = document.querySelectorAll('.nav-link');
+  const tocLinks = document.querySelectorAll('.toc a');
+
+  function setActive(links, id) {
+    links.forEach(l => {
+      l.classList.toggle('active', l.getAttribute('href') === '#' + id);
+    });
+  }
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        setActive(navLinks, entry.target.id);
+        setActive(tocLinks, entry.target.id);
+        const activeLink = document.querySelector('.nav-link.active');
+        if (activeLink) {
+          const group = activeLink.closest('.nav-group');
+          if (group) group.classList.add('open');
+        }
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+
+  sections.forEach(s => observer.observe(s));
+</script>
+
+</body>
+</html>

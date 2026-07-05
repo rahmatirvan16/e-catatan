@@ -1,0 +1,1194 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Modul Capstone Project: E-commerce &mdash; Laravel</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --sidebar-w: 260px;
+      --toc-w: 220px;
+      --accent: #0d6efd;
+      --accent-light: #e7f1ff;
+      --text: #212529;
+      --muted: #6c757d;
+      --border: #dee2e6;
+      --code-bg: #f8f9fa;
+      --code-border: #e9ecef;
+      --sidebar-bg: #f8f9fa;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 15px;
+      line-height: 1.7;
+      color: var(--text);
+      background: #fff;
+    }
+
+    /* TOP BAR */
+    .topbar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      height: 56px;
+      background: #fff;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; padding: 0 24px;
+      gap: 16px;
+    }
+    .topbar-brand {
+      font-weight: 700; font-size: 17px; color: var(--accent);
+      text-decoration: none;
+    }
+    .topbar-version {
+      background: var(--accent-light); color: var(--accent);
+      font-size: 11px; font-weight: 600; padding: 2px 8px;
+      border-radius: 20px;
+    }
+    .topbar-subtitle {
+      color: var(--muted); font-size: 13px; margin-left: auto;
+    }
+    /* LARAVEL NAV BAR + SUB NAVBAR (dropdown by Fokus Utama) */
+    .laravel-nav { position: relative; margin-left: 24px; }
+    .laravel-nav-trigger {
+      display: flex; align-items: center; gap: 6px;
+      background: none; border: 1px solid var(--border); border-radius: 6px;
+      padding: 6px 14px; font-size: 13px; font-weight: 600;
+      color: var(--text); cursor: pointer; font-family: inherit;
+    }
+    .laravel-nav-trigger:hover { background: var(--accent-light); color: var(--accent); border-color: var(--accent); }
+    .laravel-nav.open .laravel-nav-trigger { background: var(--accent-light); color: var(--accent); border-color: var(--accent); }
+    .laravel-nav-trigger .caret { font-size: 10px; transition: transform .15s; }
+    .laravel-nav.open .laravel-nav-trigger .caret { transform: rotate(180deg); }
+    .laravel-nav-menu {
+      display: none;
+      position: absolute; top: calc(100% + 8px); left: 0;
+      width: 360px; max-height: 75vh; overflow-y: auto;
+      background: #fff; border: 1px solid var(--border); border-radius: 10px;
+      box-shadow: 0 12px 32px rgba(0,0,0,.14);
+      padding: 8px; z-index: 200;
+    }
+    .laravel-nav.open .laravel-nav-menu { display: block; }
+    .laravel-nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 12px; border-radius: 8px;
+      text-decoration: none; color: var(--text); font-size: 13px;
+    }
+    .laravel-nav-item:hover { background: var(--accent-light); }
+    .laravel-nav-item.active { background: var(--accent-light); color: var(--accent); font-weight: 600; }
+    .laravel-nav-item .lni-week {
+      flex-shrink: 0; width: 34px; font-size: 11px; font-weight: 700; color: var(--muted);
+    }
+    .laravel-nav-item.active .lni-week { color: var(--accent); }
+    .laravel-nav-item .lni-title { flex: 1; }
+    .laravel-nav-item .lni-soon {
+      flex-shrink: 0; font-size: 10px; font-weight: 700; text-transform: uppercase;
+      background: #e9ecef; color: #495057; padding: 2px 6px; border-radius: 20px;
+    }
+
+    /* LAYOUT */
+    .layout {
+      display: flex;
+      padding-top: 56px;
+      min-height: 100vh;
+    }
+
+    /* LEFT SIDEBAR */
+    .sidebar {
+      width: var(--sidebar-w);
+      flex-shrink: 0;
+      position: fixed;
+      top: 56px; bottom: 0; left: 0;
+      overflow-y: auto;
+      background: var(--sidebar-bg);
+      border-right: 1px solid var(--border);
+      padding: 20px 0 40px;
+    }
+    .sidebar::-webkit-scrollbar { width: 4px; }
+    .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    .nav-group { margin-bottom: 4px; }
+    .nav-group-title {
+      display: flex; align-items: center; gap: 8px;
+      padding: 6px 20px;
+      font-size: 12px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .06em;
+      color: var(--text);
+      cursor: pointer;
+      user-select: none;
+    }
+    .nav-group-title .arrow {
+      display: inline-block; transition: transform .2s;
+      font-size: 10px; color: var(--muted);
+    }
+    .nav-group.open .arrow { transform: rotate(90deg); }
+    .nav-group-items { display: none; }
+    .nav-group.open .nav-group-items { display: block; }
+
+    .nav-link {
+      display: block;
+      padding: 5px 20px 5px 36px;
+      font-size: 14px; color: var(--muted);
+      text-decoration: none;
+      border-left: 3px solid transparent;
+      transition: color .15s, border-color .15s, background .15s;
+    }
+    .nav-link:hover { color: var(--accent); background: var(--accent-light); }
+    .nav-link.active {
+      color: var(--accent); font-weight: 600;
+      border-left-color: var(--accent);
+      background: var(--accent-light);
+    }
+
+    /* MAIN CONTENT */
+    .main {
+      margin-left: var(--sidebar-w);
+      margin-right: var(--toc-w);
+      flex: 1;
+      min-width: 0;
+    }
+    .main-inner {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 48px 56px;
+    }
+
+    /* MOBILE MENU TOGGLE */
+    .menu-toggle {
+      display: none;
+      align-items: center; justify-content: center;
+      width: 32px; height: 32px; flex-shrink: 0;
+      border: 1px solid var(--border); border-radius: 6px;
+      background: none; cursor: pointer; font-size: 16px;
+      color: var(--text);
+    }
+    .menu-toggle:hover { background: var(--accent-light); color: var(--accent); border-color: var(--accent); }
+    .sidebar-overlay {
+      display: none;
+      position: fixed; inset: 56px 0 0 0;
+      background: rgba(0,0,0,.35);
+      z-index: 95;
+    }
+    .sidebar-overlay.show { display: block; }
+
+    /* TABLES THAT OVERFLOW SCROLL INSTEAD OF BREAKING LAYOUT */
+    .table-scroll { overflow-x: auto; margin: 16px 0; -webkit-overflow-scrolling: touch; }
+    .table-scroll table { margin: 0; }
+
+    /* RESPONSIVE */
+    @media (max-width: 1300px) {
+      .toc { display: none; }
+      .main { margin-right: 0; }
+    }
+    @media (max-width: 900px) {
+      .menu-toggle { display: inline-flex; }
+      .topbar-subtitle { display: none; }
+      .sidebar {
+        transform: translateX(-100%);
+        transition: transform .2s ease;
+        z-index: 96;
+        box-shadow: 4px 0 24px rgba(0,0,0,.15);
+      }
+      .sidebar.open { transform: translateX(0); }
+      .main { margin-left: 0; }
+      .main-inner { padding: 32px 24px; }
+      .laravel-nav-menu { width: min(360px, 88vw); }
+    }
+    @media (max-width: 560px) {
+      .topbar { padding: 0 14px; gap: 10px; }
+      .topbar-brand { font-size: 15px; }
+      .topbar-version { display: none; }
+      .page-title { font-size: 28px; }
+      .page-lead { font-size: 15px; padding-bottom: 24px; margin-bottom: 28px; }
+      .main-inner { padding: 24px 16px; }
+      h2 { font-size: 21px; }
+    }
+
+    /* RIGHT TOC */
+    .toc {
+      width: var(--toc-w);
+      flex-shrink: 0;
+      position: fixed;
+      top: 56px; bottom: 0; right: 0;
+      overflow-y: auto;
+      padding: 24px 16px;
+      border-left: 1px solid var(--border);
+    }
+    .toc-title {
+      font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .06em;
+      color: var(--muted); margin-bottom: 12px;
+    }
+    .toc a {
+      display: block; font-size: 13px; color: var(--muted);
+      text-decoration: none; padding: 3px 0 3px 8px;
+      border-left: 2px solid transparent;
+      transition: color .15s, border-color .15s;
+    }
+    .toc a:hover, .toc a.active {
+      color: var(--accent); border-left-color: var(--accent);
+    }
+    .toc a.sub { padding-left: 20px; font-size: 12px; }
+
+    /* CONTENT TYPOGRAPHY */
+    .page-title {
+      font-size: 40px; font-weight: 700;
+      margin-bottom: 12px; line-height: 1.2;
+    }
+    .page-lead {
+      font-size: 18px; color: var(--muted);
+      margin-bottom: 40px; border-bottom: 1px solid var(--border);
+      padding-bottom: 32px;
+    }
+    .section { margin-bottom: 56px; }
+    h2 {
+      font-size: 26px; font-weight: 700;
+      margin-bottom: 16px; padding-top: 8px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 8px;
+    }
+    h3 {
+      font-size: 18px; font-weight: 600;
+      margin: 24px 0 10px;
+    }
+    h4 {
+      font-size: 15px; font-weight: 600;
+      margin: 18px 0 8px; color: var(--text);
+    }
+    p { margin-bottom: 14px; }
+    ul, ol { padding-left: 24px; margin-bottom: 14px; }
+    li { margin-bottom: 6px; }
+    strong { font-weight: 600; }
+
+    /* CODE */
+    code {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      font-size: 13px;
+      background: var(--code-bg);
+      border: 1px solid var(--code-border);
+      padding: 1px 5px; border-radius: 4px;
+      color: #d63384;
+    }
+    pre {
+      background: #1e1e2e;
+      border-radius: 8px;
+      padding: 20px 24px;
+      overflow-x: auto;
+      margin: 16px 0 20px;
+      position: relative;
+    }
+    pre code {
+      background: none; border: none; padding: 0;
+      color: #cdd6f4; font-size: 13px; line-height: 1.65;
+    }
+    .pre-label {
+      font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .06em;
+      color: #6c757d; margin-bottom: 6px;
+    }
+
+    /* COPY BUTTON */
+    .copy-btn {
+      position: absolute; top: 10px; right: 10px;
+      display: flex; align-items: center; gap: 5px;
+      background: rgba(255,255,255,.08);
+      color: #cdd6f4;
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 6px;
+      font-family: inherit; font-size: 11px; font-weight: 600;
+      padding: 4px 9px;
+      cursor: pointer;
+      opacity: .55;
+      transition: opacity .15s, background .15s;
+    }
+    pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
+    .copy-btn:hover { background: rgba(255,255,255,.2); }
+    .copy-btn.copied {
+      opacity: 1; background: #198754; border-color: #198754; color: #fff;
+    }
+    @media (max-width: 900px) { .copy-btn { opacity: .8; } }
+    @media print { .copy-btn { display: none; } }
+
+    .kw  { color: #cba6f7; }
+    .fn  { color: #89b4fa; }
+    .str { color: #a6e3a1; }
+    .cm  { color: #6c7086; }
+    .cl  { color: #fab387; }
+    .nb  { color: #89dceb; }
+    .op  { color: #89dceb; }
+
+    /* BADGES / CALLOUTS */
+    .badge {
+      display: inline-block; font-size: 11px; font-weight: 700;
+      padding: 2px 8px; border-radius: 4px;
+      text-transform: uppercase; letter-spacing: .04em;
+    }
+    .badge-blue  { background: #cfe2ff; color: #084298; }
+    .badge-green { background: #d1e7dd; color: #0a3622; }
+    .badge-red   { background: #f8d7da; color: #842029; }
+    .badge-yellow{ background: #fff3cd; color: #664d03; }
+    .badge-purple{ background: #e8d5fb; color: #5e2d91; }
+    .badge-orange{ background: #ffe5d0; color: #8a3800; }
+
+    .callout {
+      border-left: 4px solid var(--accent);
+      background: var(--accent-light);
+      padding: 14px 18px; border-radius: 0 6px 6px 0;
+      margin: 16px 0;
+    }
+    .callout.warning { border-left-color: #ffc107; background: #fff3cd; }
+    .callout.danger  { border-left-color: #dc3545; background: #f8d7da; }
+    .callout.success { border-left-color: #198754; background: #d1e7dd; }
+    .callout-title { font-weight: 700; margin-bottom: 4px; font-size: 13px; }
+
+    /* TABLE */
+    table {
+      width: 100%; border-collapse: collapse;
+      margin: 16px 0; font-size: 14px;
+    }
+    th {
+      background: var(--code-bg); font-weight: 600;
+      padding: 10px 14px; border: 1px solid var(--border);
+      text-align: left;
+    }
+    td { padding: 9px 14px; border: 1px solid var(--border); }
+    tr:nth-child(even) td { background: #fafafa; }
+
+    /* STEP LIST */
+    .step-list { list-style: none; padding: 0; }
+    .step-list li { display: flex; gap: 16px; margin-bottom: 20px; }
+    .step-num {
+      flex-shrink: 0;
+      width: 28px; height: 28px;
+      background: var(--accent); color: #fff;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700; margin-top: 2px;
+    }
+    .step-body h4 { margin-top: 0; }
+
+    /* DIVIDER */
+    .divider { border: none; border-top: 2px solid var(--border); margin: 56px 0; }
+
+    /* PRINT */
+    @media print {
+      .topbar, .sidebar, .toc { display: none; }
+      .main { margin: 0; }
+      .main-inner { padding: 24px 32px; max-width: 100%; }
+      pre { background: #f8f9fa !important; }
+      pre code { color: #212529 !important; }
+      .kw,.fn,.str,.cm,.cl,.nb,.op { color: #212529 !important; }
+      h2 { page-break-before: always; }
+      .section:first-of-type h2 { page-break-before: avoid; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<header class="topbar">
+  <button class="menu-toggle" id="menuToggle" aria-label="Buka menu">&#9776;</button>
+  <a class="topbar-brand" href="index.html">Laravel Docs</a>
+  <span class="topbar-version">v12.x</span>
+  <div class="laravel-nav" id="laravelNav">
+    <button class="laravel-nav-trigger" type="button">Laravel <span class="caret">&#9662;</span></button>
+    <div class="laravel-nav-menu">
+      <a class="laravel-nav-item" href="modul-rest-api-sanctum.html"><span class="lni-week">M1</span><span class="lni-title">Core Laravel &amp; Database</span></a>
+      <a class="laravel-nav-item" href="modul-arsitektur-otorisasi.html"><span class="lni-week">M2</span><span class="lni-title">Arsitektur Kode &amp; Otorisasi</span></a>
+      <a class="laravel-nav-item" href="modul-optimasi.html"><span class="lni-week">M3</span><span class="lni-title">Testing &amp; Optimasi</span></a>
+      <a class="laravel-nav-item" href="modul-observability.html"><span class="lni-week">M4</span><span class="lni-title">Observability</span></a>
+      <a class="laravel-nav-item" href="modul-api-design-realtime.html"><span class="lni-week">M5</span><span class="lni-title">API Design &amp; Real-time</span></a>
+      <a class="laravel-nav-item" href="modul-security-deepdive.html"><span class="lni-week">M6</span><span class="lni-title">Security Deep-dive</span></a>
+      <a class="laravel-nav-item active" href="modul-capstone-ecommerce.html"><span class="lni-week">M7</span><span class="lni-title">Capstone Project: E-commerce</span></a>
+      <a class="laravel-nav-item" href="modul-containerization-deployment.html"><span class="lni-week">M8</span><span class="lni-title">Containerization &amp; Deployment</span></a>
+      <a class="laravel-nav-item" href="modul-cloud-infrastructure.html"><span class="lni-week">M9</span><span class="lni-title">Cloud &amp; Infrastructure</span></a>
+      <a class="laravel-nav-item" href="modul-skala-besar.html"><span class="lni-week">M10</span><span class="lni-title">Skala Besar</span></a>
+      <a class="laravel-nav-item" href="modul-system-design.html"><span class="lni-week">M11</span><span class="lni-title">System Design</span></a>
+    </div>
+  </div>
+  <span class="topbar-subtitle">Cart, Checkout, Payment Gateway, Order Management &mdash; Capstone Project</span>
+</header>
+
+<div class="layout">
+
+  <!-- LEFT SIDEBAR -->
+  <nav class="sidebar">
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Project Overview</div>
+      <div class="nav-group-items">
+        <a class="nav-link active" href="#capstone-intro">Apa yang Dibangun</a>
+        <a class="nav-link" href="#capstone-erd">Desain Database</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Shopping Cart</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#cart-migration">Migration &amp; Model</a>
+        <a class="nav-link" href="#cart-service">Cart Service</a>
+        <a class="nav-link" href="#cart-routes">Cart API Endpoints</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Checkout &amp; Order</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#checkout-flow">Dari Cart ke Order</a>
+        <a class="nav-link" href="#order-status">Order Status &amp; State Machine</a>
+        <a class="nav-link" href="#order-routes">Order API Endpoints</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Payment Gateway</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#payment-midtrans">Integrasi Midtrans</a>
+        <a class="nav-link" href="#payment-webhook">Webhook &amp; Verifikasi</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Menerapkan Skill</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#skill-checklist">Checklist Minggu 1&ndash;6</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Ringkasan</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#ringkasan">Ringkasan Minggu 7</a>
+      </div>
+    </div>
+
+  </nav>
+
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- MAIN CONTENT -->
+  <main class="main">
+   <div class="main-inner">
+
+    <!-- ========== PROJECT OVERVIEW ========== -->
+    <div class="section" id="capstone-intro">
+      <h1 class="page-title">Capstone Project: E-commerce</h1>
+      <p class="page-lead">
+        Bukan topik baru &mdash; minggu ini menggabungkan semua skill dari Minggu 1&ndash;6
+        untuk membangun satu fitur nyata: <strong>alur belanja online lengkap</strong> di atas
+        <code>laravel-crud-app</code>, mulai dari keranjang belanja sampai pembayaran
+        terverifikasi.
+      </p>
+
+      <h2>Apa yang Dibangun</h2>
+      <table>
+        <thead><tr><th>Fitur</th><th>Deskripsi</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Shopping Cart</strong></td><td>Tambah/ubah/hapus item, cart tersimpan per user</td></tr>
+          <tr><td><strong>Checkout</strong></td><td>Validasi stok, ubah isi cart jadi Order, kurangi stok produk</td></tr>
+          <tr><td><strong>Payment Gateway</strong></td><td>Integrasi Midtrans untuk pembayaran, webhook update status otomatis</td></tr>
+          <tr><td><strong>Order Management</strong></td><td>Status order (pending &rarr; paid &rarr; shipped &rarr; completed), endpoint admin</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Alur Belanja End-to-End</h3>
+      <pre><code>1. User tambah Produk ke Cart          → CartController::store()
+2. User checkout                        → OrderController::store()
+   → validasi stok tiap item cart
+   → buat Order + OrderItems dari Cart
+   → kurangi stok Produk
+   → cart dikosongkan
+3. Redirect ke Payment Gateway (Midtrans) → PaymentController::createSnapToken()
+4. User bayar di halaman Midtrans
+5. Midtrans kirim webhook ke server      → PaymentController::webhook()
+   → verifikasi signature (Minggu 6)
+   → update status Order jadi "paid"
+   → broadcast event (Minggu 5) → notifikasi real-time ke admin</code></pre>
+
+      <div class="callout">
+        <div class="callout-title">Kenapa Ini Disebut Capstone?</div>
+        Setiap langkah di atas memakai skill dari minggu-minggu sebelumnya: Eloquent &amp;
+        relasi (M1), Repository/Service &amp; otorisasi (M2), cache &amp; queue untuk proses
+        berat (M3), logging transaksi (M4), broadcasting status (M5), dan validasi/signature
+        aman (M6). Tidak ada konsep baru &mdash; ini latihan <em>merangkai</em> semuanya.
+      </div>
+    </div>
+
+    <!-- ERD -->
+    <div class="section" id="capstone-erd">
+      <h2>Desain Database</h2>
+      <pre><code>produks (sudah ada sejak Minggu 1)
+  id, nama_produk, harga, stok, deskripsi, kategori_id
+
+carts
+  id, user_id, created_at, updated_at
+
+cart_items
+  id, cart_id (FK), produk_id (FK), qty, created_at, updated_at
+
+orders
+  id, user_id (FK), status, total, kode_order, created_at, updated_at
+
+order_items
+  id, order_id (FK), produk_id (FK), qty, harga_saat_beli, created_at
+
+payments
+  id, order_id (FK), midtrans_order_id, status, metode_pembayaran,
+  raw_response (json), created_at, updated_at</code></pre>
+
+      <h3>Relasi Antar Model</h3>
+      <table>
+        <thead><tr><th>Model</th><th>Relasi</th></tr></thead>
+        <tbody>
+          <tr><td><code>User</code></td><td><code>hasOne(Cart::class)</code>, <code>hasMany(Order::class)</code></td></tr>
+          <tr><td><code>Cart</code></td><td><code>belongsTo(User::class)</code>, <code>hasMany(CartItem::class)</code></td></tr>
+          <tr><td><code>CartItem</code></td><td><code>belongsTo(Cart::class)</code>, <code>belongsTo(Produk::class)</code></td></tr>
+          <tr><td><code>Order</code></td><td><code>belongsTo(User::class)</code>, <code>hasMany(OrderItem::class)</code>, <code>hasOne(Payment::class)</code></td></tr>
+          <tr><td><code>Payment</code></td><td><code>belongsTo(Order::class)</code></td></tr>
+        </tbody>
+      </table>
+
+      <div class="pre-label">Terminal — Buat Semua Migration &amp; Model Sekaligus</div>
+      <pre><code>php artisan make:model Cart -m
+php artisan make:model CartItem -m
+php artisan make:model Order -m
+php artisan make:model OrderItem -m
+php artisan make:model Payment -m</code></pre>
+
+      <div class="callout warning">
+        <div class="callout-title">Kenapa <code>harga_saat_beli</code> Disimpan Terpisah?</div>
+        Harga produk bisa berubah kapan saja. <code>order_items.harga_saat_beli</code> membekukan
+        harga <em>pada saat transaksi terjadi</em> &mdash; supaya riwayat order tetap akurat
+        meski harga produk di master data berubah di kemudian hari.
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- ========== SHOPPING CART ========== -->
+    <div class="section" id="cart-migration">
+      <h2>Migration &amp; Model Cart</h2>
+      <div class="pre-label">database/migrations/..._create_carts_table.php</div>
+      <pre><code><span class="kw">public function</span> <span class="fn">up</span>(): <span class="kw">void</span>
+{
+    <span class="cl">Schema</span>::<span class="fn">create</span>(<span class="str">'carts'</span>, <span class="kw">function</span> (Blueprint $table) {
+        $table-&gt;<span class="fn">id</span>();
+        $table-&gt;<span class="fn">foreignId</span>(<span class="str">'user_id'</span>)-&gt;<span class="fn">unique</span>()-&gt;<span class="fn">constrained</span>()-&gt;<span class="fn">cascadeOnDelete</span>();
+        $table-&gt;<span class="fn">timestamps</span>();
+    });
+
+    <span class="cl">Schema</span>::<span class="fn">create</span>(<span class="str">'cart_items'</span>, <span class="kw">function</span> (Blueprint $table) {
+        $table-&gt;<span class="fn">id</span>();
+        $table-&gt;<span class="fn">foreignId</span>(<span class="str">'cart_id'</span>)-&gt;<span class="fn">constrained</span>()-&gt;<span class="fn">cascadeOnDelete</span>();
+        $table-&gt;<span class="fn">foreignId</span>(<span class="str">'produk_id'</span>)-&gt;<span class="fn">constrained</span>()-&gt;<span class="fn">cascadeOnDelete</span>();
+        $table-&gt;<span class="fn">unsignedInteger</span>(<span class="str">'qty'</span>)-&gt;<span class="fn">default</span>(<span class="nb">1</span>);
+        $table-&gt;<span class="fn">timestamps</span>();
+        $table-&gt;<span class="fn">unique</span>([<span class="str">'cart_id'</span>, <span class="str">'produk_id'</span>]);   <span class="cm">// satu produk = satu baris per cart</span>
+    });
+}</code></pre>
+
+      <div class="pre-label">app/Models/Cart.php</div>
+      <pre><code><span class="kw">class</span> <span class="cl">Cart</span> <span class="kw">extends</span> Model
+{
+    <span class="kw">protected</span> $fillable = [<span class="str">'user_id'</span>];
+
+    <span class="kw">public function</span> <span class="fn">items</span>()
+    {
+        <span class="kw">return</span> $this-&gt;<span class="fn">hasMany</span>(CartItem::class);
+    }
+
+    <span class="kw">public function</span> <span class="fn">total</span>(): <span class="kw">int</span>
+    {
+        <span class="kw">return</span> $this-&gt;<span class="fn">items</span>-&gt;<span class="fn">sum</span>(<span class="fn">fn</span>($item) =&gt; $item-&gt;produk-&gt;harga * $item-&gt;qty);
+    }
+}</code></pre>
+    </div>
+
+    <!-- CART SERVICE -->
+    <div class="section" id="cart-service">
+      <h2>Cart Service</h2>
+      <p>Mengikuti Repository/Service Pattern dari Minggu 2 &mdash; logic bisnis cart (validasi
+        stok, gabung qty produk yang sama) ada di Service, bukan di controller.</p>
+      <div class="pre-label">app/Services/CartService.php</div>
+      <pre><code><span class="op">&lt;?php</span>
+
+<span class="kw">namespace</span> App\Services;
+
+<span class="kw">use</span> App\Models\{Cart, Produk, User};
+<span class="kw">use</span> Illuminate\Validation\ValidationException;
+
+<span class="kw">class</span> <span class="cl">CartService</span>
+{
+    <span class="kw">public function</span> <span class="fn">getOrCreateCart</span>(User $user): Cart
+    {
+        <span class="kw">return</span> Cart::<span class="fn">firstOrCreate</span>([<span class="str">'user_id'</span> =&gt; $user-&gt;id]);
+    }
+
+    <span class="kw">public function</span> <span class="fn">addItem</span>(User $user, <span class="kw">int</span> $produkId, <span class="kw">int</span> $qty): Cart
+    {
+        $produk = Produk::<span class="fn">findOrFail</span>($produkId);
+
+        <span class="kw">if</span> ($produk-&gt;stok &lt; $qty) {
+            <span class="kw">throw</span> ValidationException::<span class="fn">withMessages</span>([
+                <span class="str">'qty'</span> =&gt; <span class="str">"Stok {$produk-&gt;nama_produk} hanya tersisa {$produk-&gt;stok}."</span>,
+            ]);
+        }
+
+        $cart = $this-&gt;<span class="fn">getOrCreateCart</span>($user);
+
+        $cart-&gt;items()-&gt;<span class="fn">updateOrCreate</span>(
+            [<span class="str">'produk_id'</span> =&gt; $produkId],
+            [<span class="str">'qty'</span> =&gt; \DB::<span class="fn">raw</span>(<span class="str">"qty + {$qty}"</span>)]
+        );
+
+        <span class="kw">return</span> $cart-&gt;<span class="fn">fresh</span>(<span class="str">'items.produk'</span>);
+    }
+
+    <span class="kw">public function</span> <span class="fn">removeItem</span>(User $user, <span class="kw">int</span> $produkId): Cart
+    {
+        $cart = $this-&gt;<span class="fn">getOrCreateCart</span>($user);
+        $cart-&gt;items()-&gt;<span class="fn">where</span>(<span class="str">'produk_id'</span>, $produkId)-&gt;<span class="fn">delete</span>();
+
+        <span class="kw">return</span> $cart-&gt;<span class="fn">fresh</span>(<span class="str">'items.produk'</span>);
+    }
+}</code></pre>
+    </div>
+
+    <!-- CART API ENDPOINTS -->
+    <div class="section" id="cart-routes">
+      <h2>Cart API Endpoints</h2>
+      <div class="pre-label">app/Http/Controllers/Api/CartController.php</div>
+      <pre><code><span class="kw">class</span> <span class="cl">CartController</span> <span class="kw">extends</span> Controller
+{
+    <span class="kw">public function</span> <span class="fn">__construct</span>(<span class="kw">private readonly</span> CartService $cartService) {}
+
+    <span class="kw">public function</span> <span class="fn">show</span>(Request $request)
+    {
+        $cart = $this-&gt;cartService-&gt;<span class="fn">getOrCreateCart</span>($request-&gt;<span class="fn">user</span>())-&gt;<span class="fn">load</span>(<span class="str">'items.produk'</span>);
+        <span class="kw">return</span> <span class="fn">response</span>()-&gt;<span class="fn">json</span>([<span class="str">'success'</span> =&gt; <span class="kw">true</span>, <span class="str">'data'</span> =&gt; $cart, <span class="str">'total'</span> =&gt; $cart-&gt;<span class="fn">total</span>()]);
+    }
+
+    <span class="kw">public function</span> <span class="fn">store</span>(Request $request)
+    {
+        $validated = $request-&gt;<span class="fn">validate</span>([
+            <span class="str">'produk_id'</span> =&gt; <span class="str">'required|exists:produks,id'</span>,
+            <span class="str">'qty'</span>       =&gt; <span class="str">'required|integer|min:1'</span>,
+        ]);
+
+        $cart = $this-&gt;cartService-&gt;<span class="fn">addItem</span>($request-&gt;<span class="fn">user</span>(), $validated[<span class="str">'produk_id'</span>], $validated[<span class="str">'qty'</span>]);
+        <span class="kw">return</span> <span class="fn">response</span>()-&gt;<span class="fn">json</span>([<span class="str">'success'</span> =&gt; <span class="kw">true</span>, <span class="str">'data'</span> =&gt; $cart]);
+    }
+
+    <span class="kw">public function</span> <span class="fn">destroy</span>(Request $request, <span class="kw">int</span> $produkId)
+    {
+        $cart = $this-&gt;cartService-&gt;<span class="fn">removeItem</span>($request-&gt;<span class="fn">user</span>(), $produkId);
+        <span class="kw">return</span> <span class="fn">response</span>()-&gt;<span class="fn">json</span>([<span class="str">'success'</span> =&gt; <span class="kw">true</span>, <span class="str">'data'</span> =&gt; $cart]);
+    }
+}</code></pre>
+
+      <div class="pre-label">routes/api.php</div>
+      <pre><code><span class="cl">Route</span>::<span class="fn">middleware</span>([<span class="str">'auth:sanctum'</span>, <span class="str">'throttle:60,1'</span>])-&gt;<span class="fn">group</span>(<span class="kw">function</span> () {
+    <span class="cl">Route</span>::<span class="fn">get</span>(<span class="str">'/cart'</span>, [CartController::class, <span class="str">'show'</span>]);
+    <span class="cl">Route</span>::<span class="fn">post</span>(<span class="str">'/cart'</span>, [CartController::class, <span class="str">'store'</span>]);
+    <span class="cl">Route</span>::<span class="fn">delete</span>(<span class="str">'/cart/{produkId}'</span>, [CartController::class, <span class="str">'destroy'</span>]);
+});</code></pre>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- ========== CHECKOUT & ORDER ========== -->
+    <div class="section" id="checkout-flow">
+      <h2>Dari Cart ke Order (Checkout)</h2>
+      <p>Checkout adalah proses yang <strong>harus atomik</strong> &mdash; kurangi stok, buat
+        order, kosongkan cart, semuanya berhasil bersama atau gagal bersama. Gunakan
+        <code>DB::transaction()</code>.</p>
+
+      <div class="pre-label">app/Services/OrderService.php</div>
+      <pre><code><span class="op">&lt;?php</span>
+
+<span class="kw">namespace</span> App\Services;
+
+<span class="kw">use</span> App\Models\{Cart, Order, User};
+<span class="kw">use</span> Illuminate\Support\Facades\DB;
+<span class="kw">use</span> Illuminate\Validation\ValidationException;
+
+<span class="kw">class</span> <span class="cl">OrderService</span>
+{
+    <span class="kw">public function</span> <span class="fn">checkout</span>(User $user, Cart $cart): Order
+    {
+        <span class="kw">if</span> ($cart-&gt;items-&gt;<span class="fn">isEmpty</span>()) {
+            <span class="kw">throw</span> ValidationException::<span class="fn">withMessages</span>([<span class="str">'cart'</span> =&gt; <span class="str">'Keranjang masih kosong.'</span>]);
+        }
+
+        <span class="kw">return</span> DB::<span class="fn">transaction</span>(<span class="kw">function</span> () <span class="kw">use</span> ($user, $cart) {
+            <span class="cm">// 1. Validasi stok semua item dulu, sebelum ada yang diubah</span>
+            <span class="kw">foreach</span> ($cart-&gt;items <span class="kw">as</span> $item) {
+                <span class="kw">if</span> ($item-&gt;produk-&gt;stok &lt; $item-&gt;qty) {
+                    <span class="kw">throw</span> ValidationException::<span class="fn">withMessages</span>([
+                        <span class="str">'stok'</span> =&gt; <span class="str">"Stok {$item-&gt;produk-&gt;nama_produk} tidak cukup."</span>,
+                    ]);
+                }
+            }
+
+            <span class="cm">// 2. Buat order</span>
+            $order = Order::<span class="fn">create</span>([
+                <span class="str">'user_id'</span>   =&gt; $user-&gt;id,
+                <span class="str">'kode_order'</span> =&gt; <span class="str">'ORD-'</span> . <span class="fn">strtoupper</span>(<span class="fn">uniqid</span>()),
+                <span class="str">'status'</span>     =&gt; <span class="str">'pending'</span>,
+                <span class="str">'total'</span>      =&gt; $cart-&gt;<span class="fn">total</span>(),
+            ]);
+
+            <span class="cm">// 3. Salin item cart → order_items, kurangi stok</span>
+            <span class="kw">foreach</span> ($cart-&gt;items <span class="kw">as</span> $item) {
+                $order-&gt;items()-&gt;<span class="fn">create</span>([
+                    <span class="str">'produk_id'</span>        =&gt; $item-&gt;produk_id,
+                    <span class="str">'qty'</span>              =&gt; $item-&gt;qty,
+                    <span class="str">'harga_saat_beli'</span>  =&gt; $item-&gt;produk-&gt;harga,
+                ]);
+
+                $item-&gt;produk-&gt;<span class="fn">decrement</span>(<span class="str">'stok'</span>, $item-&gt;qty);
+            }
+
+            <span class="cm">// 4. Kosongkan cart</span>
+            $cart-&gt;items()-&gt;<span class="fn">delete</span>();
+
+            <span class="kw">return</span> $order;
+        });
+    }
+}</code></pre>
+      <div class="callout warning">
+        <div class="callout-title">Kenapa Wajib <code>DB::transaction()</code>?</div>
+        Tanpa transaction, kalau server crash di tengah proses (misal setelah stok dikurangi
+        tapi sebelum order tersimpan), data jadi tidak konsisten &mdash; stok berkurang tapi
+        tidak ada order-nya. Transaction menjamin semua langkah sukses bersama atau
+        di-<em>rollback</em> semuanya.
+      </div>
+    </div>
+
+    <!-- ORDER STATUS -->
+    <div class="section" id="order-status">
+      <h2>Order Status &amp; State Machine</h2>
+      <p>Status order tidak boleh berubah sembarangan &mdash; order yang sudah
+        <code>completed</code> tidak boleh balik jadi <code>pending</code>.</p>
+      <table>
+        <thead><tr><th>Status</th><th>Arti</th><th>Transisi Berikutnya yang Valid</th></tr></thead>
+        <tbody>
+          <tr><td><code>pending</code></td><td>Order dibuat, menunggu pembayaran</td><td><code>paid</code>, <code>cancelled</code></td></tr>
+          <tr><td><code>paid</code></td><td>Pembayaran terverifikasi (via webhook)</td><td><code>processing</code>, <code>cancelled</code></td></tr>
+          <tr><td><code>processing</code></td><td>Sedang disiapkan/dikemas</td><td><code>shipped</code></td></tr>
+          <tr><td><code>shipped</code></td><td>Dalam pengiriman</td><td><code>completed</code></td></tr>
+          <tr><td><code>completed</code></td><td>Diterima pembeli, selesai</td><td>&mdash; (final)</td></tr>
+          <tr><td><code>cancelled</code></td><td>Dibatalkan, stok dikembalikan</td><td>&mdash; (final)</td></tr>
+        </tbody>
+      </table>
+
+      <div class="pre-label">app/Models/Order.php</div>
+      <pre><code><span class="kw">private const</span> TRANSITIONS = [
+    <span class="str">'pending'</span>    =&gt; [<span class="str">'paid'</span>, <span class="str">'cancelled'</span>],
+    <span class="str">'paid'</span>       =&gt; [<span class="str">'processing'</span>, <span class="str">'cancelled'</span>],
+    <span class="str">'processing'</span> =&gt; [<span class="str">'shipped'</span>],
+    <span class="str">'shipped'</span>    =&gt; [<span class="str">'completed'</span>],
+];
+
+<span class="kw">public function</span> <span class="fn">transitionTo</span>(<span class="kw">string</span> $status): <span class="kw">void</span>
+{
+    $allowed = <span class="kw">self</span>::TRANSITIONS[$this-&gt;status] ?? [];
+
+    <span class="kw">if</span> (!<span class="fn">in_array</span>($status, $allowed, <span class="kw">true</span>)) {
+        <span class="kw">throw</span> <span class="kw">new</span> \DomainException(
+            <span class="str">"Tidak bisa ubah status dari '{$this-&gt;status}' ke '{$status}'."</span>
+        );
+    }
+
+    $this-&gt;<span class="fn">update</span>([<span class="str">'status'</span> =&gt; $status]);
+}</code></pre>
+      <div class="callout success">
+        <div class="callout-title">State Machine Sederhana Tapi Efektif</div>
+        Tidak perlu package tambahan &mdash; array transisi + satu method sudah cukup mencegah
+        bug klasik seperti "order completed tiba-tiba balik pending" akibat request yang salah
+        urutan.
+      </div>
+    </div>
+
+    <!-- ORDER API ENDPOINTS -->
+    <div class="section" id="order-routes">
+      <h2>Order API Endpoints</h2>
+      <div class="pre-label">app/Http/Controllers/Api/OrderController.php</div>
+      <pre><code><span class="kw">public function</span> <span class="fn">store</span>(Request $request)
+{
+    $cart = $this-&gt;cartService-&gt;<span class="fn">getOrCreateCart</span>($request-&gt;<span class="fn">user</span>())-&gt;<span class="fn">load</span>(<span class="str">'items.produk'</span>);
+    $order = $this-&gt;orderService-&gt;<span class="fn">checkout</span>($request-&gt;<span class="fn">user</span>(), $cart);
+
+    <span class="kw">return</span> <span class="fn">response</span>()-&gt;<span class="fn">json</span>([<span class="str">'success'</span> =&gt; <span class="kw">true</span>, <span class="str">'data'</span> =&gt; $order], <span class="nb">201</span>);
+}
+
+<span class="kw">public function</span> <span class="fn">updateStatus</span>(Request $request, Order $order)
+{
+    <span class="cm">// hanya admin yang boleh ubah status manual (lihat Minggu 2 — Spatie)</span>
+    $this-&gt;<span class="fn">authorize</span>(<span class="str">'update'</span>, $order);
+
+    $request-&gt;<span class="fn">validate</span>([<span class="str">'status'</span> =&gt; <span class="str">'required|in:processing,shipped,completed,cancelled'</span>]);
+    $order-&gt;<span class="fn">transitionTo</span>($request-&gt;status);
+
+    <span class="kw">return</span> <span class="fn">response</span>()-&gt;<span class="fn">json</span>([<span class="str">'success'</span> =&gt; <span class="kw">true</span>, <span class="str">'data'</span> =&gt; $order]);
+}</code></pre>
+
+      <div class="pre-label">routes/api.php</div>
+      <pre><code><span class="cl">Route</span>::<span class="fn">middleware</span>(<span class="str">'auth:sanctum'</span>)-&gt;<span class="fn">group</span>(<span class="kw">function</span> () {
+    <span class="cl">Route</span>::<span class="fn">post</span>(<span class="str">'/orders'</span>, [OrderController::class, <span class="str">'store'</span>]);
+    <span class="cl">Route</span>::<span class="fn">get</span>(<span class="str">'/orders/{order}'</span>, [OrderController::class, <span class="str">'show'</span>]);
+});
+
+<span class="cl">Route</span>::<span class="fn">middleware</span>([<span class="str">'auth:sanctum'</span>, <span class="str">'role:admin'</span>])-&gt;<span class="fn">group</span>(<span class="kw">function</span> () {
+    <span class="cl">Route</span>::<span class="fn">patch</span>(<span class="str">'/orders/{order}/status'</span>, [OrderController::class, <span class="str">'updateStatus'</span>]);
+});</code></pre>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- ========== PAYMENT GATEWAY ========== -->
+    <div class="section" id="payment-midtrans">
+      <h2>Integrasi Payment Gateway (Midtrans)</h2>
+      <p><strong>Midtrans</strong> adalah payment gateway populer di Indonesia yang mendukung
+        transfer bank, e-wallet, dan kartu kredit lewat satu integrasi.</p>
+
+      <h3>Install SDK &amp; Konfigurasi</h3>
+      <div class="pre-label">Terminal</div>
+      <pre><code>composer require midtrans/midtrans-php</code></pre>
+      <div class="pre-label">.env</div>
+      <pre><code>MIDTRANS_SERVER_KEY=SB-Mid-server-xxxxxxxxxxxx
+MIDTRANS_CLIENT_KEY=SB-Mid-client-xxxxxxxxxxxx
+MIDTRANS_IS_PRODUCTION=false</code></pre>
+
+      <h3>Buat Snap Token untuk Order</h3>
+      <div class="pre-label">app/Services/PaymentService.php</div>
+      <pre><code><span class="op">&lt;?php</span>
+
+<span class="kw">namespace</span> App\Services;
+
+<span class="kw">use</span> App\Models\{Order, Payment};
+<span class="kw">use</span> Midtrans\Config;
+<span class="kw">use</span> Midtrans\Snap;
+
+<span class="kw">class</span> <span class="cl">PaymentService</span>
+{
+    <span class="kw">public function</span> <span class="fn">__construct</span>()
+    {
+        Config::$serverKey    = config(<span class="str">'services.midtrans.server_key'</span>);
+        Config::$isProduction = config(<span class="str">'services.midtrans.is_production'</span>);
+        Config::$isSanitized  = <span class="kw">true</span>;
+        Config::$is3ds        = <span class="kw">true</span>;
+    }
+
+    <span class="kw">public function</span> <span class="fn">createSnapToken</span>(Order $order): <span class="kw">string</span>
+    {
+        $params = [
+            <span class="str">'transaction_details'</span> =&gt; [
+                <span class="str">'order_id'</span>     =&gt; $order-&gt;kode_order,
+                <span class="str">'gross_amount'</span> =&gt; $order-&gt;total,
+            ],
+            <span class="str">'customer_details'</span> =&gt; [
+                <span class="str">'first_name'</span> =&gt; $order-&gt;user-&gt;name,
+                <span class="str">'email'</span>      =&gt; $order-&gt;user-&gt;email,
+            ],
+        ];
+
+        $snapToken = Snap::<span class="fn">getSnapToken</span>($params);
+
+        Payment::<span class="fn">create</span>([
+            <span class="str">'order_id'</span>           =&gt; $order-&gt;id,
+            <span class="str">'midtrans_order_id'</span>  =&gt; $order-&gt;kode_order,
+            <span class="str">'status'</span>             =&gt; <span class="str">'pending'</span>,
+        ]);
+
+        <span class="kw">return</span> $snapToken;
+    }
+}</code></pre>
+
+      <div class="pre-label">app/Http/Controllers/Api/PaymentController.php</div>
+      <pre><code><span class="kw">public function</span> <span class="fn">createSnapToken</span>(Order $order)
+{
+    $this-&gt;<span class="fn">authorize</span>(<span class="str">'view'</span>, $order);
+
+    $token = $this-&gt;paymentService-&gt;<span class="fn">createSnapToken</span>($order);
+    <span class="kw">return</span> <span class="fn">response</span>()-&gt;<span class="fn">json</span>([<span class="str">'success'</span> =&gt; <span class="kw">true</span>, <span class="str">'snap_token'</span> =&gt; $token]);
+}</code></pre>
+    </div>
+
+    <!-- WEBHOOK -->
+    <div class="section" id="payment-webhook">
+      <h2>Webhook &amp; Verifikasi Signature</h2>
+      <p>
+        Midtrans memberi tahu status pembayaran lewat <strong>webhook</strong> (server Midtrans
+        yang mengirim POST ke server kita). Endpoint ini harus <strong>publik</strong> (tanpa
+        <code>auth:sanctum</code>), tapi tetap wajib diverifikasi keasliannya (prinsip
+        keamanan dari Minggu 6).
+      </p>
+
+      <div class="pre-label">app/Http/Controllers/Api/PaymentController.php</div>
+      <pre><code><span class="kw">public function</span> <span class="fn">webhook</span>(Request $request)
+{
+    $payload = $request-&gt;<span class="fn">all</span>();
+
+    <span class="cm">// Verifikasi signature — pastikan request benar-benar dari Midtrans, bukan penyerang</span>
+    $signature = <span class="fn">hash</span>(<span class="str">'sha512'</span>,
+        $payload[<span class="str">'order_id'</span>] .
+        $payload[<span class="str">'status_code'</span>] .
+        $payload[<span class="str">'gross_amount'</span>] .
+        config(<span class="str">'services.midtrans.server_key'</span>)
+    );
+
+    <span class="kw">if</span> ($signature !== $payload[<span class="str">'signature_key'</span>]) {
+        Log::<span class="fn">channel</span>(<span class="str">'payment'</span>)-&gt;<span class="fn">warning</span>(<span class="str">'Signature webhook tidak valid'</span>, $payload);
+        <span class="fn">abort</span>(<span class="nb">403</span>, <span class="str">'Invalid signature.'</span>);
+    }
+
+    $payment = Payment::<span class="fn">where</span>(<span class="str">'midtrans_order_id'</span>, $payload[<span class="str">'order_id'</span>])-&gt;<span class="fn">firstOrFail</span>();
+    $payment-&gt;<span class="fn">update</span>([
+        <span class="str">'status'</span>       =&gt; $payload[<span class="str">'transaction_status'</span>],
+        <span class="str">'raw_response'</span> =&gt; $payload,
+    ]);
+
+    <span class="kw">if</span> ($payload[<span class="str">'transaction_status'</span>] === <span class="str">'settlement'</span>) {
+        $payment-&gt;order-&gt;<span class="fn">transitionTo</span>(<span class="str">'paid'</span>);
+        OrderStatusUpdated::<span class="fn">dispatch</span>($payment-&gt;order);   <span class="cm">// broadcast real-time, Minggu 5</span>
+        Log::<span class="fn">channel</span>(<span class="str">'payment'</span>)-&gt;<span class="fn">info</span>(<span class="str">'Pembayaran berhasil'</span>, [<span class="str">'order_id'</span> =&gt; $payment-&gt;order_id]);
+    }
+
+    <span class="kw">return</span> <span class="fn">response</span>()-&gt;<span class="fn">json</span>([<span class="str">'success'</span> =&gt; <span class="kw">true</span>]);
+}</code></pre>
+
+      <div class="pre-label">routes/api.php</div>
+      <pre><code><span class="cm">// Publik (dipanggil server Midtrans, bukan user) — tapi diverifikasi signature</span>
+<span class="cl">Route</span>::<span class="fn">post</span>(<span class="str">'/payment/webhook'</span>, [PaymentController::class, <span class="str">'webhook'</span>])
+    -&gt;<span class="fn">middleware</span>(<span class="str">'throttle:30,1'</span>);</code></pre>
+
+      <div class="callout danger">
+        <div class="callout-title">Endpoint Publik &ne; Endpoint Tanpa Proteksi</div>
+        Webhook harus bisa diakses tanpa token Sanctum (server Midtrans tidak punya token
+        user), tapi tetap wajib diverifikasi lewat <strong>signature</strong>. Tanpa ini,
+        siapapun bisa memalsukan callback "pembayaran berhasil" tanpa benar-benar membayar.
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- SKILL CHECKLIST -->
+    <div class="section" id="skill-checklist">
+      <h2>Checklist Penerapan Skill Minggu 1&ndash;6</h2>
+      <table>
+        <thead><tr><th>Minggu</th><th>Skill</th><th>Diterapkan di</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>Eloquent, relasi, query optimization</td><td>Relasi Cart/Order/Payment, eager load <code>items.produk</code></td></tr>
+          <tr><td>2</td><td>Repository/Service, Spatie Roles, Rate Limiting</td><td><code>CartService</code>/<code>OrderService</code>, <code>role:admin</code> di update status, throttle di cart &amp; webhook</td></tr>
+          <tr><td>3</td><td>Redis, Horizon, Testing</td><td>Cache daftar produk populer, queue untuk kirim email invoice, Feature Test alur checkout</td></tr>
+          <tr><td>4</td><td>Telescope, Logging, Sentry</td><td>Log channel <code>payment</code> khusus, Sentry untuk error checkout/webhook</td></tr>
+          <tr><td>5</td><td>API Versioning, Reverb</td><td><code>OrderStatusUpdated</code> broadcast real-time ke user &amp; admin</td></tr>
+          <tr><td>6</td><td>Access Control, Encryption, Hardening</td><td>Policy <code>OrderPolicy</code>, verifikasi signature webhook, HTTPS wajib untuk payment</td></tr>
+        </tbody>
+      </table>
+      <div class="callout success">
+        <div class="callout-title">Ini Intinya Belajar Backend</div>
+        Fitur e-commerce ini terlihat rumit, tapi kalau diperhatikan, tidak ada satupun konsep
+        yang benar-benar baru. Kemampuan <em>merangkai</em> potongan-potongan skill yang sudah
+        dikuasai menjadi satu alur kerja yang solid adalah keterampilan inti seorang backend
+        developer.
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- RINGKASAN -->
+    <div class="section" id="ringkasan">
+      <h2>Ringkasan Minggu 7</h2>
+      <ul class="step-list">
+        <li>
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <h4>Shopping Cart</h4>
+            <p>Cart per user dengan <code>CartService</code>, validasi stok saat item
+              ditambahkan, dan penggabungan qty otomatis untuk produk yang sama.</p>
+          </div>
+        </li>
+        <li>
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <h4>Checkout &amp; Order</h4>
+            <p>Proses checkout atomik dengan <code>DB::transaction()</code>, dan status order
+              dijaga lewat state machine sederhana supaya transisi tidak melompat-lompat.</p>
+          </div>
+        </li>
+        <li>
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <h4>Payment Gateway</h4>
+            <p>Integrasi Midtrans lewat Snap Token, webhook diverifikasi dengan signature
+              sebelum status order diperbarui.</p>
+          </div>
+        </li>
+        <li>
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <h4>Menggabungkan Semua Skill</h4>
+            <p>Repository/Service, otorisasi, caching, logging, broadcasting, dan hardening
+              keamanan &mdash; semua dipakai bersama dalam satu alur kerja nyata.</p>
+          </div>
+        </li>
+      </ul>
+
+      <div class="callout success">
+        <div class="callout-title">Selamat! Minggu 7 (Capstone) Selesai</div>
+        <code>laravel-crud-app</code> sekarang punya alur e-commerce lengkap dari cart sampai
+        pembayaran terverifikasi. Lanjut ke
+        <a href="modul-containerization-deployment.html"><strong>Minggu 8 &mdash;
+        Containerization &amp; Deployment</strong></a> dengan Docker dan CI/CD, atau lihat
+        <a href="index.html">roadmap lengkap</a> untuk lanjutannya.
+      </div>
+    </div>
+
+   </div>
+  </main>
+
+  <!-- RIGHT TOC -->
+  <aside class="toc">
+    <div class="toc-title">Daftar Isi</div>
+
+    <a href="#capstone-intro">Project Overview</a>
+    <a class="sub" href="#capstone-intro">Apa yang Dibangun</a>
+    <a class="sub" href="#capstone-erd">Desain Database</a>
+
+    <a href="#cart-migration" style="margin-top:12px;display:block">Shopping Cart</a>
+    <a class="sub" href="#cart-migration">Migration &amp; Model</a>
+    <a class="sub" href="#cart-service">Cart Service</a>
+    <a class="sub" href="#cart-routes">Cart API</a>
+
+    <a href="#checkout-flow" style="margin-top:12px;display:block">Checkout &amp; Order</a>
+    <a class="sub" href="#checkout-flow">Dari Cart ke Order</a>
+    <a class="sub" href="#order-status">Order Status</a>
+    <a class="sub" href="#order-routes">Order API</a>
+
+    <a href="#payment-midtrans" style="margin-top:12px;display:block">Payment Gateway</a>
+    <a class="sub" href="#payment-midtrans">Integrasi Midtrans</a>
+    <a class="sub" href="#payment-webhook">Webhook</a>
+
+    <a href="#skill-checklist" style="margin-top:12px;display:block">Checklist Skill</a>
+
+    <a href="#ringkasan" style="margin-top:12px;display:block">Ringkasan</a>
+  </aside>
+
+</div>
+
+<script>
+  // Sidebar accordion
+  document.querySelectorAll('.nav-group-title').forEach(title => {
+    title.addEventListener('click', () => {
+      title.parentElement.classList.toggle('open');
+    });
+  });
+
+  // Laravel nav bar — sub navbar (dropdown) toggle
+  document.querySelectorAll('.laravel-nav-trigger').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      btn.closest('.laravel-nav').classList.toggle('open');
+    });
+  });
+  document.addEventListener('click', (e) => {
+    document.querySelectorAll('.laravel-nav.open').forEach(nav => {
+      if (!nav.contains(e.target)) nav.classList.remove('open');
+    });
+  });
+
+  // Mobile sidebar toggle
+  const sidebarEl = document.querySelector('.sidebar');
+  const overlayEl = document.getElementById('sidebarOverlay');
+  const menuToggleBtn = document.getElementById('menuToggle');
+  function closeSidebar() {
+    sidebarEl.classList.remove('open');
+    overlayEl.classList.remove('show');
+  }
+  if (menuToggleBtn) {
+    menuToggleBtn.addEventListener('click', () => {
+      sidebarEl.classList.toggle('open');
+      overlayEl.classList.toggle('show');
+    });
+  }
+  if (overlayEl) overlayEl.addEventListener('click', closeSidebar);
+  document.querySelectorAll('.sidebar a').forEach(a => a.addEventListener('click', closeSidebar));
+
+  // Wrap tables so they scroll horizontally instead of breaking layout on small screens
+  document.querySelectorAll('.main table').forEach(t => {
+    if (t.closest('.table-scroll')) return;
+    const wrap = document.createElement('div');
+    wrap.className = 'table-scroll';
+    t.parentNode.insertBefore(wrap, t);
+    wrap.appendChild(t);
+  });
+
+  // Copy button on every code block
+  function copyText(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+      return navigator.clipboard.writeText(text);
+    }
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); } catch (err) {}
+    document.body.removeChild(ta);
+    return Promise.resolve();
+  }
+  document.querySelectorAll('pre').forEach(pre => {
+    const codeEl = pre.querySelector('code');
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'copy-btn';
+    btn.textContent = 'Copy';
+    btn.setAttribute('aria-label', 'Salin kode');
+    btn.addEventListener('click', () => {
+      const text = (codeEl ? codeEl.textContent : pre.textContent).trim();
+      copyText(text).then(() => {
+        btn.textContent = 'Copied!';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = 'Copy';
+          btn.classList.remove('copied');
+        }, 1500);
+      });
+    });
+    pre.appendChild(btn);
+  });
+
+  // Scroll spy for sidebar + TOC
+  const sections = document.querySelectorAll('.section[id]');
+  const navLinks = document.querySelectorAll('.nav-link');
+  const tocLinks = document.querySelectorAll('.toc a');
+
+  function setActive(links, id) {
+    links.forEach(l => {
+      l.classList.toggle('active', l.getAttribute('href') === '#' + id);
+    });
+  }
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        setActive(navLinks, entry.target.id);
+        setActive(tocLinks, entry.target.id);
+        const activeLink = document.querySelector('.nav-link.active');
+        if (activeLink) {
+          const group = activeLink.closest('.nav-group');
+          if (group) group.classList.add('open');
+        }
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+
+  sections.forEach(s => observer.observe(s));
+</script>
+
+</body>
+</html>

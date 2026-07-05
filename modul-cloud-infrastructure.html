@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Modul Cloud &amp; Infrastructure &mdash; Laravel</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --sidebar-w: 260px;
+      --toc-w: 220px;
+      --accent: #0d6efd;
+      --accent-light: #e7f1ff;
+      --text: #212529;
+      --muted: #6c757d;
+      --border: #dee2e6;
+      --code-bg: #f8f9fa;
+      --code-border: #e9ecef;
+      --sidebar-bg: #f8f9fa;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 15px;
+      line-height: 1.7;
+      color: var(--text);
+      background: #fff;
+    }
+
+    /* TOP BAR */
+    .topbar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      height: 56px;
+      background: #fff;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; padding: 0 24px;
+      gap: 16px;
+    }
+    .topbar-brand {
+      font-weight: 700; font-size: 17px; color: var(--accent);
+      text-decoration: none;
+    }
+    .topbar-version {
+      background: var(--accent-light); color: var(--accent);
+      font-size: 11px; font-weight: 600; padding: 2px 8px;
+      border-radius: 20px;
+    }
+    .topbar-subtitle {
+      color: var(--muted); font-size: 13px; margin-left: auto;
+    }
+    /* LARAVEL NAV BAR + SUB NAVBAR (dropdown by Fokus Utama) */
+    .laravel-nav { position: relative; margin-left: 24px; }
+    .laravel-nav-trigger {
+      display: flex; align-items: center; gap: 6px;
+      background: none; border: 1px solid var(--border); border-radius: 6px;
+      padding: 6px 14px; font-size: 13px; font-weight: 600;
+      color: var(--text); cursor: pointer; font-family: inherit;
+    }
+    .laravel-nav-trigger:hover { background: var(--accent-light); color: var(--accent); border-color: var(--accent); }
+    .laravel-nav.open .laravel-nav-trigger { background: var(--accent-light); color: var(--accent); border-color: var(--accent); }
+    .laravel-nav-trigger .caret { font-size: 10px; transition: transform .15s; }
+    .laravel-nav.open .laravel-nav-trigger .caret { transform: rotate(180deg); }
+    .laravel-nav-menu {
+      display: none;
+      position: absolute; top: calc(100% + 8px); left: 0;
+      width: 360px; max-height: 75vh; overflow-y: auto;
+      background: #fff; border: 1px solid var(--border); border-radius: 10px;
+      box-shadow: 0 12px 32px rgba(0,0,0,.14);
+      padding: 8px; z-index: 200;
+    }
+    .laravel-nav.open .laravel-nav-menu { display: block; }
+    .laravel-nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 12px; border-radius: 8px;
+      text-decoration: none; color: var(--text); font-size: 13px;
+    }
+    .laravel-nav-item:hover { background: var(--accent-light); }
+    .laravel-nav-item.active { background: var(--accent-light); color: var(--accent); font-weight: 600; }
+    .laravel-nav-item .lni-week {
+      flex-shrink: 0; width: 34px; font-size: 11px; font-weight: 700; color: var(--muted);
+    }
+    .laravel-nav-item.active .lni-week { color: var(--accent); }
+    .laravel-nav-item .lni-title { flex: 1; }
+    .laravel-nav-item .lni-soon {
+      flex-shrink: 0; font-size: 10px; font-weight: 700; text-transform: uppercase;
+      background: #e9ecef; color: #495057; padding: 2px 6px; border-radius: 20px;
+    }
+
+    /* LAYOUT */
+    .layout {
+      display: flex;
+      padding-top: 56px;
+      min-height: 100vh;
+    }
+
+    /* LEFT SIDEBAR */
+    .sidebar {
+      width: var(--sidebar-w);
+      flex-shrink: 0;
+      position: fixed;
+      top: 56px; bottom: 0; left: 0;
+      overflow-y: auto;
+      background: var(--sidebar-bg);
+      border-right: 1px solid var(--border);
+      padding: 20px 0 40px;
+    }
+    .sidebar::-webkit-scrollbar { width: 4px; }
+    .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    .nav-group { margin-bottom: 4px; }
+    .nav-group-title {
+      display: flex; align-items: center; gap: 8px;
+      padding: 6px 20px;
+      font-size: 12px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .06em;
+      color: var(--text);
+      cursor: pointer;
+      user-select: none;
+    }
+    .nav-group-title .arrow {
+      display: inline-block; transition: transform .2s;
+      font-size: 10px; color: var(--muted);
+    }
+    .nav-group.open .arrow { transform: rotate(90deg); }
+    .nav-group-items { display: none; }
+    .nav-group.open .nav-group-items { display: block; }
+
+    .nav-link {
+      display: block;
+      padding: 5px 20px 5px 36px;
+      font-size: 14px; color: var(--muted);
+      text-decoration: none;
+      border-left: 3px solid transparent;
+      transition: color .15s, border-color .15s, background .15s;
+    }
+    .nav-link:hover { color: var(--accent); background: var(--accent-light); }
+    .nav-link.active {
+      color: var(--accent); font-weight: 600;
+      border-left-color: var(--accent);
+      background: var(--accent-light);
+    }
+
+    /* MAIN CONTENT */
+    .main {
+      margin-left: var(--sidebar-w);
+      margin-right: var(--toc-w);
+      flex: 1;
+      min-width: 0;
+    }
+    .main-inner {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 48px 56px;
+    }
+
+    /* MOBILE MENU TOGGLE */
+    .menu-toggle {
+      display: none;
+      align-items: center; justify-content: center;
+      width: 32px; height: 32px; flex-shrink: 0;
+      border: 1px solid var(--border); border-radius: 6px;
+      background: none; cursor: pointer; font-size: 16px;
+      color: var(--text);
+    }
+    .menu-toggle:hover { background: var(--accent-light); color: var(--accent); border-color: var(--accent); }
+    .sidebar-overlay {
+      display: none;
+      position: fixed; inset: 56px 0 0 0;
+      background: rgba(0,0,0,.35);
+      z-index: 95;
+    }
+    .sidebar-overlay.show { display: block; }
+
+    /* TABLES THAT OVERFLOW SCROLL INSTEAD OF BREAKING LAYOUT */
+    .table-scroll { overflow-x: auto; margin: 16px 0; -webkit-overflow-scrolling: touch; }
+    .table-scroll table { margin: 0; }
+
+    /* RESPONSIVE */
+    @media (max-width: 1300px) {
+      .toc { display: none; }
+      .main { margin-right: 0; }
+    }
+    @media (max-width: 900px) {
+      .menu-toggle { display: inline-flex; }
+      .topbar-subtitle { display: none; }
+      .sidebar {
+        transform: translateX(-100%);
+        transition: transform .2s ease;
+        z-index: 96;
+        box-shadow: 4px 0 24px rgba(0,0,0,.15);
+      }
+      .sidebar.open { transform: translateX(0); }
+      .main { margin-left: 0; }
+      .main-inner { padding: 32px 24px; }
+      .laravel-nav-menu { width: min(360px, 88vw); }
+    }
+    @media (max-width: 560px) {
+      .topbar { padding: 0 14px; gap: 10px; }
+      .topbar-brand { font-size: 15px; }
+      .topbar-version { display: none; }
+      .page-title { font-size: 28px; }
+      .page-lead { font-size: 15px; padding-bottom: 24px; margin-bottom: 28px; }
+      .main-inner { padding: 24px 16px; }
+      h2 { font-size: 21px; }
+    }
+
+    /* RIGHT TOC */
+    .toc {
+      width: var(--toc-w);
+      flex-shrink: 0;
+      position: fixed;
+      top: 56px; bottom: 0; right: 0;
+      overflow-y: auto;
+      padding: 24px 16px;
+      border-left: 1px solid var(--border);
+    }
+    .toc-title {
+      font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .06em;
+      color: var(--muted); margin-bottom: 12px;
+    }
+    .toc a {
+      display: block; font-size: 13px; color: var(--muted);
+      text-decoration: none; padding: 3px 0 3px 8px;
+      border-left: 2px solid transparent;
+      transition: color .15s, border-color .15s;
+    }
+    .toc a:hover, .toc a.active {
+      color: var(--accent); border-left-color: var(--accent);
+    }
+    .toc a.sub { padding-left: 20px; font-size: 12px; }
+
+    /* CONTENT TYPOGRAPHY */
+    .page-title {
+      font-size: 40px; font-weight: 700;
+      margin-bottom: 12px; line-height: 1.2;
+    }
+    .page-lead {
+      font-size: 18px; color: var(--muted);
+      margin-bottom: 40px; border-bottom: 1px solid var(--border);
+      padding-bottom: 32px;
+    }
+    .section { margin-bottom: 56px; }
+    h2 {
+      font-size: 26px; font-weight: 700;
+      margin-bottom: 16px; padding-top: 8px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 8px;
+    }
+    h3 {
+      font-size: 18px; font-weight: 600;
+      margin: 24px 0 10px;
+    }
+    h4 {
+      font-size: 15px; font-weight: 600;
+      margin: 18px 0 8px; color: var(--text);
+    }
+    p { margin-bottom: 14px; }
+    ul, ol { padding-left: 24px; margin-bottom: 14px; }
+    li { margin-bottom: 6px; }
+    strong { font-weight: 600; }
+
+    /* CODE */
+    code {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      font-size: 13px;
+      background: var(--code-bg);
+      border: 1px solid var(--code-border);
+      padding: 1px 5px; border-radius: 4px;
+      color: #d63384;
+    }
+    pre {
+      background: #1e1e2e;
+      border-radius: 8px;
+      padding: 20px 24px;
+      overflow-x: auto;
+      margin: 16px 0 20px;
+      position: relative;
+    }
+    pre code {
+      background: none; border: none; padding: 0;
+      color: #cdd6f4; font-size: 13px; line-height: 1.65;
+    }
+    .pre-label {
+      font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .06em;
+      color: #6c757d; margin-bottom: 6px;
+    }
+
+    /* COPY BUTTON */
+    .copy-btn {
+      position: absolute; top: 10px; right: 10px;
+      display: flex; align-items: center; gap: 5px;
+      background: rgba(255,255,255,.08);
+      color: #cdd6f4;
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 6px;
+      font-family: inherit; font-size: 11px; font-weight: 600;
+      padding: 4px 9px;
+      cursor: pointer;
+      opacity: .55;
+      transition: opacity .15s, background .15s;
+    }
+    pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
+    .copy-btn:hover { background: rgba(255,255,255,.2); }
+    .copy-btn.copied {
+      opacity: 1; background: #198754; border-color: #198754; color: #fff;
+    }
+    @media (max-width: 900px) { .copy-btn { opacity: .8; } }
+    @media print { .copy-btn { display: none; } }
+
+    .kw  { color: #cba6f7; }
+    .fn  { color: #89b4fa; }
+    .str { color: #a6e3a1; }
+    .cm  { color: #6c7086; }
+    .cl  { color: #fab387; }
+    .nb  { color: #89dceb; }
+    .op  { color: #89dceb; }
+
+    /* BADGES / CALLOUTS */
+    .badge {
+      display: inline-block; font-size: 11px; font-weight: 700;
+      padding: 2px 8px; border-radius: 4px;
+      text-transform: uppercase; letter-spacing: .04em;
+    }
+    .badge-blue  { background: #cfe2ff; color: #084298; }
+    .badge-green { background: #d1e7dd; color: #0a3622; }
+    .badge-red   { background: #f8d7da; color: #842029; }
+    .badge-yellow{ background: #fff3cd; color: #664d03; }
+    .badge-purple{ background: #e8d5fb; color: #5e2d91; }
+    .badge-orange{ background: #ffe5d0; color: #8a3800; }
+
+    .callout {
+      border-left: 4px solid var(--accent);
+      background: var(--accent-light);
+      padding: 14px 18px; border-radius: 0 6px 6px 0;
+      margin: 16px 0;
+    }
+    .callout.warning { border-left-color: #ffc107; background: #fff3cd; }
+    .callout.danger  { border-left-color: #dc3545; background: #f8d7da; }
+    .callout.success { border-left-color: #198754; background: #d1e7dd; }
+    .callout-title { font-weight: 700; margin-bottom: 4px; font-size: 13px; }
+
+    /* TABLE */
+    table {
+      width: 100%; border-collapse: collapse;
+      margin: 16px 0; font-size: 14px;
+    }
+    th {
+      background: var(--code-bg); font-weight: 600;
+      padding: 10px 14px; border: 1px solid var(--border);
+      text-align: left;
+    }
+    td { padding: 9px 14px; border: 1px solid var(--border); }
+    tr:nth-child(even) td { background: #fafafa; }
+
+    /* STEP LIST */
+    .step-list { list-style: none; padding: 0; }
+    .step-list li { display: flex; gap: 16px; margin-bottom: 20px; }
+    .step-num {
+      flex-shrink: 0;
+      width: 28px; height: 28px;
+      background: var(--accent); color: #fff;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700; margin-top: 2px;
+    }
+    .step-body h4 { margin-top: 0; }
+
+    /* DIVIDER */
+    .divider { border: none; border-top: 2px solid var(--border); margin: 56px 0; }
+
+    /* PRINT */
+    @media print {
+      .topbar, .sidebar, .toc { display: none; }
+      .main { margin: 0; }
+      .main-inner { padding: 24px 32px; max-width: 100%; }
+      pre { background: #f8f9fa !important; }
+      pre code { color: #212529 !important; }
+      .kw,.fn,.str,.cm,.cl,.nb,.op { color: #212529 !important; }
+      h2 { page-break-before: always; }
+      .section:first-of-type h2 { page-break-before: avoid; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<header class="topbar">
+  <button class="menu-toggle" id="menuToggle" aria-label="Buka menu">&#9776;</button>
+  <a class="topbar-brand" href="index.html">Laravel Docs</a>
+  <span class="topbar-version">v12.x</span>
+  <div class="laravel-nav" id="laravelNav">
+    <button class="laravel-nav-trigger" type="button">Laravel <span class="caret">&#9662;</span></button>
+    <div class="laravel-nav-menu">
+      <a class="laravel-nav-item" href="modul-rest-api-sanctum.html"><span class="lni-week">M1</span><span class="lni-title">Core Laravel &amp; Database</span></a>
+      <a class="laravel-nav-item" href="modul-arsitektur-otorisasi.html"><span class="lni-week">M2</span><span class="lni-title">Arsitektur Kode &amp; Otorisasi</span></a>
+      <a class="laravel-nav-item" href="modul-optimasi.html"><span class="lni-week">M3</span><span class="lni-title">Testing &amp; Optimasi</span></a>
+      <a class="laravel-nav-item" href="modul-observability.html"><span class="lni-week">M4</span><span class="lni-title">Observability</span></a>
+      <a class="laravel-nav-item" href="modul-api-design-realtime.html"><span class="lni-week">M5</span><span class="lni-title">API Design &amp; Real-time</span></a>
+      <a class="laravel-nav-item" href="modul-security-deepdive.html"><span class="lni-week">M6</span><span class="lni-title">Security Deep-dive</span></a>
+      <a class="laravel-nav-item" href="modul-capstone-ecommerce.html"><span class="lni-week">M7</span><span class="lni-title">Capstone Project: E-commerce</span></a>
+      <a class="laravel-nav-item" href="modul-containerization-deployment.html"><span class="lni-week">M8</span><span class="lni-title">Containerization &amp; Deployment</span></a>
+      <a class="laravel-nav-item active" href="modul-cloud-infrastructure.html"><span class="lni-week">M9</span><span class="lni-title">Cloud &amp; Infrastructure</span></a>
+      <a class="laravel-nav-item" href="modul-skala-besar.html"><span class="lni-week">M10</span><span class="lni-title">Skala Besar</span></a>
+      <a class="laravel-nav-item" href="modul-system-design.html"><span class="lni-week">M11</span><span class="lni-title">System Design</span></a>
+    </div>
+  </div>
+  <span class="topbar-subtitle">Nginx/Supervisor, Cloud (AWS/GCP), Terraform &mdash; Modul Belajar</span>
+</header>
+
+<div class="layout">
+
+  <!-- LEFT SIDEBAR -->
+  <nav class="sidebar">
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Nginx &amp; Supervisor</div>
+      <div class="nav-group-items">
+        <a class="nav-link active" href="#nginx-intro">Kenapa Nginx untuk Production</a>
+        <a class="nav-link" href="#nginx-install">Install &amp; Konfigurasi Nginx</a>
+        <a class="nav-link" href="#nginx-supervisor">Supervisor untuk Queue Worker</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Cloud (AWS/GCP)</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#cloud-options">Pilihan Layanan Cloud</a>
+        <a class="nav-link" href="#cloud-cli">Install CLI (AWS/GCP)</a>
+        <a class="nav-link" href="#cloud-provision">Provisioning Server &amp; Database</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Infrastructure as Code</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#terraform-intro">Kenapa Butuh IaC</a>
+        <a class="nav-link" href="#terraform-install">Install Terraform</a>
+        <a class="nav-link" href="#terraform-config">Terraform untuk Laravel</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Deploy E-commerce</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#deploy-checklist">Checklist Deployment</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Ringkasan</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#ringkasan">Ringkasan Minggu 9</a>
+      </div>
+    </div>
+
+  </nav>
+
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- MAIN CONTENT -->
+  <main class="main">
+   <div class="main-inner">
+
+    <!-- ========== NGINX & SUPERVISOR ========== -->
+    <div class="section" id="nginx-intro">
+      <h1 class="page-title">Cloud &amp; Infrastructure</h1>
+      <p class="page-lead">
+        Docker (Minggu 8) membungkus aplikasi, tapi container itu perlu <strong>tempat
+        berjalan</strong> yang stabil di production. Minggu ini: web server production-grade
+        (Nginx), penjaga proses background (Supervisor), penyedia server sungguhan
+        (AWS/GCP), dan cara mengelola semuanya sebagai kode (Terraform).
+      </p>
+
+      <h2>Kenapa Nginx untuk Production?</h2>
+      <p>Sejak Minggu 1 kita pakai <strong>Apache</strong> (bawaan XAMPP) untuk development.
+        Di production, <strong>Nginx</strong> lebih umum dipakai di depan Laravel karena
+        arsitekturnya lebih ringan untuk menangani banyak koneksi bersamaan.</p>
+      <table>
+        <thead><tr><th>Aspek</th><th>Apache (XAMPP)</th><th>Nginx</th></tr></thead>
+        <tbody>
+          <tr><td>Model proses</td><td>Satu proses/thread per koneksi</td><td>Event-driven, satu proses tangani ribuan koneksi</td></tr>
+          <tr><td>Konsumsi memori</td><td>Naik signifikan dengan banyak koneksi</td><td>Tetap rendah &amp; stabil</td></tr>
+          <tr><td>Eksekusi PHP</td><td>Modul <code>mod_php</code> tertanam</td><td>Proxy ke PHP-FPM terpisah</td></tr>
+          <tr><td>Cocok untuk</td><td>Development lokal, kemudahan konfigurasi</td><td>Production dengan trafik tinggi</td></tr>
+        </tbody>
+      </table>
+      <div class="callout">
+        <div class="callout-title">Tidak Perlu Migrasi Buru-buru</div>
+        Apache tetap bisa dipakai di production untuk trafik kecil-menengah. Nginx jadi
+        relevan saat aplikasi sudah diuji dengan k6 (Minggu 8) dan terbukti butuh menangani
+        banyak koneksi bersamaan secara efisien.
+      </div>
+    </div>
+
+    <!-- INSTALL NGINX -->
+    <div class="section" id="nginx-install">
+      <h2>Install &amp; Konfigurasi Nginx</h2>
+      <p>Server production umumnya Linux (Ubuntu). Langkah ini dijalankan di server, bisa
+        dites dulu di WSL (sudah di-setup sejak <a href="modul-rest-api-sanctum.html#instalasi-wsl">Minggu 1</a>).</p>
+
+      <h3>Langkah 1 &mdash; Install Nginx &amp; PHP-FPM</h3>
+      <div class="pre-label">Terminal (Ubuntu/WSL)</div>
+      <pre><code><span class="fn">sudo</span> apt update
+<span class="fn">sudo</span> apt install nginx php8.3-fpm -y
+
+<span class="fn">sudo</span> systemctl status nginx    <span class="cm"># pastikan "active (running)"</span></code></pre>
+
+      <h3>Langkah 2 &mdash; Server Block untuk Laravel</h3>
+      <div class="pre-label">/etc/nginx/sites-available/laravel-crud-app</div>
+      <pre><code><span class="kw">server</span> {
+    <span class="kw">listen</span> 80;
+    <span class="kw">server_name</span> laravel-crud-app.com;
+    <span class="kw">root</span> /var/www/laravel-crud-app/public;
+
+    <span class="kw">add_header</span> X-Frame-Options <span class="str">"DENY"</span>;
+    <span class="kw">add_header</span> X-Content-Type-Options <span class="str">"nosniff"</span>;
+
+    <span class="kw">index</span> index.php;
+
+    <span class="kw">location</span> / {
+        <span class="kw">try_files</span> $uri $uri/ /index.php?$query_string;
+    }
+
+    <span class="kw">location</span> ~ \.php$ {
+        <span class="kw">fastcgi_pass</span> unix:/var/run/php/php8.3-fpm.sock;
+        <span class="kw">fastcgi_param</span> SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        <span class="kw">include</span> fastcgi_params;
+    }
+
+    <span class="kw">location</span> ~ /\.(?!well-known).* {
+        <span class="kw">deny</span> all;   <span class="cm"># blokir akses ke file dotfile seperti .env</span>
+    }
+}</code></pre>
+
+      <h3>Langkah 3 &mdash; Aktifkan Konfigurasi</h3>
+      <div class="pre-label">Terminal</div>
+      <pre><code><span class="fn">sudo</span> ln -s /etc/nginx/sites-available/laravel-crud-app /etc/nginx/sites-enabled/
+<span class="fn">sudo</span> nginx -t             <span class="cm"># cek syntax config sebelum reload</span>
+<span class="fn">sudo</span> systemctl reload nginx</code></pre>
+      <div class="callout warning">
+        <div class="callout-title">Blok <code>location ~ /\.</code> Itu Penting</div>
+        Tanpa baris ini, file seperti <code>.env</code> (berisi secrets dari
+        <a href="modul-security-deepdive.html#encrypt-secrets">Minggu 6</a>) bisa diakses
+        langsung lewat browser kalau tidak sengaja ter-expose.
+      </div>
+    </div>
+
+    <!-- SUPERVISOR -->
+    <div class="section" id="nginx-supervisor">
+      <h2>Supervisor untuk Queue Worker &amp; Horizon</h2>
+      <p>
+        <code>php artisan horizon</code> (Minggu 3) dan queue worker harus
+        <strong>selalu berjalan</strong> di background. Kalau proses ini crash atau server
+        restart, <strong>Supervisor</strong> yang menjaganya tetap hidup dan otomatis
+        menyalakannya kembali.
+      </p>
+
+      <h3>Install Supervisor</h3>
+      <div class="pre-label">Terminal</div>
+      <pre><code><span class="fn">sudo</span> apt install supervisor -y</code></pre>
+
+      <h3>Konfigurasi untuk Horizon</h3>
+      <div class="pre-label">/etc/supervisor/conf.d/horizon.conf</div>
+      <pre><code>[program:horizon]
+process_name=%(program_name)s
+command=php /var/www/laravel-crud-app/artisan horizon
+autostart=true
+autorestart=true
+user=www-data
+redirect_stderr=true
+stdout_logfile=/var/www/laravel-crud-app/storage/logs/horizon.log
+stopwaitsecs=3600</code></pre>
+
+      <h3>Jalankan &amp; Verifikasi</h3>
+      <div class="pre-label">Terminal</div>
+      <pre><code><span class="fn">sudo</span> supervisorctl reread
+<span class="fn">sudo</span> supervisorctl update
+<span class="fn">sudo</span> supervisorctl start horizon
+
+<span class="fn">sudo</span> supervisorctl status   <span class="cm"># harus tampil "horizon RUNNING"</span></code></pre>
+      <div class="callout success">
+        <div class="callout-title">Auto-restart Kalau Crash</div>
+        <code>autorestart=true</code> membuat Supervisor otomatis menyalakan ulang proses
+        Horizon kalau tiba-tiba mati &mdash; tidak perlu ada yang login manual ke server tiap
+        kali worker berhenti.
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- ========== CLOUD ========== -->
+    <div class="section" id="cloud-options">
+      <h2>Pilihan Layanan Cloud</h2>
+      <p>Dua provider paling umum untuk deploy aplikasi Laravel skala kecil-menengah:</p>
+      <table>
+        <thead><tr><th>Kebutuhan</th><th>AWS</th><th>GCP</th></tr></thead>
+        <tbody>
+          <tr><td>Server (compute)</td><td>EC2</td><td>Compute Engine</td></tr>
+          <tr><td>Database terkelola</td><td>RDS (MySQL/PostgreSQL)</td><td>Cloud SQL</td></tr>
+          <tr><td>Object storage (upload file)</td><td>S3</td><td>Cloud Storage</td></tr>
+          <tr><td>Cache terkelola</td><td>ElastiCache (Redis)</td><td>Memorystore</td></tr>
+          <tr><td>Container orchestration</td><td>ECS / EKS</td><td>GKE</td></tr>
+        </tbody>
+      </table>
+      <div class="callout">
+        <div class="callout-title">Tidak Perlu Kuasai Keduanya Sekaligus</div>
+        Konsepnya mirip di semua provider (compute, managed database, object storage). Kuasai
+        satu provider dengan baik dulu &mdash; skill-nya banyak yang transferable ke provider
+        lain.
+      </div>
+    </div>
+
+    <!-- INSTALL CLI -->
+    <div class="section" id="cloud-cli">
+      <h2>Install CLI (AWS/GCP)</h2>
+      <p>CLI dipakai untuk mengelola resource cloud dari terminal, tanpa harus klik-klik di
+        dashboard web setiap saat.</p>
+
+      <h3>AWS CLI (Windows)</h3>
+      <div class="pre-label">PowerShell</div>
+      <pre><code>winget install Amazon.AWSCLI</code></pre>
+      <div class="pre-label">Verifikasi &amp; Konfigurasi</div>
+      <pre><code>aws --version
+aws configure   <span class="cm"># masukkan Access Key ID, Secret Key, region (mis. ap-southeast-1)</span></code></pre>
+
+      <h3>Google Cloud CLI (Windows)</h3>
+      <div class="pre-label">PowerShell</div>
+      <pre><code>winget install Google.CloudSDK</code></pre>
+      <div class="pre-label">Verifikasi &amp; Login</div>
+      <pre><code>gcloud --version
+gcloud init          <span class="cm"># login &amp; pilih project GCP</span>
+gcloud auth login</code></pre>
+
+      <div class="callout warning">
+        <div class="callout-title">Jangan Commit Access Key</div>
+        Kredensial AWS/GCP hasil <code>aws configure</code> tersimpan di
+        <code>~/.aws/credentials</code> &mdash; folder ini di luar project Git, tapi tetap
+        pastikan tidak pernah menyalin isinya ke dalam kode atau <code>.env</code> yang
+        ter-commit (prinsip Minggu 6).
+      </div>
+    </div>
+
+    <!-- PROVISIONING -->
+    <div class="section" id="cloud-provision">
+      <h2>Provisioning Server &amp; Database (Manual, Sebelum Terraform)</h2>
+      <p>Sebelum masuk ke Infrastructure as Code, pahami dulu apa yang sebenarnya dibuat
+        &mdash; supaya paham apa yang nanti "diotomatisasi" oleh Terraform.</p>
+
+      <h3>Membuat EC2 Instance via AWS CLI</h3>
+      <div class="pre-label">Terminal</div>
+      <pre><code>aws ec2 run-instances \
+  --image-id ami-0abcdef1234567890 \
+  --instance-type t3.small \
+  --key-name laravel-crud-app-key \
+  --security-groups laravel-crud-app-sg</code></pre>
+
+      <h3>Membuat Database RDS</h3>
+      <div class="pre-label">Terminal</div>
+      <pre><code>aws rds create-db-instance \
+  --db-instance-identifier laravel-crud-app-db \
+  --db-instance-class db.t3.micro \
+  --engine mysql \
+  --master-username admin \
+  --master-user-password <span class="str">'GantiPasswordIni!'</span> \
+  --allocated-storage 20</code></pre>
+
+      <div class="callout danger">
+        <div class="callout-title">Ini Cara "Manual" &mdash; Mudah Salah &amp; Sulit Diulang</div>
+        Menjalankan perintah satu-satu seperti ini cukup untuk belajar konsep, tapi rawan
+        human error dan tidak tercatat sebagai "dokumentasi hidup". Itulah masalah yang
+        dipecahkan Terraform di bagian berikutnya.
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- ========== TERRAFORM ========== -->
+    <div class="section" id="terraform-intro">
+      <h2>Kenapa Butuh Infrastructure as Code?</h2>
+      <p>
+        <strong>Infrastructure as Code (IaC)</strong> menulis definisi infrastruktur (server,
+        database, jaringan) sebagai file konfigurasi &mdash; bukan langkah manual di
+        console/CLI yang mudah lupa atau beda antar environment.
+      </p>
+      <table>
+        <thead><tr><th>Manual (Console/CLI)</th><th>Terraform (IaC)</th></tr></thead>
+        <tbody>
+          <tr><td>Langkah tidak terdokumentasi otomatis</td><td>Semua definisi ada di file <code>.tf</code>, versi-terkontrol di Git</td></tr>
+          <tr><td>Sulit reproduksi environment identik</td><td><code>terraform apply</code> menghasilkan environment yang sama persis</td></tr>
+          <tr><td>Perubahan tidak ter-review</td><td><code>terraform plan</code> menampilkan preview perubahan sebelum dieksekusi</td></tr>
+          <tr><td>Rawan resource "yatim" yang lupa dihapus</td><td>Semua resource tercatat, <code>terraform destroy</code> membersihkan rapi</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- INSTALL TERRAFORM -->
+    <div class="section" id="terraform-install">
+      <h2>Install Terraform (Windows)</h2>
+
+      <h3>Opsi 1 &mdash; winget</h3>
+      <div class="pre-label">PowerShell</div>
+      <pre><code>winget install HashiCorp.Terraform</code></pre>
+
+      <h3>Opsi 2 &mdash; Chocolatey</h3>
+      <div class="pre-label">PowerShell (Run as Administrator)</div>
+      <pre><code>choco install terraform</code></pre>
+
+      <h3>Verifikasi Instalasi</h3>
+      <div class="pre-label">Terminal</div>
+      <pre><code>terraform -version</code></pre>
+      <div class="pre-label">Contoh Output</div>
+      <pre><code>Terraform v1.x.x
+on windows_amd64</code></pre>
+    </div>
+
+    <!-- TERRAFORM CONFIG -->
+    <div class="section" id="terraform-config">
+      <h2>Terraform untuk Laravel (AWS)</h2>
+      <p>Definisikan server EC2 dan database RDS yang tadi dibuat manual, sekarang sebagai
+        kode yang bisa diulang kapan saja.</p>
+
+      <div class="pre-label">main.tf</div>
+      <pre><code><span class="kw">terraform</span> {
+  required_providers {
+    aws = {
+      source  = <span class="str">"hashicorp/aws"</span>
+      version = <span class="str">"~&gt; 5.0"</span>
+    }
+  }
+}
+
+<span class="kw">provider</span> <span class="str">"aws"</span> {
+  region = <span class="str">"ap-southeast-1"</span>
+}
+
+<span class="kw">resource</span> <span class="str">"aws_instance"</span> <span class="str">"laravel_app"</span> {
+  ami           = <span class="str">"ami-0abcdef1234567890"</span>
+  instance_type = <span class="str">"t3.small"</span>
+  key_name      = <span class="str">"laravel-crud-app-key"</span>
+
+  tags = {
+    Name = <span class="str">"laravel-crud-app-server"</span>
+  }
+}
+
+<span class="kw">resource</span> <span class="str">"aws_db_instance"</span> <span class="str">"laravel_db"</span> {
+  identifier        = <span class="str">"laravel-crud-app-db"</span>
+  engine            = <span class="str">"mysql"</span>
+  instance_class    = <span class="str">"db.t3.micro"</span>
+  allocated_storage = <span class="nb">20</span>
+  username          = <span class="str">"admin"</span>
+  password          = var.db_password   <span class="cm"># dari variabel, bukan hardcoded</span>
+  skip_final_snapshot = <span class="kw">true</span>
+}</code></pre>
+
+      <div class="pre-label">variables.tf</div>
+      <pre><code><span class="kw">variable</span> <span class="str">"db_password"</span> {
+  description = <span class="str">"Password untuk RDS"</span>
+  type        = string
+  sensitive   = <span class="kw">true</span>   <span class="cm">// tidak tampil di log/output Terraform</span>
+}</code></pre>
+
+      <h3>Jalankan Terraform</h3>
+      <div class="pre-label">Terminal</div>
+      <pre><code>terraform init      <span class="cm"># download provider AWS</span>
+terraform plan -var=<span class="str">"db_password=GantiPasswordIni!"</span>   <span class="cm"># preview perubahan</span>
+terraform apply -var=<span class="str">"db_password=GantiPasswordIni!"</span>  <span class="cm"># eksekusi (minta konfirmasi "yes")</span></code></pre>
+
+      <div class="callout success">
+        <div class="callout-title">Menerapkan Minggu 6 &mdash; Secrets di Variabel</div>
+        <code>db_password</code> ditandai <code>sensitive = true</code> dan diisi lewat
+        variabel (bukan ditulis langsung di <code>main.tf</code>) &mdash; sama prinsipnya
+        dengan <code>.env</code> yang tidak boleh commit ke Git.
+      </div>
+
+      <h3>Membersihkan Resource</h3>
+      <div class="pre-label">Terminal</div>
+      <pre><code>terraform destroy -var=<span class="str">"db_password=GantiPasswordIni!"</span></code></pre>
+      <div class="callout warning">
+        <div class="callout-title">Hati-hati dengan <code>terraform destroy</code></div>
+        Perintah ini menghapus <strong>semua resource</strong> yang didefinisikan di file
+        Terraform, termasuk database berisi data production. Selalu jalankan
+        <code>terraform plan</code> dulu untuk memastikan tidak ada yang terhapus tidak
+        sengaja.
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- DEPLOY CHECKLIST -->
+    <div class="section" id="deploy-checklist">
+      <h2>Checklist Deploy Project E-commerce ke Cloud</h2>
+      <ol class="step-list">
+        <li>
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <h4>Provision Infrastruktur</h4>
+            <p><code>terraform apply</code> &mdash; buat EC2/Compute Engine + RDS/Cloud SQL sesuai definisi di atas.</p>
+          </div>
+        </li>
+        <li>
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <h4>Install Docker di Server</h4>
+            <p>SSH ke server, install Docker Engine (bukan Docker Desktop &mdash; itu khusus Windows/Mac).</p>
+          </div>
+        </li>
+        <li>
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <h4>Deploy via CI/CD</h4>
+            <p>Push ke branch <code>main</code> &mdash; workflow <code>deploy.yml</code> dari
+              <a href="modul-containerization-deployment.html#cicd-deploy">Minggu 8</a> otomatis
+              build image &amp; SSH ke server baru ini.</p>
+          </div>
+        </li>
+        <li>
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <h4>Setup Nginx + Supervisor</h4>
+            <p>Konfigurasi reverse proxy dan pastikan Horizon selalu jalan lewat Supervisor.</p>
+          </div>
+        </li>
+        <li>
+          <div class="step-num">5</div>
+          <div class="step-body">
+            <h4>Load Test Ulang</h4>
+            <p>Jalankan skrip k6 dari <a href="modul-containerization-deployment.html#k6-script">Minggu 8</a>
+              mengarah ke domain production untuk validasi kapasitas server sungguhan.</p>
+          </div>
+        </li>
+      </ol>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- RINGKASAN -->
+    <div class="section" id="ringkasan">
+      <h2>Ringkasan Minggu 9</h2>
+      <ul class="step-list">
+        <li>
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <h4>Nginx &amp; Supervisor</h4>
+            <p>Nginx sebagai reverse proxy production-grade, Supervisor menjaga Horizon dan
+              queue worker tetap hidup dan auto-restart kalau crash.</p>
+          </div>
+        </li>
+        <li>
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <h4>Cloud (AWS/GCP)</h4>
+            <p>Kenal layanan inti (compute, managed database, storage) dan CLI masing-masing
+              provider untuk provisioning resource.</p>
+          </div>
+        </li>
+        <li>
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <h4>Infrastructure as Code (Terraform)</h4>
+            <p>Definisikan infrastruktur sebagai kode yang bisa di-review, diulang, dan
+              dihapus rapi &mdash; jauh lebih aman dari klik manual di console.</p>
+          </div>
+        </li>
+      </ul>
+
+      <div class="callout success">
+        <div class="callout-title">Selamat! Minggu 9 Selesai</div>
+        Project e-commerce sekarang bisa di-deploy ke server cloud sungguhan, dengan
+        infrastruktur yang terdefinisi sebagai kode. Lanjut ke
+        <a href="modul-skala-besar.html"><strong>Minggu 10 &mdash; Skala Besar</strong></a>
+        (Microservices, Message Brokers, Kubernetes), atau lihat
+        <a href="index.html">roadmap lengkap</a> untuk lanjutannya.
+      </div>
+    </div>
+
+   </div>
+  </main>
+
+  <!-- RIGHT TOC -->
+  <aside class="toc">
+    <div class="toc-title">Daftar Isi</div>
+
+    <a href="#nginx-intro">Nginx &amp; Supervisor</a>
+    <a class="sub" href="#nginx-intro">Kenapa Nginx</a>
+    <a class="sub" href="#nginx-install">Install &amp; Config</a>
+    <a class="sub" href="#nginx-supervisor">Supervisor</a>
+
+    <a href="#cloud-options" style="margin-top:12px;display:block">Cloud (AWS/GCP)</a>
+    <a class="sub" href="#cloud-options">Pilihan Layanan</a>
+    <a class="sub" href="#cloud-cli">Install CLI</a>
+    <a class="sub" href="#cloud-provision">Provisioning</a>
+
+    <a href="#terraform-intro" style="margin-top:12px;display:block">Terraform (IaC)</a>
+    <a class="sub" href="#terraform-intro">Kenapa IaC</a>
+    <a class="sub" href="#terraform-install">Install Terraform</a>
+    <a class="sub" href="#terraform-config">Config untuk Laravel</a>
+
+    <a href="#deploy-checklist" style="margin-top:12px;display:block">Deploy E-commerce</a>
+
+    <a href="#ringkasan" style="margin-top:12px;display:block">Ringkasan</a>
+  </aside>
+
+</div>
+
+<script>
+  // Sidebar accordion
+  document.querySelectorAll('.nav-group-title').forEach(title => {
+    title.addEventListener('click', () => {
+      title.parentElement.classList.toggle('open');
+    });
+  });
+
+  // Laravel nav bar — sub navbar (dropdown) toggle
+  document.querySelectorAll('.laravel-nav-trigger').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      btn.closest('.laravel-nav').classList.toggle('open');
+    });
+  });
+  document.addEventListener('click', (e) => {
+    document.querySelectorAll('.laravel-nav.open').forEach(nav => {
+      if (!nav.contains(e.target)) nav.classList.remove('open');
+    });
+  });
+
+  // Mobile sidebar toggle
+  const sidebarEl = document.querySelector('.sidebar');
+  const overlayEl = document.getElementById('sidebarOverlay');
+  const menuToggleBtn = document.getElementById('menuToggle');
+  function closeSidebar() {
+    sidebarEl.classList.remove('open');
+    overlayEl.classList.remove('show');
+  }
+  if (menuToggleBtn) {
+    menuToggleBtn.addEventListener('click', () => {
+      sidebarEl.classList.toggle('open');
+      overlayEl.classList.toggle('show');
+    });
+  }
+  if (overlayEl) overlayEl.addEventListener('click', closeSidebar);
+  document.querySelectorAll('.sidebar a').forEach(a => a.addEventListener('click', closeSidebar));
+
+  // Wrap tables so they scroll horizontally instead of breaking layout on small screens
+  document.querySelectorAll('.main table').forEach(t => {
+    if (t.closest('.table-scroll')) return;
+    const wrap = document.createElement('div');
+    wrap.className = 'table-scroll';
+    t.parentNode.insertBefore(wrap, t);
+    wrap.appendChild(t);
+  });
+
+  // Copy button on every code block
+  function copyText(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+      return navigator.clipboard.writeText(text);
+    }
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); } catch (err) {}
+    document.body.removeChild(ta);
+    return Promise.resolve();
+  }
+  document.querySelectorAll('pre').forEach(pre => {
+    const codeEl = pre.querySelector('code');
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'copy-btn';
+    btn.textContent = 'Copy';
+    btn.setAttribute('aria-label', 'Salin kode');
+    btn.addEventListener('click', () => {
+      const text = (codeEl ? codeEl.textContent : pre.textContent).trim();
+      copyText(text).then(() => {
+        btn.textContent = 'Copied!';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = 'Copy';
+          btn.classList.remove('copied');
+        }, 1500);
+      });
+    });
+    pre.appendChild(btn);
+  });
+
+  // Scroll spy for sidebar + TOC
+  const sections = document.querySelectorAll('.section[id]');
+  const navLinks = document.querySelectorAll('.nav-link');
+  const tocLinks = document.querySelectorAll('.toc a');
+
+  function setActive(links, id) {
+    links.forEach(l => {
+      l.classList.toggle('active', l.getAttribute('href') === '#' + id);
+    });
+  }
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        setActive(navLinks, entry.target.id);
+        setActive(tocLinks, entry.target.id);
+        const activeLink = document.querySelector('.nav-link.active');
+        if (activeLink) {
+          const group = activeLink.closest('.nav-group');
+          if (group) group.classList.add('open');
+        }
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+
+  sections.forEach(s => observer.observe(s));
+</script>
+
+</body>
+</html>
