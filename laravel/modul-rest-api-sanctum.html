@@ -484,6 +484,7 @@
       <div class="nav-group-items">
         <a class="nav-link" href="#n-plus-one">Masalah N+1</a>
         <a class="nav-link" href="#eager-loading">Eager Loading</a>
+        <a class="nav-link" href="#n-plus-one-praktik">Praktik: Ukur &amp; Bandingkan</a>
         <a class="nav-link" href="#indexing">Indexing Dasar</a>
       </div>
     </div>
@@ -1514,6 +1515,159 @@ $produks = <span class="cl">Produk</span>::<span class="fn">with</span>(<span cl
       </div>
     </div>
 
+    <div class="section" id="n-plus-one-praktik">
+      <h2>Praktik: Ukur &amp; Bandingkan Sendiri</h2>
+      <p>
+        Membaca kode di atas saja kadang belum terasa nyata. Bagian ini memandu kamu
+        mempraktikkan langsung di project <code>laravel-crud-app</code>: membuat data dalam
+        jumlah besar, memicu N+1 dengan sengaja, mengukur jumlah query yang benar-benar
+        dijalankan, lalu membandingkannya setelah memakai eager loading.
+      </p>
+
+      <h3>Yang Perlu Disiapkan</h3>
+      <ul>
+        <li>Project <code>laravel-crud-app</code> dari Minggu 1 sudah bisa dijalankan (<code>php artisan serve</code>).</li>
+        <li>Model &amp; migrasi <code>Produk</code> dan <code>Kategori</code> beserta relasinya sudah ada (lihat bagian sebelumnya).</li>
+        <li><strong>Opsional tapi direkomendasikan</strong> untuk kerja profesional sehari-hari: package <code>barryvdh/laravel-debugbar</code>, diinstal di Langkah 4.</li>
+      </ul>
+
+      <h3>Langkah 1 &mdash; Buat Factory (Kalau Belum Ada)</h3>
+      <p>Factory dipakai untuk membuat data dummy dalam jumlah banyak secara instan.</p>
+      <div class="pre-label">Terminal</div>
+      <pre><code>php artisan make:factory KategoriFactory --model=Kategori
+php artisan make:factory ProdukFactory --model=Produk</code></pre>
+
+      <div class="pre-label">database/factories/KategoriFactory.php</div>
+      <pre><code><span class="kw">public function</span> <span class="fn">definition</span>(): <span class="cl">array</span>
+{
+    <span class="kw">return</span> [
+        <span class="str">'nama_kategori'</span> =&gt; $this-&gt;faker-&gt;<span class="fn">word</span>(),
+    ];
+}</code></pre>
+
+      <div class="pre-label">database/factories/ProdukFactory.php</div>
+      <pre><code><span class="kw">public function</span> <span class="fn">definition</span>(): <span class="cl">array</span>
+{
+    <span class="kw">return</span> [
+        <span class="str">'nama_produk'</span> =&gt; $this-&gt;faker-&gt;<span class="fn">words</span>(<span class="nb">3</span>, <span class="kw">true</span>),
+        <span class="str">'harga'</span> =&gt; $this-&gt;faker-&gt;<span class="fn">numberBetween</span>(<span class="nb">10000</span>, <span class="nb">5000000</span>),
+        <span class="str">'stok'</span> =&gt; $this-&gt;faker-&gt;<span class="fn">numberBetween</span>(<span class="nb">0</span>, <span class="nb">100</span>),
+        <span class="str">'kategori_id'</span> =&gt; <span class="cl">Kategori</span>::<span class="fn">factory</span>(),
+    ];
+}</code></pre>
+
+      <h3>Langkah 2 &mdash; Seed 500 Produk Dummy</h3>
+      <div class="pre-label">Terminal</div>
+      <pre><code>php artisan tinker</code></pre>
+      <pre><code>&gt;&gt;&gt; <span class="cl">App\Models\Kategori</span>::<span class="fn">factory</span>(<span class="nb">10</span>)-&gt;<span class="fn">create</span>();
+&gt;&gt;&gt; <span class="cl">App\Models\Produk</span>::<span class="fn">factory</span>(<span class="nb">500</span>)-&gt;<span class="fn">create</span>();
+&gt;&gt;&gt; exit</code></pre>
+      <div class="callout">
+        <div class="callout-title">Kenapa 500 Baris?</div>
+        Dengan hanya 3&ndash;5 baris, perbedaan N+1 hampir tidak terasa. Memakai ratusan baris
+        membuat perbedaannya jelas terlihat, baik dari jumlah query maupun waktu respons.
+      </div>
+
+      <h3>Langkah 3 &mdash; Ukur Jumlah Query Tanpa Install Apa Pun</h3>
+      <p>
+        Laravel sudah punya <code>DB::enableQueryLog()</code> bawaan &mdash; cara paling cepat
+        membuktikan N+1 tanpa instalasi tambahan apa pun.
+      </p>
+      <div class="pre-label">Terminal</div>
+      <pre><code>php artisan tinker</code></pre>
+      <pre><code><span class="cm">// --- versi bermasalah ---</span>
+&gt;&gt;&gt; <span class="cl">DB</span>::<span class="fn">enableQueryLog</span>();
+&gt;&gt;&gt; $produks = <span class="cl">App\Models\Produk</span>::<span class="fn">all</span>();
+&gt;&gt;&gt; <span class="kw">foreach</span> ($produks <span class="kw">as</span> $p) { $p-&gt;kategori-&gt;nama_kategori; }
+&gt;&gt;&gt; <span class="fn">count</span>(<span class="cl">DB</span>::<span class="fn">getQueryLog</span>());
+=&gt; <span class="nb">501</span></code></pre>
+      <pre><code><span class="cm">// --- versi diperbaiki, di sesi tinker yang sama ---</span>
+&gt;&gt;&gt; <span class="cl">DB</span>::<span class="fn">flushQueryLog</span>();
+&gt;&gt;&gt; $produks = <span class="cl">App\Models\Produk</span>::<span class="fn">with</span>(<span class="str">'kategori'</span>)-&gt;<span class="fn">get</span>();
+&gt;&gt;&gt; <span class="kw">foreach</span> ($produks <span class="kw">as</span> $p) { $p-&gt;kategori-&gt;nama_kategori; }
+&gt;&gt;&gt; <span class="fn">count</span>(<span class="cl">DB</span>::<span class="fn">getQueryLog</span>());
+=&gt; <span class="nb">2</span></code></pre>
+      <div class="callout success">
+        <div class="callout-title">Bukti Nyata</div>
+        501 query turun jadi 2 query hanya dengan menambahkan <code>with('kategori')</code>.
+        Angka <strong>501</strong> = 1 query <code>Produk::all()</code> + 500 query kategori
+        (satu per baris). Angka <strong>2</strong> = 1 query produk + 1 query kategori (diambil
+        sekaligus lewat <code>WHERE kategori_id IN (...)</code>).
+      </div>
+
+      <h3>Langkah 4 &mdash; Install Laravel Debugbar untuk Monitoring Visual</h3>
+      <p>
+        Tinker cocok untuk pembuktian cepat, tapi tim profesional biasanya memantau query
+        langsung dari browser saat development memakai <strong>Laravel Debugbar</strong>.
+      </p>
+      <div class="pre-label">Terminal</div>
+      <pre><code>composer require barryvdh/laravel-debugbar --dev</code></pre>
+      <p>Package ini otomatis aktif saat <code>APP_DEBUG=true</code> di <code>.env</code>
+        (nilai default untuk environment <code>local</code>) &mdash; tidak perlu konfigurasi
+        tambahan.</p>
+
+      <h3>Langkah 5 &mdash; Buat Route Percobaan</h3>
+      <p>Tambahkan route sementara khusus untuk membandingkan, supaya tidak mengubah
+        controller aslinya.</p>
+      <div class="pre-label">routes/web.php</div>
+      <pre><code><span class="kw">if</span> (app()-&gt;environment(<span class="str">'local'</span>)) {
+    <span class="cl">Route</span>::<span class="fn">get</span>(<span class="str">'/percobaan/n-plus-one'</span>, <span class="kw">function</span> () {
+        $produks = <span class="cl">App\Models\Produk</span>::<span class="fn">all</span>();
+        <span class="kw">foreach</span> ($produks <span class="kw">as</span> $p) { $p-&gt;kategori?-&gt;nama_kategori; }
+        <span class="kw">return</span> <span class="str">'Selesai — cek tab Queries di Debugbar'</span>;
+    });
+
+    <span class="cl">Route</span>::<span class="fn">get</span>(<span class="str">'/percobaan/eager-loading'</span>, <span class="kw">function</span> () {
+        $produks = <span class="cl">App\Models\Produk</span>::<span class="fn">with</span>(<span class="str">'kategori'</span>)-&gt;<span class="fn">get</span>();
+        <span class="kw">foreach</span> ($produks <span class="kw">as</span> $p) { $p-&gt;kategori?-&gt;nama_kategori; }
+        <span class="kw">return</span> <span class="str">'Selesai — cek tab Queries di Debugbar'</span>;
+    });
+}</code></pre>
+      <div class="callout warning">
+        <div class="callout-title">Kenapa Dibungkus <code>environment('local')</code></div>
+        Route percobaan seperti ini tidak boleh ikut ter-deploy ke production &mdash; bisa jadi
+        celah keamanan atau membebani server tanpa alasan jelas. Hapus route ini (Langkah 7)
+        setelah selesai belajar.
+      </div>
+
+      <h3>Langkah 6 &mdash; Jalankan &amp; Bandingkan di Browser</h3>
+      <ol>
+        <li>Jalankan <code>php artisan serve</code>.</li>
+        <li>Buka <code>http://localhost:8000/percobaan/n-plus-one</code> &mdash; lihat toolbar
+          Debugbar di bagian bawah browser, klik tab <strong>Queries</strong>, catat jumlah
+          query &amp; total waktunya.</li>
+        <li>Buka <code>http://localhost:8000/percobaan/eager-loading</code> &mdash; bandingkan
+          jumlah query &amp; waktunya dengan langkah sebelumnya.</li>
+      </ol>
+
+      <div class="table-scroll">
+      <table>
+        <thead><tr><th>Versi</th><th>Jumlah Query (500 produk)</th><th>Ilustrasi Waktu</th></tr></thead>
+        <tbody>
+          <tr><td>Bermasalah (<code>Produk::all()</code>)</td><td>501</td><td>~250&ndash;600ms*</td></tr>
+          <tr><td>Diperbaiki (<code>with('kategori')</code>)</td><td>2</td><td>~15&ndash;40ms*</td></tr>
+        </tbody>
+      </table>
+      </div>
+      <p style="font-size:13px;color:var(--muted)">*Angka waktu hanya ilustrasi &mdash; nilai
+        sebenarnya tergantung mesin, jumlah data, dan latensi database. Yang paling penting
+        dibandingkan adalah <strong>jumlah query</strong>, karena itu penyebab utamanya.</p>
+
+      <h3>Langkah 7 &mdash; Bersihkan Kode Percobaan</h3>
+      <p>Setelah selesai membandingkan, hapus route di <code>routes/web.php</code> yang dibuat
+        di Langkah 5. Package Debugbar boleh tetap terpasang (<code>--dev</code> artinya tidak
+        ikut ter-install saat <code>composer install --no-dev</code> di server production),
+        tapi pastikan <code>APP_DEBUG=false</code> di <code>.env</code> production supaya
+        Debugbar otomatis nonaktif.</p>
+
+      <div class="callout danger">
+        <div class="callout-title">Jangan Sampai Terbawa ke Production</div>
+        <code>APP_DEBUG=true</code> di production membocorkan detail error, query, dan
+        konfigurasi internal ke publik. Selalu pastikan <code>.env</code> production memakai
+        <code>APP_DEBUG=false</code> dan <code>APP_ENV=production</code>.
+      </div>
+    </div>
+
     <div class="section" id="indexing">
       <h2>Indexing Dasar</h2>
       <p>
@@ -2330,6 +2484,7 @@ Penyerang bisa login sebagai user manapun tanpa password!</code></pre>
     <a href="#n-plus-one" style="margin-top:12px;display:block">Query Optimization</a>
     <a class="sub" href="#n-plus-one">Masalah N+1</a>
     <a class="sub" href="#eager-loading">Eager Loading</a>
+    <a class="sub" href="#n-plus-one-praktik">Praktik: Bandingkan</a>
     <a class="sub" href="#indexing">Indexing</a>
 
     <a href="#pengenalan" style="margin-top:12px;display:block">REST API</a>
