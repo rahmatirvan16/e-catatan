@@ -1,0 +1,2964 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Modul REST API &mdash; Membangun Tax Processing System dari Nol</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --sidebar-w: 260px;
+      --toc-w: 220px;
+      --accent: #0d6efd;
+      --accent-light: #e7f1ff;
+      --text: #212529;
+      --muted: #6c757d;
+      --border: #dee2e6;
+      --code-bg: #f8f9fa;
+      --code-border: #e9ecef;
+      --sidebar-bg: #f8f9fa;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 15px;
+      line-height: 1.7;
+      color: var(--text);
+      background: #fff;
+    }
+
+    /* TOP BAR */
+    .topbar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      height: 56px;
+      background: #fff;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; padding: 0 24px;
+      gap: 16px;
+    }
+    .topbar-brand {
+      font-weight: 700; font-size: 17px; color: var(--accent);
+      text-decoration: none;
+    }
+    .topbar-version {
+      background: var(--accent-light); color: var(--accent);
+      font-size: 11px; font-weight: 600; padding: 2px 8px;
+      border-radius: 20px;
+    }
+    .topbar-subtitle {
+      color: var(--muted); font-size: 13px; margin-left: auto;
+      white-space: nowrap;
+    }
+
+    .site-search { position: relative; flex: 1 1 260px; max-width: 340px; margin-left: 12px; }
+    .site-search-input {
+      width: 100%; padding: 7px 12px; font-size: 13px;
+      border: 1px solid var(--border); border-radius: 6px;
+      font-family: inherit; outline: none; color: var(--text); background: #fff;
+    }
+    .site-search-input:focus { border-color: var(--accent); }
+    .site-search-results {
+      display: none;
+      position: absolute; top: calc(100% + 8px); left: 0; right: 0;
+      max-height: 70vh; overflow-y: auto;
+      background: #fff; border: 1px solid var(--border); border-radius: 10px;
+      box-shadow: 0 12px 32px rgba(0,0,0,.14);
+      padding: 6px; z-index: 250;
+    }
+    .site-search-results.show { display: block; }
+    .site-search-item {
+      display: block; padding: 8px 10px; border-radius: 8px;
+      text-decoration: none; color: var(--text);
+    }
+    .site-search-item:hover, .site-search-item.active { background: var(--accent-light); }
+    .site-search-item .ssi-title { font-size: 13px; font-weight: 600; }
+    .site-search-item .ssi-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .site-search-item .ssi-snippet { font-size: 12px; color: var(--muted); margin-top: 4px; }
+    .site-search-empty { padding: 14px; font-size: 13px; color: var(--muted); text-align: center; }
+    .site-search mark { background: #fff3cd; color: inherit; border-radius: 2px; padding: 0 1px; }
+    @media (max-width: 900px) { .site-search { flex-basis: 140px; } }
+
+    /* NAV BAR + SUB NAVBAR (dropdown) */
+    .laravel-nav { position: relative; margin-left: 24px; }
+    .laravel-nav-trigger {
+      display: flex; align-items: center; gap: 6px;
+      background: none; border: 1px solid var(--border); border-radius: 6px;
+      padding: 6px 14px; font-size: 13px; font-weight: 600;
+      color: var(--text); cursor: pointer; font-family: inherit;
+    }
+    .laravel-nav-trigger:hover { background: var(--accent-light); color: var(--accent); border-color: var(--accent); }
+    .laravel-nav.open .laravel-nav-trigger { background: var(--accent-light); color: var(--accent); border-color: var(--accent); }
+    .laravel-nav-trigger .caret { font-size: 10px; transition: transform .15s; }
+    .laravel-nav.open .laravel-nav-trigger .caret { transform: rotate(180deg); }
+    .laravel-nav-menu {
+      display: none;
+      position: absolute; top: calc(100% + 8px); left: 0;
+      width: 360px; max-height: 75vh; overflow-y: auto;
+      background: #fff; border: 1px solid var(--border); border-radius: 10px;
+      box-shadow: 0 12px 32px rgba(0,0,0,.14);
+      padding: 8px; z-index: 200;
+    }
+    .laravel-nav.open .laravel-nav-menu { display: block; }
+    .laravel-nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 12px; border-radius: 8px;
+      text-decoration: none; color: var(--text); font-size: 13px;
+    }
+    .laravel-nav-item:hover { background: var(--accent-light); }
+    .laravel-nav-item.active { background: var(--accent-light); color: var(--accent); font-weight: 600; }
+    .laravel-nav-item .lni-week {
+      flex-shrink: 0; width: 34px; font-size: 11px; font-weight: 700; color: var(--muted);
+    }
+    .laravel-nav-item.active .lni-week { color: var(--accent); }
+    .laravel-nav-item .lni-title { flex: 1; }
+
+    /* LAYOUT */
+    .layout {
+      display: flex;
+      padding-top: 56px;
+      min-height: 100vh;
+    }
+
+    /* LEFT SIDEBAR */
+    .sidebar {
+      width: var(--sidebar-w);
+      flex-shrink: 0;
+      position: fixed;
+      top: 56px; bottom: 0; left: 0;
+      overflow-y: auto;
+      background: var(--sidebar-bg);
+      border-right: 1px solid var(--border);
+      padding: 20px 0 40px;
+    }
+    .sidebar::-webkit-scrollbar { width: 4px; }
+    .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    .nav-group { margin-bottom: 4px; }
+    .nav-group-title {
+      display: flex; align-items: center; gap: 8px;
+      padding: 6px 20px;
+      font-size: 12px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .06em;
+      color: var(--text);
+      cursor: pointer;
+      user-select: none;
+    }
+    .nav-group-title .arrow {
+      display: inline-block; transition: transform .2s;
+      font-size: 10px; color: var(--muted);
+    }
+    .nav-group.open .arrow { transform: rotate(90deg); }
+    .nav-group-items { display: none; }
+    .nav-group.open .nav-group-items { display: block; }
+
+    .nav-link {
+      display: block;
+      padding: 5px 20px 5px 36px;
+      font-size: 14px; color: var(--muted);
+      text-decoration: none;
+      border-left: 3px solid transparent;
+      transition: color .15s, border-color .15s, background .15s;
+    }
+    .nav-link:hover { color: var(--accent); background: var(--accent-light); }
+    .nav-link.active {
+      color: var(--accent); font-weight: 600;
+      border-left-color: var(--accent);
+      background: var(--accent-light);
+    }
+
+    /* MAIN CONTENT */
+    .main {
+      margin-left: var(--sidebar-w);
+      margin-right: var(--toc-w);
+      flex: 1;
+      min-width: 0;
+    }
+    .main-inner {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 48px 56px;
+    }
+
+    /* MOBILE MENU TOGGLE */
+    .menu-toggle {
+      display: none;
+      align-items: center; justify-content: center;
+      width: 32px; height: 32px; flex-shrink: 0;
+      border: 1px solid var(--border); border-radius: 6px;
+      background: none; cursor: pointer; font-size: 16px;
+      color: var(--text);
+    }
+    .menu-toggle:hover { background: var(--accent-light); color: var(--accent); border-color: var(--accent); }
+    .sidebar-overlay {
+      display: none;
+      position: fixed; inset: 56px 0 0 0;
+      background: rgba(0,0,0,.35);
+      z-index: 95;
+    }
+    .sidebar-overlay.show { display: block; }
+
+    .table-scroll { overflow-x: auto; margin: 16px 0; -webkit-overflow-scrolling: touch; }
+    .table-scroll table { margin: 0; }
+
+    /* RESPONSIVE */
+    @media (max-width: 1300px) {
+      .toc { display: none; }
+      .main { margin-right: 0; }
+    }
+    @media (max-width: 900px) {
+      .menu-toggle { display: inline-flex; }
+      .topbar-subtitle { display: none; }
+      .sidebar {
+        transform: translateX(-100%);
+        transition: transform .2s ease;
+        z-index: 96;
+        box-shadow: 4px 0 24px rgba(0,0,0,.15);
+      }
+      .sidebar.open { transform: translateX(0); }
+      .main { margin-left: 0; }
+      .main-inner { padding: 32px 24px; }
+      .laravel-nav-menu { width: min(360px, 88vw); }
+    }
+    @media (max-width: 560px) {
+      .topbar { padding: 0 14px; gap: 10px; }
+      .topbar-brand { font-size: 15px; }
+      .topbar-version { display: none; }
+      .page-title { font-size: 28px; }
+      .page-lead { font-size: 15px; padding-bottom: 24px; margin-bottom: 28px; }
+      .main-inner { padding: 24px 16px; }
+      h2 { font-size: 21px; }
+    }
+
+    /* RIGHT TOC */
+    .toc {
+      width: var(--toc-w);
+      flex-shrink: 0;
+      position: fixed;
+      top: 56px; bottom: 0; right: 0;
+      overflow-y: auto;
+      padding: 24px 16px;
+      border-left: 1px solid var(--border);
+    }
+    .toc-title {
+      font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .06em;
+      color: var(--muted); margin-bottom: 12px;
+    }
+    .toc a {
+      display: block; font-size: 13px; color: var(--muted);
+      text-decoration: none; padding: 3px 0 3px 8px;
+      border-left: 2px solid transparent;
+      transition: color .15s, border-color .15s;
+    }
+    .toc a:hover, .toc a.active {
+      color: var(--accent); border-left-color: var(--accent);
+    }
+    .toc a.sub { padding-left: 20px; font-size: 12px; }
+
+    /* CONTENT TYPOGRAPHY */
+    .page-title {
+      font-size: 40px; font-weight: 700;
+      margin-bottom: 12px; line-height: 1.2;
+    }
+    .page-lead {
+      font-size: 18px; color: var(--muted);
+      margin-bottom: 40px; border-bottom: 1px solid var(--border);
+      padding-bottom: 32px;
+    }
+    .section { margin-bottom: 56px; }
+    h2 {
+      font-size: 26px; font-weight: 700;
+      margin-bottom: 16px; padding-top: 8px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 8px;
+      display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    }
+    h3 {
+      font-size: 18px; font-weight: 600;
+      margin: 24px 0 10px;
+    }
+    h4 {
+      font-size: 15px; font-weight: 600;
+      margin: 18px 0 8px; color: var(--text);
+    }
+    p { margin-bottom: 14px; }
+    ul, ol { padding-left: 24px; margin-bottom: 14px; }
+    li { margin-bottom: 6px; }
+    strong { font-weight: 600; }
+
+    /* CODE */
+    code {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      font-size: 13px;
+      background: var(--code-bg);
+      border: 1px solid var(--code-border);
+      padding: 1px 5px; border-radius: 4px;
+      color: #d63384;
+    }
+    pre {
+      background: #1e1e2e;
+      border-radius: 8px;
+      padding: 20px 24px;
+      overflow-x: auto;
+      margin: 16px 0 20px;
+      position: relative;
+    }
+    pre code {
+      background: none; border: none; padding: 0;
+      color: #cdd6f4; font-size: 12.5px; line-height: 1.6;
+      white-space: pre;
+    }
+    .pre-label {
+      font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .06em;
+      color: #6c757d; margin-bottom: 6px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .pre-label .file-icon { color: var(--accent); }
+
+    /* COPY BUTTON */
+    .copy-btn {
+      position: absolute; top: 10px; right: 10px;
+      display: flex; align-items: center; gap: 5px;
+      background: rgba(255,255,255,.08);
+      color: #cdd6f4;
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 6px;
+      font-family: inherit; font-size: 11px; font-weight: 600;
+      padding: 4px 9px;
+      cursor: pointer;
+      opacity: .55;
+      transition: opacity .15s, background .15s;
+    }
+    pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
+    .copy-btn:hover { background: rgba(255,255,255,.2); }
+    .copy-btn.copied {
+      opacity: 1; background: #198754; border-color: #198754; color: #fff;
+    }
+    @media (max-width: 900px) { .copy-btn { opacity: .8; } }
+    @media print { .copy-btn { display: none; } }
+
+    /* MERMAID DIAGRAM WRAPPER */
+    .diagram-wrap {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px;
+      margin: 16px 0 20px;
+      overflow-x: auto;
+      text-align: center;
+    }
+    .diagram-wrap .mermaid { display: inline-block; }
+
+    /* BADGES / CALLOUTS */
+    .badge {
+      display: inline-block; font-size: 11px; font-weight: 700;
+      padding: 2px 8px; border-radius: 4px;
+      text-transform: uppercase; letter-spacing: .04em;
+    }
+    .badge-blue  { background: #cfe2ff; color: #084298; }
+    .badge-green { background: #d1e7dd; color: #0a3622; }
+    .badge-red   { background: #f8d7da; color: #842029; }
+    .badge-yellow{ background: #fff3cd; color: #664d03; }
+    .badge-purple{ background: #e8d5fb; color: #5e2d91; }
+    .badge-orange{ background: #ffe5d0; color: #8a3800; }
+    .badge-muted { background: #e9ecef; color: #495057; }
+
+    .callout {
+      border-left: 4px solid var(--accent);
+      background: var(--accent-light);
+      padding: 14px 18px; border-radius: 0 6px 6px 0;
+      margin: 16px 0;
+    }
+    .callout.warning { border-left-color: #ffc107; background: #fff3cd; }
+    .callout.danger  { border-left-color: #dc3545; background: #f8d7da; }
+    .callout.success { border-left-color: #198754; background: #d1e7dd; }
+    .callout-title { font-weight: 700; margin-bottom: 4px; font-size: 13px; }
+
+    /* TABLE */
+    table {
+      width: 100%; border-collapse: collapse;
+      margin: 16px 0; font-size: 14px;
+    }
+    th {
+      background: var(--code-bg); font-weight: 600;
+      padding: 10px 14px; border: 1px solid var(--border);
+      text-align: left;
+    }
+    td { padding: 9px 14px; border: 1px solid var(--border); }
+    tr:nth-child(even) td { background: #fafafa; }
+
+    /* STEP LIST */
+    .step-list { list-style: none; padding: 0; }
+    .step-list li { display: flex; gap: 16px; margin-bottom: 24px; }
+    .step-num {
+      flex-shrink: 0;
+      width: 28px; height: 28px;
+      background: var(--accent); color: #fff;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700; margin-top: 2px;
+    }
+    .step-body { flex: 1; min-width: 0; }
+    .step-body h4 { margin-top: 0; }
+
+    .divider { border: none; border-top: 2px solid var(--border); margin: 56px 0; }
+
+    /* PRINT */
+    @media print {
+      .topbar, .sidebar, .toc { display: none; }
+      .main { margin: 0; }
+      .main-inner { padding: 24px 32px; max-width: 100%; }
+      pre { background: #f8f9fa !important; }
+      pre code { color: #212529 !important; }
+      h2 { page-break-before: always; }
+      .section:first-of-type h2 { page-break-before: avoid; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<header class="topbar">
+  <button class="menu-toggle" id="menuToggle" aria-label="Buka menu">&#9776;</button>
+  <a class="topbar-brand" href="../index.html">Laravel Docs</a>
+  <span class="topbar-version">Bangun dari Nol</span>
+  <div class="laravel-nav" id="laravelNav">
+    <button class="laravel-nav-trigger" type="button">Laravel <span class="caret">&#9662;</span></button>
+    <div class="laravel-nav-menu">
+      <a class="laravel-nav-item" href="../laravel/modul-rest-api-sanctum.html"><span class="lni-week">M1</span><span class="lni-title">Core Laravel &amp; Database</span></a>
+      <a class="laravel-nav-item" href="../laravel/modul-arsitektur-otorisasi.html"><span class="lni-week">M2</span><span class="lni-title">Arsitektur Kode &amp; Otorisasi</span></a>
+      <a class="laravel-nav-item" href="../laravel/modul-optimasi.html"><span class="lni-week">M3</span><span class="lni-title">Testing &amp; Optimasi</span></a>
+      <a class="laravel-nav-item" href="../laravel/modul-observability.html"><span class="lni-week">M4</span><span class="lni-title">Observability</span></a>
+      <a class="laravel-nav-item" href="../laravel/modul-api-design-realtime.html"><span class="lni-week">M5</span><span class="lni-title">API Design &amp; Real-time</span></a>
+      <a class="laravel-nav-item" href="../laravel/modul-security-deepdive.html"><span class="lni-week">M6</span><span class="lni-title">Security Deep-dive</span></a>
+      <a class="laravel-nav-item" href="../laravel/modul-capstone-ecommerce.html"><span class="lni-week">M7</span><span class="lni-title">Capstone Project: E-commerce</span></a>
+      <a class="laravel-nav-item" href="../laravel/modul-containerization-deployment.html"><span class="lni-week">M8</span><span class="lni-title">Containerization &amp; Deployment</span></a>
+      <a class="laravel-nav-item" href="../laravel/modul-cloud-infrastructure.html"><span class="lni-week">M9</span><span class="lni-title">Cloud &amp; Infrastructure</span></a>
+      <a class="laravel-nav-item" href="../laravel/modul-skala-besar.html"><span class="lni-week">M10</span><span class="lni-title">Skala Besar</span></a>
+      <a class="laravel-nav-item" href="../laravel/modul-system-design.html"><span class="lni-week">M11</span><span class="lni-title">System Design</span></a>
+    </div>
+  </div>
+  <div class="laravel-nav" id="gitNav">
+    <button class="laravel-nav-trigger" type="button">GIT <span class="caret">&#9662;</span></button>
+    <div class="laravel-nav-menu">
+      <a class="laravel-nav-item" href="../git/modul-git.html#git-intro"><span class="lni-week">G1</span><span class="lni-title">Pengenalan Git</span></a>
+      <a class="laravel-nav-item" href="../git/modul-git.html#git-konsep"><span class="lni-week">G2</span><span class="lni-title">Konsep &amp; Alur Kerja</span></a>
+      <a class="laravel-nav-item" href="../git/modul-git.html#git-dasar"><span class="lni-week">G3</span><span class="lni-title">Perintah Dasar</span></a>
+      <a class="laravel-nav-item" href="../git/modul-git.html#git-branch"><span class="lni-week">G4</span><span class="lni-title">Branching &amp; Merging</span></a>
+      <a class="laravel-nav-item" href="../git/modul-git.html#git-remote"><span class="lni-week">G5</span><span class="lni-title">Remote &amp; Kolaborasi</span></a>
+      <a class="laravel-nav-item" href="../git/modul-git.html#git-strategi"><span class="lni-week">G6</span><span class="lni-title">Strategi Branching</span></a>
+      <a class="laravel-nav-item" href="../git/modul-git.html#git-rebase"><span class="lni-week">G7</span><span class="lni-title">Teknik Lanjutan</span></a>
+      <a class="laravel-nav-item" href="../git/modul-git.html#git-best-practice"><span class="lni-week">G8</span><span class="lni-title">Best Practice</span></a>
+      <a class="laravel-nav-item" href="../git/modul-git.html#git-ringkasan"><span class="lni-week">G9</span><span class="lni-title">Ringkasan</span></a>
+    </div>
+  </div>
+  <div class="laravel-nav" id="restApiNav">
+    <button class="laravel-nav-trigger" type="button">REST API <span class="caret">&#9662;</span></button>
+    <div class="laravel-nav-menu">
+      <a class="laravel-nav-item" href="#tps-intro"><span class="lni-week">R1</span><span class="lni-title">Ringkasan &amp; Arsitektur</span></a>
+      <a class="laravel-nav-item" href="#tps-setup"><span class="lni-week">R2</span><span class="lni-title">Setup Project (Laravel, JWT, Swagger)</span></a>
+      <a class="laravel-nav-item" href="#tps-database"><span class="lni-week">R3</span><span class="lni-title">Database &amp; Migrasi</span></a>
+      <a class="laravel-nav-item" href="#tps-auth"><span class="lni-week">R4</span><span class="lni-title">Autentikasi JWT &amp; RBAC</span></a>
+      <a class="laravel-nav-item" href="#tps-wajibpajak"><span class="lni-week">R5</span><span class="lni-title">Wajib Pajak &amp; Validasi</span></a>
+      <a class="laravel-nav-item" href="#tps-kewajiban"><span class="lni-week">R6</span><span class="lni-title">Kewajiban Pajak &amp; Denda Otomatis</span></a>
+      <a class="laravel-nav-item" href="#tps-pembayaran"><span class="lni-week">R7</span><span class="lni-title">Pembayaran Cicilan</span></a>
+      <a class="laravel-nav-item" href="#tps-laporan"><span class="lni-week">R8</span><span class="lni-title">Laporan &amp; Filter</span></a>
+      <a class="laravel-nav-item" href="#tps-audit"><span class="lni-week">R9</span><span class="lni-title">Audit Trail</span></a>
+      <a class="laravel-nav-item" href="#tps-swagger"><span class="lni-week">R10</span><span class="lni-title">Dokumentasi API (Swagger)</span></a>
+      <a class="laravel-nav-item" href="#tps-testing"><span class="lni-week">R11</span><span class="lni-title">Testing</span></a>
+      <a class="laravel-nav-item" href="#tps-ringkasan"><span class="lni-week">R12</span><span class="lni-title">Ringkasan Alur Iteratif</span></a>
+    </div>
+  </div>
+    <div class="site-search" id="siteSearch">
+    <input type="text" id="searchInput" class="site-search-input" placeholder="Cari modul... ( tekan / )" autocomplete="off" />
+    <div class="site-search-results" id="searchResults"></div>
+  </div>
+  <span class="topbar-subtitle">REST API &mdash; Membangun Tax Processing System dari Nol</span>
+</header>
+
+<div class="layout">
+
+  <!-- LEFT SIDEBAR -->
+  <nav class="sidebar">
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Ringkasan</div>
+      <div class="nav-group-items">
+        <a class="nav-link active" href="#tps-intro">Arsitektur &amp; Tech Stack</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Setup Project</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#tps-setup">Install Laravel, JWT, Swagger</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Database</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#tps-database">Skema &amp; Migrasi</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Autentikasi</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#tps-auth">JWT &amp; Role-based Access Control</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Wajib Pajak</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#tps-wajibpajak">Validasi NIK/NPWP/NIB</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Kewajiban &amp; Denda</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#tps-kewajiban">Perhitungan Denda Otomatis</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Pembayaran</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#tps-pembayaran">Cicilan &amp; Seeder Data</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Laporan</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#tps-laporan">Filter &amp; Ringkasan Statistik</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Audit Trail</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#tps-audit">Spatie Activity Log</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Dokumentasi API</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#tps-swagger">Swagger / OpenAPI 3.0</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Testing</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#tps-testing">Unit &amp; Feature Test</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Ringkasan</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#tps-ringkasan">Checklist &amp; Alur Iteratif</a>
+      </div>
+    </div>
+
+  </nav>
+
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- MAIN CONTENT -->
+  <main class="main">
+   <div class="main-inner">
+
+    <!-- ========== RINGKASAN ========== -->
+    <div class="section" id="tps-intro">
+      <h1 class="page-title">Membangun REST API Tax Processing System dari Nol</h1>
+      <p class="page-lead">
+        Tutorial langkah-langkah <strong>membangun ulang</strong> REST API pengelolaan pajak
+        dengan Laravel 12, dari <code>composer create-project</code> kosong sampai jadi API
+        lengkap dengan autentikasi JWT, RBAC, perhitungan denda otomatis, audit trail, dan
+        dokumentasi Swagger. Setiap langkah menyertakan kode asli yang bisa langsung
+        <strong>di-copy-paste</strong> ke project kamu sendiri, plus penjelasan singkat di
+        bagian yang keputusan desainnya tidak trivial.
+      </p>
+
+      <h2>Apa yang Akan Dibangun?</h2>
+      <p>
+        Sistem mencatat kewajiban pajak wajib pajak (individu maupun badan usaha), pembayaran
+        &mdash; termasuk cicilan &mdash; dan menghitung denda keterlambatan/kekurangan bayar
+        otomatis setiap pembayaran dicatat. Tiga peran mengakses sistem dengan batas wewenang
+        berbeda: <strong>ADMIN</strong> (akses penuh), <strong>PETUGAS</strong> (input data &amp;
+        laporan), dan <strong>WAJIB_PAJAK</strong> (hanya data miliknya sendiri).
+      </p>
+
+      <h3>Tech Stack yang Dipakai</h3>
+      <table>
+        <thead><tr><th>Layer</th><th>Package</th><th>Alasan Dipilih</th></tr></thead>
+        <tbody>
+          <tr><td>Framework</td><td>Laravel 12 / PHP 8.2+</td><td>Migration &amp; Eloquent mempercepat pengembangan REST API</td></tr>
+          <tr><td>Autentikasi</td><td><code>php-open-source-saver/jwt-auth</code> ^2.8</td><td>Stateless, cocok untuk konsumen non-browser (mobile/SPA/pihak ketiga)</td></tr>
+          <tr><td>Audit Log</td><td><code>spatie/laravel-activitylog</code> ^4.12</td><td>Audit trail otomatis tanpa logging manual di tiap controller</td></tr>
+          <tr><td>Dokumentasi API</td><td><code>darkaonline/l5-swagger</code> ^11.1</td><td>Dokumentasi OpenAPI 3.0 dari anotasi PHP, selalu sinkron dengan kode</td></tr>
+          <tr><td>Database</td><td>MySQL 8.0 (dev/prod), SQLite in-memory (test)</td><td>SQLite mempercepat test tanpa dependensi eksternal</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Alur Request</h3>
+      <div class="diagram-wrap">
+        <div class="mermaid">
+flowchart LR
+    A[Klien HTTP] -- "Bearer Token" --> B[ForceJsonResponse]
+    B --> C[JWT Auth Middleware]
+    C --> D[RoleMiddleware]
+    D --> E[Controller]
+    E --> F[FormRequest Validasi]
+    F --> G["Model / Service (DendaService)"]
+    G --> H[(MySQL)]
+    E -.-> I["Spatie Activity Log (audit)"]
+        </div>
+      </div>
+      <div class="callout">
+        <div class="callout-title">Cara Memakai Modul Ini</div>
+        Ikuti R2&ndash;R11 berurutan &mdash; tiap langkah bergantung pada file yang dibuat di
+        langkah sebelumnya (migrasi sebelum model, model sebelum controller, dst). Semua blok
+        kode punya label nama file di atasnya &mdash; itu path tempat kode itu harus disimpan,
+        relatif dari root project Laravel kamu.
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- ========== SETUP ========== -->
+    <div class="section" id="tps-setup">
+      <h2>Setup Project dari Nol</h2>
+
+      <ol class="step-list">
+        <li>
+          <span class="step-num">1</span>
+          <div class="step-body">
+            <h4>Buat project Laravel &amp; database</h4>
+            <div class="pre-label">Terminal</div>
+            <pre><code>composer create-project laravel/laravel tax-processing-system-rest-api
+cd tax-processing-system-rest-api
+mysql -u root -p -e "CREATE DATABASE tps_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"</code></pre>
+          </div>
+        </li>
+        <li>
+          <span class="step-num">2</span>
+          <div class="step-body">
+            <h4>Install tiga dependensi inti</h4>
+            <div class="pre-label">Terminal</div>
+            <pre><code>composer require php-open-source-saver/jwt-auth
+composer require spatie/laravel-activitylog
+composer require darkaonline/l5-swagger</code></pre>
+          </div>
+        </li>
+        <li>
+          <span class="step-num">3</span>
+          <div class="step-body">
+            <h4>Publish config JWT &amp; generate secret</h4>
+            <div class="pre-label">Terminal</div>
+            <pre><code>php artisan vendor:publish --provider="PHPOpenSourceSaver\JWTAuth\Providers\LaravelServiceProvider"
+php artisan jwt:secret</code></pre>
+            <p>Perintah kedua menulis <code>JWT_SECRET</code> ke <code>.env</code> secara
+              otomatis &mdash; ini kunci yang dipakai menandatangani &amp; memverifikasi token.</p>
+          </div>
+        </li>
+        <li>
+          <span class="step-num">4</span>
+          <div class="step-body">
+            <h4>Ubah guard <code>api</code> supaya pakai driver <code>jwt</code></h4>
+            <div class="pre-label"><span class="file-icon">&#128196;</span> config/auth.php</div>
+            <pre><code>'guards' => [
+    'web' => [
+        'driver' => 'session',
+        'provider' => 'users',
+    ],
+
+    'api' => [
+        'driver' => 'jwt',
+        'provider' => 'users',
+    ],
+],</code></pre>
+          </div>
+        </li>
+        <li>
+          <span class="step-num">5</span>
+          <div class="step-body">
+            <h4>Konfigurasi <code>.env</code></h4>
+            <div class="pre-label"><span class="file-icon">&#128196;</span> .env</div>
+            <pre><code>DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=tps_db
+DB_USERNAME=root
+DB_PASSWORD=
+
+JWT_TTL=60
+JWT_ALGO=HS256</code></pre>
+          </div>
+        </li>
+        <li>
+          <span class="step-num">6</span>
+          <div class="step-body">
+            <h4>Publish migrasi Activity Log (untuk audit trail nanti di R9)</h4>
+            <div class="pre-label">Terminal</div>
+            <pre><code>php artisan vendor:publish --provider="Spatie\Activitylog\ActivitylogServiceProvider" --tag="activitylog-migrations"</code></pre>
+          </div>
+        </li>
+        <li>
+          <span class="step-num">7</span>
+          <div class="step-body">
+            <h4>Publish config Swagger (untuk R10)</h4>
+            <div class="pre-label">Terminal</div>
+            <pre><code>php artisan vendor:publish --provider "L5Swagger\L5SwaggerServiceProvider"</code></pre>
+          </div>
+        </li>
+      </ol>
+
+      <div class="callout">
+        <div class="callout-title">Kenapa JWT, Bukan Laravel Sanctum?</div>
+        Laravel 12 sudah membawa Sanctum secara bawaan, tapi project ini sengaja pakai JWT
+        karena bersifat <em>stateless</em> &mdash; lebih cocok untuk konsumen REST API murni
+        (mobile app, SPA, integrasi pihak ketiga) dibanding sesi berbasis cookie milik Sanctum
+        yang lebih pas untuk aplikasi web monolitik. Sanctum boleh tetap ada di
+        <code>composer.json</code>, cukup tidak dipakai sebagai guard <code>api</code>.
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- ========== DATABASE ========== -->
+    <div class="section" id="tps-database">
+      <h2>Skema Database &amp; Migrasi</h2>
+      <p>
+        Lima tabel inti membentuk rantai relasi one-to-many:
+        <code>wajib_pajak</code> &rarr; <code>kewajiban_pajak</code> &rarr;
+        <code>pembayaran</code> &rarr; <code>denda</code>, dengan <code>users</code>
+        terhubung sebagai identitas login.
+      </p>
+      <div class="diagram-wrap">
+        <div class="mermaid">
+erDiagram
+    USERS ||--o{ PEMBAYARAN : "mencatat"
+    USERS }o--o| WAJIB_PAJAK : "role WAJIB_PAJAK"
+    WAJIB_PAJAK ||--o{ KEWAJIBAN_PAJAK : memiliki
+    KEWAJIBAN_PAJAK ||--o{ PEMBAYARAN : "dibayar via"
+    PEMBAYARAN ||--|| DENDA : menghasilkan
+        </div>
+      </div>
+
+      <ol class="step-list">
+        <li>
+          <span class="step-num">1</span>
+          <div class="step-body">
+            <h4>Tambahkan kolom <code>role</code> &amp; <code>wajib_pajak_id</code> ke migrasi <code>users</code> bawaan</h4>
+            <p>Buka migrasi <code>database/migrations/0001_01_01_000000_create_users_table.php</code>
+              yang sudah otomatis dibuat Laravel, lalu sisipkan dua baris ini di dalam
+              <code>Schema::create('users', ...)</code>, tepat sebelum <code>$table-&gt;rememberToken();</code>:</p>
+            <div class="pre-label"><span class="file-icon">&#128196;</span> database/migrations/0001_01_01_000000_create_users_table.php</div>
+            <pre><code>$table->id();
+$table->string('name');
+$table->string('username')->unique();
+$table->string('email')->unique()->nullable();
+$table->timestamp('email_verified_at')->nullable();
+$table->string('password');
+$table->enum('role', ['ADMIN', 'PETUGAS', 'WAJIB_PAJAK'])->default('PETUGAS');
+// Relasi ke wajib_pajak: hanya diisi untuk user dengan role WAJIB_PAJAK
+$table->unsignedBigInteger('wajib_pajak_id')->nullable();
+$table->rememberToken();
+$table->timestamps();</code></pre>
+          </div>
+        </li>
+        <li>
+          <span class="step-num">2</span>
+          <div class="step-body">
+            <h4>Buat migrasi <code>wajib_pajak</code></h4>
+            <div class="pre-label">Terminal</div>
+            <pre><code>php artisan make:migration create_wajib_pajak_table</code></pre>
+            <div class="pre-label"><span class="file-icon">&#128196;</span> database/migrations/&hellip;_create_wajib_pajak_table.php</div>
+            <pre><code>&lt;?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('wajib_pajak', function (Blueprint $table) {
+            $table->id();
+            // INDIVIDU (perorangan, identitas NIK) atau BADAN (badan usaha, NPWP/NIB)
+            $table->enum('jenis', ['INDIVIDU', 'BADAN']);
+            $table->string('nama');
+            // NIK 16 digit untuk individu
+            $table->string('nik', 16)->nullable()->unique();
+            // NPWP untuk badan usaha (15/16 digit)
+            $table->string('npwp', 25)->nullable()->unique();
+            // NIB sebagai alternatif identitas badan usaha
+            $table->string('nib', 30)->nullable()->unique();
+            $table->string('email')->nullable();
+            $table->string('telepon', 20)->nullable();
+            $table->text('alamat')->nullable();
+            $table->boolean('status_aktif')->default(true);
+            $table->timestamps();
+
+            $table->index('nama');
+            $table->index('jenis');
+            $table->index('status_aktif');
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('wajib_pajak');
+    }
+};</code></pre>
+          </div>
+        </li>
+        <li>
+          <span class="step-num">3</span>
+          <div class="step-body">
+            <h4>Buat migrasi <code>kewajiban_pajak</code></h4>
+            <div class="pre-label">Terminal</div>
+            <pre><code>php artisan make:migration create_kewajiban_pajak_table</code></pre>
+            <div class="pre-label"><span class="file-icon">&#128196;</span> database/migrations/&hellip;_create_kewajiban_pajak_table.php</div>
+            <pre><code>&lt;?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('kewajiban_pajak', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('wajib_pajak_id')->constrained('wajib_pajak')->cascadeOnDelete();
+            // Jenis pajak, mis: PBB, PPh, PPN, dll
+            $table->string('jenis_pajak');
+            $table->string('masa_pajak')->nullable(); // periode kewajiban, mis: 2026-01
+            $table->decimal('pokok_pajak', 18, 2);
+            $table->date('jatuh_tempo');
+            // Status kewajiban dihitung dari akumulasi pembayaran
+            $table->enum('status', ['BELUM_LUNAS', 'LUNAS', 'LEBIH_BAYAR'])->default('BELUM_LUNAS');
+            $table->timestamps();
+
+            $table->index('jenis_pajak');
+            $table->index('jatuh_tempo');
+            $table->index('status');
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('kewajiban_pajak');
+    }
+};</code></pre>
+          </div>
+        </li>
+        <li>
+          <span class="step-num">4</span>
+          <div class="step-body">
+            <h4>Buat migrasi <code>pembayaran</code></h4>
+            <div class="pre-label">Terminal</div>
+            <pre><code>php artisan make:migration create_pembayaran_table</code></pre>
+            <div class="pre-label"><span class="file-icon">&#128196;</span> database/migrations/&hellip;_create_pembayaran_table.php</div>
+            <pre><code>&lt;?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('pembayaran', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('kewajiban_pajak_id')->constrained('kewajiban_pajak')->cascadeOnDelete();
+            $table->decimal('nominal', 18, 2);
+            $table->date('tanggal_bayar');
+            // Status hasil evaluasi terhadap kewajiban: LUNAS / KURANG_BAYAR / LEBIH_BAYAR
+            $table->enum('status', ['LUNAS', 'KURANG_BAYAR', 'LEBIH_BAYAR']);
+            $table->text('keterangan')->nullable();
+            // Audit: user (petugas/admin) yang mencatat pembayaran
+            $table->foreignId('dicatat_oleh')->nullable()->constrained('users')->nullOnDelete();
+            $table->timestamps();
+
+            $table->index('tanggal_bayar');
+            $table->index('status');
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('pembayaran');
+    }
+};</code></pre>
+          </div>
+        </li>
+        <li>
+          <span class="step-num">5</span>
+          <div class="step-body">
+            <h4>Buat migrasi <code>denda</code></h4>
+            <div class="pre-label">Terminal</div>
+            <pre><code>php artisan make:migration create_denda_table</code></pre>
+            <div class="pre-label"><span class="file-icon">&#128196;</span> database/migrations/&hellip;_create_denda_table.php</div>
+            <pre><code>&lt;?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('denda', function (Blueprint $table) {
+            $table->id();
+            // Denda dihitung & disimpan otomatis saat pembayaran dicatat (relasi 1-1)
+            $table->foreignId('pembayaran_id')->constrained('pembayaran')->cascadeOnDelete();
+            $table->decimal('denda_telat', 18, 2)->default(0);
+            $table->decimal('denda_kurang', 18, 2)->default(0);
+            $table->decimal('total_denda', 18, 2)->default(0);
+            $table->boolean('is_telat')->default(false);
+            $table->boolean('is_kurang_bayar')->default(false);
+            $table->text('keterangan')->nullable();
+            $table->timestamps();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('denda');
+    }
+};</code></pre>
+          </div>
+        </li>
+        <li>
+          <span class="step-num">6</span>
+          <div class="step-body">
+            <h4>Jalankan migrasi</h4>
+            <div class="pre-label">Terminal</div>
+            <pre><code>php artisan migrate</code></pre>
+          </div>
+        </li>
+      </ol>
+
+      <div class="callout">
+        <div class="callout-title">Kenapa <code>cascadeOnDelete()</code> di Setiap Foreign Key?</div>
+        Menghapus satu <code>wajib_pajak</code> otomatis membersihkan seluruh
+        <code>kewajiban_pajak</code>, <code>pembayaran</code>, dan <code>denda</code> terkait
+        di level database &mdash; menghindari data yatim (orphan rows) tanpa perlu query
+        penghapusan manual berlapis di controller. Khusus <code>dicatat_oleh</code> memakai
+        <code>nullOnDelete()</code> karena riwayat pembayaran harus tetap ada meski akun
+        petugas yang mencatatnya sudah dihapus.
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- ========== AUTENTIKASI ========== -->
+    <div class="section" id="tps-auth">
+      <h2>Autentikasi JWT &amp; Role-Based Access Control</h2>
+
+      <ol class="step-list">
+        <li>
+          <span class="step-num">1</span>
+          <div class="step-body">
+            <h4>Buat middleware <code>ForceJsonResponse</code></h4>
+            <div class="pre-label">Terminal</div>
+            <pre><code>php artisan make:middleware ForceJsonResponse</code></pre>
+            <div class="pre-label"><span class="file-icon">&#128196;</span> app/Http/Middleware/ForceJsonResponse.php</div>
+            <pre><code>&lt;?php
+
+namespace App\Http\Middleware;
+
+use Closure;
+use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
+
+class ForceJsonResponse
+{
+    /**
+     * Paksa setiap request API dianggap meminta JSON.
+     *
+     * Tanpa ini, saat autentikasi gagal middleware Authenticate Laravel
+     * mencoba redirect ke route('login') (yang tidak ada) sehingga muncul
+     * 500 RouteNotFoundException, bukan 401 JSON.
+     */
+    public function handle(Request $request, Closure $next): Response
+    {
+        $request->headers->set('Accept', 'application/json');
+
+        return $next($request);
+    }
+}</code></pre>
+          </div>
+        </li>
+        <li>
+          <span class="step-num">2</span>
+          <div class="step-body">
+            <h4>Buat middleware <code>RoleMiddleware</code></h4>
+            <div class="pre-label">Terminal</div>
+            <pre><code>php artisan make:middleware RoleMiddleware</code></pre>
+            <div class="pre-label"><span class="file-icon">&#128196;</span> app/Http/Middleware/RoleMiddleware.php</div>
+            <pre><code>&lt;?php
+
+namespace App\Http\Middleware;
+
+use Closure;
+use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
+
+/**
+ * Middleware otorisasi berbasis role.
+ *
+ * Pemakaian pada route: ->middleware('role:ADMIN,PETUGAS')
+ */
+class RoleMiddleware
+{
+    public function handle(Request $request, Closure $next, string ...$roles): Response
+    {
+        $user = $request->user();
+
+        if (! $user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tidak terautentikasi.',
+            ], 401);
+        }
+
+        if (! in_array($user->role, $roles, true)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Anda tidak memiliki hak akses untuk aksi ini.',
+            ], 403);
+        }
+
+        return $next($request);
+    }
+}</code></pre>
+          </div>
+        </li>
+        <li>
+          <span class="step-num">3</span>
+          <div class="step-body">
+            <h4>Daftarkan middleware &amp; exception handler JSON di <code>bootstrap/app.php</code></h4>
+            <p>Laravel 12 tidak lagi punya <code>app/Http/Kernel.php</code> &mdash; semua
+              registrasi middleware &amp; exception dilakukan di <code>bootstrap/app.php</code>.</p>
+            <div class="pre-label"><span class="file-icon">&#128196;</span> bootstrap/app.php</div>
+            <pre><code>&lt;?php
+
+use App\Http\Middleware\RoleMiddleware;
+use Illuminate\Auth\AuthenticationException;
+use Illuminate\Foundation\Application;
+use Illuminate\Foundation\Configuration\Exceptions;
+use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+
+return Application::configure(basePath: dirname(__DIR__))
+    ->withRouting(
+        web: __DIR__.'/../routes/web.php',
+        // Endpoint dipasang tanpa prefix "/api" (mis. POST /auth/login, GET /wajib-pajak)
+        api: __DIR__.'/../routes/api.php',
+        apiPrefix: '',
+        commands: __DIR__.'/../routes/console.php',
+        health: '/up',
+    )
+    ->withMiddleware(function (Middleware $middleware): void {
+        // Semua endpoint adalah API: paksa request dianggap meminta JSON sejak
+        // awal agar kegagalan auth menghasilkan 401 JSON, bukan 500 akibat
+        // redirect ke route('login') yang tidak ada.
+        $middleware->api(prepend: [
+            \App\Http\Middleware\ForceJsonResponse::class,
+        ]);
+
+        $middleware->alias([
+            'role' => RoleMiddleware::class,
+        ]);
+    })
+    ->withExceptions(function (Exceptions $exceptions): void {
+        // Pastikan seluruh error pada API dikembalikan dalam format JSON.
+        $exceptions->shouldRenderJsonWhen(fn (Request $request) => true);
+
+        $exceptions->render(function (AuthenticationException $e, Request $request) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Token tidak valid atau tidak disertakan.',
+            ], 401);
+        });
+
+        $exceptions->render(function (ValidationException $e, Request $request) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Data yang dikirim tidak valid.',
+                'errors' => $e->errors(),
+            ], 422);
+        });
+
+        $exceptions->render(function (NotFoundHttpException $e, Request $request) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Resource tidak ditemukan.',
+            ], 404);
+        });
+
+        $exceptions->render(function (HttpExceptionInterface $e, Request $request) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage() ?: 'Terjadi kesalahan.',
+            ], $e->getStatusCode());
+        });
+    })->create();</code></pre>
+          </div>
+        </li>
+        <li>
+          <span class="step-num">4</span>
+          <div class="step-body">
+            <h4>Jadikan Model <code>User</code> subjek JWT</h4>
+            <p>Edit model <code>User</code> bawaan Laravel: implement <code>JWTSubject</code>,
+              tambahkan kolom baru ke <code>$fillable</code>, dan tambahkan helper role.</p>
+            <div class="pre-label"><span class="file-icon">&#128196;</span> app/Models/User.php</div>
+            <pre><code>&lt;?php
+
+namespace App\Models;
+
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+use PHPOpenSourceSaver\JWTAuth\Contracts\JWTSubject;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
+
+class User extends Authenticatable implements JWTSubject
+{
+    use Notifiable, LogsActivity;
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['name', 'username', 'email', 'role'])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->useLogName('user');
+    }
+
+    protected $fillable = [
+        'name', 'username', 'email', 'password', 'role', 'wajib_pajak_id',
+    ];
+
+    protected $hidden = [
+        'password', 'remember_token',
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'email_verified_at' => 'datetime',
+            'password' => 'hashed',
+        ];
+    }
+
+    public function isAdmin(): bool { return $this->role === 'ADMIN'; }
+    public function isPetugas(): bool { return $this->role === 'PETUGAS'; }
+    public function isWajibPajak(): bool { return $this->role === 'WAJIB_PAJAK'; }
+
+    /** Identifier yang disimpan di klaim "sub" JWT. */
+    public function getJWTIdentifier()
+    {
+        return $this->getKey();
+    }
+
+    /** Klaim kustom yang ditambahkan ke JWT. */
+    public function getJWTCustomClaims(): array
+    {
+        return [
+            'role' => $this->role,
+            'username' => $this->username,
+        ];
+    }
+}</code></pre>
+          </div>
+        </li>
+        <li>
+          <span class="step-num">5</span>
+          <div class="step-body">
+            <h4>Buat <code>AuthController</code> (login, me, logout)</h4>
+            <div class="pre-label">Terminal</div>
+            <pre><code>php artisan make:controller AuthController</code></pre>
+            <div class="pre-label"><span class="file-icon">&#128196;</span> app/Http/Controllers/AuthController.php</div>
+            <pre><code>&lt;?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+
+class AuthController extends Controller
+{
+    public function login(Request $request): JsonResponse
+    {
+        $credentials = $request->validate([
+            'username' => ['required', 'string'],
+            'password' => ['required', 'string'],
+        ]);
+
+        $token = Auth::attempt($credentials);
+
+        if (! $token) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Username atau password salah.',
+            ], 401);
+        }
+
+        return $this->respondWithToken($token);
+    }
+
+    public function me(): JsonResponse
+    {
+        return response()->json([
+            'success' => true,
+            'data' => Auth::user(),
+        ]);
+    }
+
+    public function logout(): JsonResponse
+    {
+        Auth::logout(); // invalidasi token via blacklist JWT
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Logout berhasil.',
+        ]);
+    }
+
+    private function respondWithToken(string $token): JsonResponse
+    {
+        return response()->json([
+            'success' => true,
+            'token' => $token,
+            'token_type' => 'bearer',
+            'expires_in' => Auth::factory()->getTTL() * 60,
+            'user' => Auth::user(),
+        ]);
+    }
+}</code></pre>
+          </div>
+        </li>
+        <li>
+          <span class="step-num">6</span>
+          <div class="step-body">
+            <h4>Buat <code>routes/api.php</code> &mdash; bagian autentikasi</h4>
+            <div class="pre-label"><span class="file-icon">&#128196;</span> routes/api.php</div>
+            <pre><code>&lt;?php
+
+use App\Http\Controllers\AuthController;
+use Illuminate\Support\Facades\Route;
+
+// Publik
+Route::post('/auth/login', [AuthController::class, 'login']);
+
+// Semua endpoint di bawah wajib menyertakan header Authorization: Bearer <token>
+Route::middleware('auth:api')->group(function () {
+    Route::get('/auth/me', [AuthController::class, 'me']);
+    Route::post('/auth/logout', [AuthController::class, 'logout']);
+
+    // Route fitur lain (wajib-pajak, kewajiban-pajak, pembayaran, dst)
+    // ditambahkan di sini secara bertahap pada langkah-langkah berikutnya.
+});</code></pre>
+          </div>
+        </li>
+      </ol>
+
+      <div class="callout">
+        <div class="callout-title">Kenapa Middleware Role, Bukan Gate/Policy?</div>
+        Dengan hanya 3 role yang terdefinisi jelas dan batasnya memetakan langsung ke seluruh
+        route (bukan ke instance model tertentu), middleware di level route
+        (<code>-&gt;middleware('role:ADMIN,PETUGAS')</code>) menghindari boilerplate policy
+        yang berlebihan untuk kasus sesederhana ini.
+      </div>
+      <div class="callout warning">
+        <div class="callout-title">Coba Sekarang</div>
+        Jalankan <code>php artisan serve</code>, lalu test login dengan Postman/curl ke
+        <code>POST /auth/login</code>. Karena tabel <code>users</code> masih kosong, buat dulu
+        satu akun lewat <code>php artisan tinker</code> atau tunggu sampai seeder dibuat di R7.
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- ========== WAJIB PAJAK ========== -->
+    <div class="section" id="tps-wajibpajak">
+      <h2>Modul Wajib Pajak &amp; Validasi Data</h2>
+
+      <ol class="step-list">
+        <li>
+          <span class="step-num">1</span>
+          <div class="step-body">
+            <h4>Buat Model <code>WajibPajak</code></h4>
+            <div class="pre-label">Terminal</div>
+            <pre><code>php artisan make:model WajibPajak</code></pre>
+            <div class="pre-label"><span class="file-icon">&#128196;</span> app/Models/WajibPajak.php</div>
+            <pre><code>&lt;?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
+
+class WajibPajak extends Model
+{
+    use LogsActivity;
+
+    protected $table = 'wajib_pajak';
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logFillable()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->useLogName('wajib_pajak');
+    }
+
+    protected $fillable = [
+        'jenis', 'nama', 'nik', 'npwp', 'nib',
+        'email', 'telepon', 'alamat', 'status_aktif',
+    ];
+
+    protected $casts = [
+        'status_aktif' => 'boolean',
+    ];
+
+    public function kewajibanPajak(): HasMany
+    {
+        return $this->hasMany(KewajibanPajak::class, 'wajib_pajak_id');
+    }
+}</code></pre>
+          </div>
+        </li>
+        <li>
+          <span class="step-num">2</span>
+          <div class="step-body">
+            <h4>Buat <code>StoreWajibPajakRequest</code> &mdash; validasi kondisional NIK/NPWP/NIB</h4>
+            <div class="pre-label">Terminal</div>
+            <pre><code>php artisan make:request StoreWajibPajakRequest</code></pre>
+            <div class="pre-label"><span class="file-icon">&#128196;</span> app/Http/Requests/StoreWajibPajakRequest.php</div>
+            <pre><code>&lt;?php
+
+namespace App\Http\Requests;
+
+use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Password;
+
+class StoreWajibPajakRequest extends FormRequest
+{
+    public function authorize(): bool
+    {
+        return true;
+    }
+
+    /**
+     * Normalisasi NIK/NPWP/NIB: buang spasi, titik, dan strip sebelum validasi.
+     */
+    protected function prepareForValidation(): void
+    {
+        // NIK pada BADAN dan NIB pada INDIVIDU diabaikan (di-null-kan)
+        // sehingga tidak tersimpan, tanpa memunculkan error validasi.
+        $clean = fn (?string $v) => $v === null ? null : preg_replace('/[\s.\-]/', '', $v);
+        $jenis = $this->input('jenis');
+
+        $this->merge([
+            'nik'  => $jenis === 'BADAN'    ? null : $clean($this->input('nik')),
+            'nib'  => $jenis === 'INDIVIDU' ? null : $clean($this->input('nib')),
+            'npwp' => $clean($this->input('npwp')),
+        ]);
+    }
+
+    public function rules(): array
+    {
+        $jenis = $this->input('jenis');
+
+        // NIK wajib untuk INDIVIDU; untuk BADAN diabaikan (tidak divalidasi/tersimpan).
+        $nikRules = $jenis === 'INDIVIDU'
+            ? ['required', 'digits:16', Rule::unique('wajib_pajak', 'nik')]
+            : ['nullable'];
+
+        // NIB wajib untuk BADAN; untuk INDIVIDU diabaikan.
+        $nibRules = $jenis === 'BADAN'
+            ? ['required', 'digits_between:9,30', Rule::unique('wajib_pajak', 'nib')]
+            : ['nullable'];
+
+        return [
+            'jenis'        => ['required', Rule::in(['INDIVIDU', 'BADAN'])],
+            'nama'         => ['required', 'string', 'max:255'],
+            'nik'          => $nikRules,
+            'npwp'         => ['required', 'regex:/^\d{15,16}$/', Rule::unique('wajib_pajak', 'npwp')],
+            'nib'          => $nibRules,
+            'email'        => ['nullable', 'email', 'max:255', Rule::unique('wajib_pajak', 'email')],
+            'telepon'      => ['nullable', 'string', 'max:20'],
+            'alamat'       => ['nullable', 'string'],
+            'status_aktif' => ['nullable', 'boolean'],
+            'username'     => ['required', 'string', 'max:255', Rule::unique('users', 'username')],
+            'password'     => ['required', 'string', Password::min(8)],
+        ];
+    }
+}</code></pre>
+            <p>Buat juga <code>UpdateWajibPajakRequest</code> dengan pola serupa, tapi setiap
+              rule diawali <code>'sometimes'</code> (bukan <code>'required'</code>) supaya
+              <code>PUT</code> parsial tetap valid, dan aturan <code>unique</code> memakai
+              <code>-&gt;ignore($id)</code> supaya record itu sendiri tidak dianggap duplikat.</p>
+          </div>
+        </li>
+        <li>
+          <span class="step-num">3</span>
+          <div class="step-body">
+            <h4>Buat <code>WajibPajakController</code></h4>
+            <div class="pre-label">Terminal</div>
+            <pre><code>php artisan make:controller WajibPajakController</code></pre>
+            <div class="pre-label"><span class="file-icon">&#128196;</span> app/Http/Controllers/WajibPajakController.php</div>
+            <pre><code>&lt;?php
+
+namespace App\Http\Controllers;
+
+use App\Http\Requests\StoreWajibPajakRequest;
+use App\Http\Requests\UpdateWajibPajakRequest;
+use App\Models\User;
+use App\Models\WajibPajak;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+
+class WajibPajakController extends Controller
+{
+    public function index(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $query = WajibPajak::query();
+
+        // WAJIB_PAJAK hanya boleh melihat datanya sendiri.
+        if ($user->isWajibPajak()) {
+            $query->where('id', $user->wajib_pajak_id);
+        }
+
+        if ($search = $request->query('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('nama', 'like', "%{$search}%")
+                    ->orWhere('nik', 'like', "%{$search}%")
+                    ->orWhere('npwp', 'like', "%{$search}%")
+                    ->orWhere('nib', 'like', "%{$search}%");
+            });
+        }
+
+        if ($jenis = $request->query('jenis')) {
+            $query->where('jenis', $jenis);
+        }
+
+        $data = $query->latest()->paginate((int) $request->query('per_page', 15));
+
+        return response()->json(['success' => true, 'data' => $data]);
+    }
+
+    public function me(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        if (! $user->isWajibPajak()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Endpoint ini hanya untuk role WAJIB_PAJAK.',
+            ], 403);
+        }
+
+        $wajibPajak = WajibPajak::findOrFail($user->wajib_pajak_id);
+
+        return response()->json(['success' => true, 'data' => $wajibPajak->loadCount('kewajibanPajak')]);
+    }
+
+    public function show(Request $request, WajibPajak $wajibPajak): JsonResponse
+    {
+        $this->pastikanBolehAkses($request, $wajibPajak);
+
+        return response()->json(['success' => true, 'data' => $wajibPajak->loadCount('kewajibanPajak')]);
+    }
+
+    public function store(StoreWajibPajakRequest $request): JsonResponse
+    {
+        $validated = $request->validated();
+        $validated['status_aktif'] = $validated['status_aktif'] ?? true;
+
+        $wajibPajak = WajibPajak::create(
+            collect($validated)->except(['username', 'password'])->all()
+        );
+
+        // Setiap wajib pajak baru otomatis mendapat akun login role WAJIB_PAJAK.
+        $user = User::create([
+            'name'           => $wajibPajak->nama,
+            'username'       => $validated['username'],
+            'password'       => $validated['password'],
+            'role'           => 'WAJIB_PAJAK',
+            'wajib_pajak_id' => $wajibPajak->id,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Wajib pajak berhasil ditambahkan.',
+            'data'    => $wajibPajak,
+            'akun'    => ['username' => $user->username, 'role' => $user->role],
+        ], 201);
+    }
+
+    public function update(UpdateWajibPajakRequest $request, WajibPajak $wajibPajak): JsonResponse
+    {
+        $wajibPajak->update($request->validated());
+
+        return response()->json(['success' => true, 'message' => 'Data berhasil diperbarui.', 'data' => $wajibPajak]);
+    }
+
+    public function destroy(WajibPajak $wajibPajak): JsonResponse
+    {
+        $wajibPajak->delete();
+
+        return response()->json(['success' => true, 'message' => 'Wajib pajak berhasil dihapus.']);
+    }
+
+    /** Pastikan WAJIB_PAJAK hanya mengakses datanya sendiri. */
+    private function pastikanBolehAkses(Request $request, WajibPajak $wajibPajak): void
+    {
+        $user = $request->user();
+
+        if ($user->isWajibPajak() && $user->wajib_pajak_id !== $wajibPajak->id) {
+            abort(403, 'Anda hanya dapat mengakses data milik sendiri.');
+        }
+    }
+}</code></pre>
+          </div>
+        </li>
+        <li>
+          <span class="step-num">4</span>
+          <div class="step-body">
+            <h4>Tambahkan route Wajib Pajak</h4>
+            <div class="pre-label"><span class="file-icon">&#128196;</span> routes/api.php &mdash; tambahkan di dalam group <code>auth:api</code></div>
+            <pre><code>use App\Http\Controllers\WajibPajakController;
+
+Route::get('/wajib-pajak', [WajibPajakController::class, 'index']);
+Route::get('/wajib-pajak/me', [WajibPajakController::class, 'me']);
+Route::get('/wajib-pajak/{wajibPajak}', [WajibPajakController::class, 'show']);
+Route::post('/wajib-pajak', [WajibPajakController::class, 'store'])->middleware('role:ADMIN,PETUGAS');
+Route::put('/wajib-pajak/{wajibPajak}', [WajibPajakController::class, 'update'])->middleware('role:ADMIN,PETUGAS');
+Route::delete('/wajib-pajak/{wajibPajak}', [WajibPajakController::class, 'destroy'])->middleware('role:ADMIN');</code></pre>
+            <div class="callout warning">
+              <div class="callout-title">Urutan Route Penting</div>
+              <code>/wajib-pajak/me</code> harus didaftarkan <strong>sebelum</strong>
+              <code>/wajib-pajak/{wajibPajak}</code>. Kalau dibalik, Laravel akan mencoba
+              mencocokkan <code>me</code> sebagai nilai <code>{wajibPajak}</code> (route model
+              binding) dan gagal dengan 404 karena ID <code>me</code> tidak ada di database.
+            </div>
+          </div>
+        </li>
+      </ol>
+
+      <h3>Aturan Validasi Kunci</h3>
+      <table>
+        <thead><tr><th>Jenis</th><th>NIK</th><th>NPWP</th><th>NIB</th></tr></thead>
+        <tbody>
+          <tr><td>INDIVIDU</td><td>Wajib, 16 digit, unique</td><td>Wajib, unique</td><td>Tidak dipakai</td></tr>
+          <tr><td>BADAN</td><td>Tidak dipakai</td><td>Wajib, unique</td><td>Wajib, 9&ndash;30 digit, unique</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout warning">
+        <div class="callout-title">Bug yang Pernah Terjadi &amp; Cara Diperbaikinya</div>
+        Versi awal validasi sempat meloloskan NIK/NPWP/NIB yang sama antar wajib pajak, dan
+        data <code>NIB</code> tersimpan untuk <code>INDIVIDU</code> (harusnya <code>NIK</code>)
+        begitu juga sebaliknya. Perbaikannya ada di dua tempat kode di atas:
+        <code>prepareForValidation()</code> men-<em>null</em>-kan field yang tidak relevan
+        dengan <code>jenis</code> <strong>sebelum</strong> divalidasi (jadi tidak pernah
+        tersimpan salah kolom), dan <code>rules()</code> menerapkan <code>Rule::unique</code>
+        ke ketiga kolom identitas sekaligus supaya tidak ada duplikasi.
+      </div>
+      <div class="callout">
+        <div class="callout-title">Catatan Jujur: Bukan Database Transaction</div>
+        Perhatikan <code>store()</code> di atas membuat <code>WajibPajak</code> lalu
+        <code>User</code> secara berurutan, <strong>tanpa</strong> dibungkus
+        <code>DB::transaction()</code>. Ini artinya kalau proses gagal di tengah (misalnya
+        query kedua error), data <code>wajib_pajak</code> yang sudah terlanjur tersimpan tidak
+        otomatis di-rollback. Kalau kamu membangun ulang project ini, pertimbangkan membungkus
+        kedua <code>create()</code> di atas dengan <code>DB::transaction(function () { ... })</code>
+        supaya operasinya atomik &mdash; ini perbaikan yang belum diterapkan di kode aslinya.
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- ========== KEWAJIBAN & DENDA ========== -->
+    <div class="section" id="tps-kewajiban">
+      <h2>Kewajiban Pajak &amp; Perhitungan Denda Otomatis</h2>
+
+      <ol class="step-list">
+        <li>
+          <span class="step-num">1</span>
+          <div class="step-body">
+            <h4>Buat Model <code>KewajibanPajak</code></h4>
+            <div class="pre-label">Terminal</div>
+            <pre><code>php artisan make:model KewajibanPajak</code></pre>
+            <div class="pre-label"><span class="file-icon">&#128196;</span> app/Models/KewajibanPajak.php</div>
+            <pre><code>&lt;?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
+
+class KewajibanPajak extends Model
+{
+    use LogsActivity;
+
+    protected $table = 'kewajiban_pajak';
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()->logFillable()->logOnlyDirty()
+            ->dontSubmitEmptyLogs()->useLogName('kewajiban_pajak');
+    }
+
+    protected $fillable = [
+        'wajib_pajak_id', 'jenis_pajak', 'masa_pajak', 'pokok_pajak', 'jatuh_tempo', 'status',
+    ];
+
+    protected $casts = [
+        'pokok_pajak' => 'decimal:2',
+        'jatuh_tempo' => 'date',
+    ];
+
+    public function wajibPajak(): BelongsTo
+    {
+        return $this->belongsTo(WajibPajak::class, 'wajib_pajak_id');
+    }
+
+    public function pembayaran(): HasMany
+    {
+        return $this->hasMany(Pembayaran::class, 'kewajiban_pajak_id');
+    }
+
+    /** Total nominal yang sudah dibayarkan untuk kewajiban ini. */
+    public function totalDibayar(): float
+    {
+        return (float) $this->pembayaran()->sum('nominal');
+    }
+}</code></pre>
+          </div>
+        </li>
+        <li>
+          <span class="step-num">2</span>
+          <div class="step-body">
+            <h4>Buat <code>DendaService</code> &mdash; isolasi logika kalkulasi</h4>
+            <div class="pre-label">Terminal</div>
+            <pre><code>mkdir -p app/Services</code></pre>
+            <div class="pre-label"><span class="file-icon">&#128196;</span> app/Services/DendaService.php</div>
+            <pre><code>&lt;?php
+
+namespace App\Services;
+
+use App\Models\KewajibanPajak;
+use Carbon\Carbon;
+
+/**
+ * Aturan denda:
+ *  - Denda Telat Bayar  = 2% x pokok pajak, bila pembayaran melewati jatuh tempo.
+ *  - Denda Kurang Bayar = 1% x selisih kekurangan, bila total dibayar < pokok kewajiban.
+ *  - Denda Gabungan     = kedua denda dijumlahkan bila terlambat sekaligus kurang bayar.
+ */
+class DendaService
+{
+    public const TARIF_TELAT = 0.02;   // 2%
+    public const TARIF_KURANG = 0.01;  // 1%
+
+    public function hitung(
+        KewajibanPajak $kewajiban,
+        float $nominal,
+        Carbon|string $tanggalBayar,
+        float $totalDibayarSebelumnya = 0.0
+    ): array {
+        $pokok = (float) $kewajiban->pokok_pajak;
+        $jatuhTempo = Carbon::parse($kewajiban->jatuh_tempo)->startOfDay();
+        $tanggal = Carbon::parse($tanggalBayar)->startOfDay();
+
+        $totalDibayar = $totalDibayarSebelumnya + $nominal;
+        $kekurangan = max(0.0, $pokok - $totalDibayar);
+
+        $isTelat = $tanggal->gt($jatuhTempo);
+        $isKurang = $kekurangan > 0;
+
+        $dendaTelat = $isTelat ? round($pokok * self::TARIF_TELAT, 2) : 0.0;
+        $dendaKurang = $isKurang ? round($kekurangan * self::TARIF_KURANG, 2) : 0.0;
+        $totalDenda = round($dendaTelat + $dendaKurang, 2);
+
+        return [
+            'denda_telat'       => $dendaTelat,
+            'denda_kurang'      => $dendaKurang,
+            'total_denda'       => $totalDenda,
+            'is_telat'          => $isTelat,
+            'is_kurang_bayar'   => $isKurang,
+            'status_pembayaran' => $this->tentukanStatus($pokok, $totalDibayar),
+            'kekurangan'        => round($kekurangan, 2),
+            'total_dibayar'     => round($totalDibayar, 2),
+            'keterangan'        => $this->keterangan($isTelat, $isKurang),
+        ];
+    }
+
+    public function tentukanStatus(float $pokok, float $totalDibayar): string
+    {
+        if ($totalDibayar < $pokok) return 'KURANG_BAYAR';
+        if ($totalDibayar > $pokok) return 'LEBIH_BAYAR';
+        return 'LUNAS';
+    }
+
+    /** Status kewajiban (agregat) untuk disimpan di tabel kewajiban_pajak. */
+    public function statusKewajiban(float $pokok, float $totalDibayar): string
+    {
+        if ($totalDibayar < $pokok) return 'BELUM_LUNAS';
+        if ($totalDibayar > $pokok) return 'LEBIH_BAYAR';
+        return 'LUNAS';
+    }
+
+    private function keterangan(bool $isTelat, bool $isKurang): string
+    {
+        return match (true) {
+            $isTelat && $isKurang => 'Denda gabungan: terlambat sekaligus kurang bayar.',
+            $isTelat              => 'Denda telat bayar: pembayaran melewati jatuh tempo.',
+            $isKurang             => 'Denda kurang bayar: jumlah dibayar kurang dari kewajiban.',
+            default               => 'Tidak ada denda.',
+        };
+    }
+}</code></pre>
+          </div>
+        </li>
+        <li>
+          <span class="step-num">3</span>
+          <div class="step-body">
+            <h4>Buat <code>KewajibanPajakController</code></h4>
+            <div class="pre-label"><span class="file-icon">&#128196;</span> app/Http/Controllers/KewajibanPajakController.php</div>
+            <pre><code>&lt;?php
+
+namespace App\Http\Controllers;
+
+use App\Models\KewajibanPajak;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+
+class KewajibanPajakController extends Controller
+{
+    public function index(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $query = KewajibanPajak::query()->with('wajibPajak')->withSum('pembayaran', 'nominal');
+
+        if ($user->isWajibPajak()) {
+            $query->where('wajib_pajak_id', $user->wajib_pajak_id);
+        } elseif ($wpId = $request->query('wajib_pajak_id')) {
+            $query->where('wajib_pajak_id', $wpId);
+        }
+
+        if ($jenis = $request->query('jenis_pajak')) $query->where('jenis_pajak', $jenis);
+        if ($status = $request->query('status')) $query->where('status', $status);
+
+        $data = $query->latest()->paginate((int) $request->query('per_page', 15));
+
+        return response()->json(['success' => true, 'data' => $data]);
+    }
+
+    public function store(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'wajib_pajak_id' => ['required', 'exists:wajib_pajak,id'],
+            'jenis_pajak' => ['required', 'string', 'max:100'],
+            'masa_pajak' => ['nullable', 'string', 'max:20'],
+            'pokok_pajak' => ['required', 'numeric', 'gt:0'],
+            'jatuh_tempo' => ['required', 'date'],
+        ]);
+
+        $kewajiban = KewajibanPajak::create($data);
+
+        return response()->json(['success' => true, 'message' => 'Kewajiban pajak berhasil ditambahkan.', 'data' => $kewajiban], 201);
+    }
+
+    public function show(Request $request, KewajibanPajak $kewajibanPajak): JsonResponse
+    {
+        $user = $request->user();
+
+        if ($user->isWajibPajak() && $kewajibanPajak->wajib_pajak_id !== $user->wajib_pajak_id) {
+            abort(403, 'Anda hanya dapat mengakses data milik sendiri.');
+        }
+
+        $kewajibanPajak->load(['wajibPajak', 'pembayaran.denda']);
+        $totalDibayar = $kewajibanPajak->totalDibayar();
+
+        return response()->json([
+            'success' => true,
+            'data' => $kewajibanPajak,
+            'ringkasan' => [
+                'total_dibayar' => $totalDibayar,
+                'sisa_kewajiban' => max(0, (float) $kewajibanPajak->pokok_pajak - $totalDibayar),
+            ],
+        ]);
+    }
+}</code></pre>
+          </div>
+        </li>
+        <li>
+          <span class="step-num">4</span>
+          <div class="step-body">
+            <h4>Tambahkan route Kewajiban Pajak</h4>
+            <div class="pre-label"><span class="file-icon">&#128196;</span> routes/api.php</div>
+            <pre><code>use App\Http\Controllers\KewajibanPajakController;
+
+Route::get('/kewajiban-pajak', [KewajibanPajakController::class, 'index']);
+Route::get('/kewajiban-pajak/{kewajibanPajak}', [KewajibanPajakController::class, 'show']);
+Route::post('/kewajiban-pajak', [KewajibanPajakController::class, 'store'])->middleware('role:ADMIN,PETUGAS');</code></pre>
+          </div>
+        </li>
+      </ol>
+
+      <h3>Aturan Perhitungan Denda</h3>
+      <table>
+        <thead><tr><th>Kondisi</th><th>Denda</th></tr></thead>
+        <tbody>
+          <tr><td>Pembayaran setelah <code>jatuh_tempo</code></td><td>2% &times; <code>pokok_pajak</code></td></tr>
+          <tr><td>Pembayaran &lt; sisa kewajiban</td><td>1% &times; selisih kekurangan</td></tr>
+          <tr><td>Keduanya terjadi</td><td>Kedua denda dijumlahkan</td></tr>
+          <tr><td>Lebih bayar</td><td>Tidak ada denda, status = <code>LEBIH_BAYAR</code></td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout">
+        <div class="callout-title">Kenapa Logika Denda Diisolasi ke Service Terpisah?</div>
+        <code>DendaService</code> tidak menyentuh Eloquent/database sama sekali &mdash; input
+        &amp; outputnya murni angka dan objek yang di-<em>inject</em>. Ini membuatnya bisa
+        diuji langsung tanpa database (lihat R11), dan dipakai ulang dari dua tempat berbeda:
+        <code>PembayaranController</code> saat runtime, dan <code>DatabaseSeeder</code> saat
+        membuat data contoh (lihat R7) &mdash; tanpa duplikasi logika perhitungan.
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- ========== PEMBAYARAN ========== -->
+    <div class="section" id="tps-pembayaran">
+      <h2>Pembayaran, Cicilan &amp; Seeder Data Percobaan</h2>
+
+      <ol class="step-list">
+        <li>
+          <span class="step-num">1</span>
+          <div class="step-body">
+            <h4>Buat Model <code>Pembayaran</code> &amp; <code>Denda</code></h4>
+            <div class="pre-label">Terminal</div>
+            <pre><code>php artisan make:model Pembayaran
+php artisan make:model Denda</code></pre>
+            <div class="pre-label"><span class="file-icon">&#128196;</span> app/Models/Pembayaran.php</div>
+            <pre><code>&lt;?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
+
+class Pembayaran extends Model
+{
+    use LogsActivity;
+
+    protected $table = 'pembayaran';
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()->logFillable()->logOnlyDirty()
+            ->dontSubmitEmptyLogs()->useLogName('pembayaran');
+    }
+
+    protected $fillable = [
+        'kewajiban_pajak_id', 'nominal', 'tanggal_bayar', 'status', 'keterangan', 'dicatat_oleh',
+    ];
+
+    protected $casts = [
+        'nominal' => 'decimal:2',
+        'tanggal_bayar' => 'date',
+    ];
+
+    public function kewajibanPajak(): BelongsTo
+    {
+        return $this->belongsTo(KewajibanPajak::class, 'kewajiban_pajak_id');
+    }
+
+    public function denda(): HasOne
+    {
+        return $this->hasOne(Denda::class, 'pembayaran_id');
+    }
+
+    public function dicatatOleh(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'dicatat_oleh');
+    }
+}</code></pre>
+            <div class="pre-label"><span class="file-icon">&#128196;</span> app/Models/Denda.php</div>
+            <pre><code>&lt;?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+class Denda extends Model
+{
+    protected $table = 'denda';
+
+    protected $fillable = [
+        'pembayaran_id', 'denda_telat', 'denda_kurang', 'total_denda', 'is_telat', 'is_kurang_bayar', 'keterangan',
+    ];
+
+    protected $casts = [
+        'denda_telat' => 'decimal:2',
+        'denda_kurang' => 'decimal:2',
+        'total_denda' => 'decimal:2',
+        'is_telat' => 'boolean',
+        'is_kurang_bayar' => 'boolean',
+    ];
+
+    public function pembayaran(): BelongsTo
+    {
+        return $this->belongsTo(Pembayaran::class, 'pembayaran_id');
+    }
+}</code></pre>
+          </div>
+        </li>
+        <li>
+          <span class="step-num">2</span>
+          <div class="step-body">
+            <h4>Buat <code>StorePembayaranRequest</code></h4>
+            <div class="pre-label"><span class="file-icon">&#128196;</span> app/Http/Requests/StorePembayaranRequest.php</div>
+            <pre><code>&lt;?php
+
+namespace App\Http\Requests;
+
+use Illuminate\Foundation\Http\FormRequest;
+
+class StorePembayaranRequest extends FormRequest
+{
+    public function authorize(): bool
+    {
+        return true;
+    }
+
+    public function rules(): array
+    {
+        return [
+            'kewajiban_pajak_id' => ['required', 'exists:kewajiban_pajak,id'],
+            // Nominal tidak boleh nol (atau negatif).
+            'nominal' => ['required', 'numeric', 'gt:0'],
+            // Tanggal tidak boleh di masa depan.
+            'tanggal_bayar' => ['required', 'date', 'before_or_equal:today'],
+            'keterangan' => ['nullable', 'string'],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'nominal.gt' => 'Nominal pembayaran harus lebih besar dari nol.',
+            'tanggal_bayar.before_or_equal' => 'Tanggal pembayaran tidak boleh di masa depan.',
+        ];
+    }
+}</code></pre>
+          </div>
+        </li>
+        <li>
+          <span class="step-num">3</span>
+          <div class="step-body">
+            <h4>Buat <code>PembayaranController</code> &mdash; di sini denda dihitung otomatis</h4>
+            <div class="pre-label"><span class="file-icon">&#128196;</span> app/Http/Controllers/PembayaranController.php</div>
+            <pre><code>&lt;?php
+
+namespace App\Http\Controllers;
+
+use App\Http\Requests\StorePembayaranRequest;
+use App\Models\Denda;
+use App\Models\KewajibanPajak;
+use App\Models\Pembayaran;
+use App\Services\DendaService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
+
+class PembayaranController extends Controller
+{
+    public function __construct(private readonly DendaService $dendaService)
+    {
+    }
+
+    public function store(StorePembayaranRequest $request): JsonResponse
+    {
+        $data = $request->validated();
+
+        $kewajiban = KewajibanPajak::with('wajibPajak')->findOrFail($data['kewajiban_pajak_id']);
+
+        if (! $kewajiban->wajibPajak || ! $kewajiban->wajibPajak->status_aktif) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Wajib pajak tidak aktif. Pembayaran tidak dapat diproses.',
+            ], 409);
+        }
+
+        $hasil = DB::transaction(function () use ($data, $kewajiban, $request) {
+            $totalSebelumnya = (float) $kewajiban->pembayaran()->sum('nominal');
+
+            $perhitungan = $this->dendaService->hitung(
+                $kewajiban, (float) $data['nominal'], $data['tanggal_bayar'], $totalSebelumnya
+            );
+
+            $pembayaran = Pembayaran::create([
+                'kewajiban_pajak_id' => $kewajiban->id,
+                'nominal' => $data['nominal'],
+                'tanggal_bayar' => $data['tanggal_bayar'],
+                'status' => $perhitungan['status_pembayaran'],
+                'keterangan' => $data['keterangan'] ?? null,
+                'dicatat_oleh' => $request->user()->id,
+            ]);
+
+            $denda = Denda::create([
+                'pembayaran_id' => $pembayaran->id,
+                'denda_telat' => $perhitungan['denda_telat'],
+                'denda_kurang' => $perhitungan['denda_kurang'],
+                'total_denda' => $perhitungan['total_denda'],
+                'is_telat' => $perhitungan['is_telat'],
+                'is_kurang_bayar' => $perhitungan['is_kurang_bayar'],
+                'keterangan' => $perhitungan['keterangan'],
+            ]);
+
+            $kewajiban->update([
+                'status' => $this->dendaService->statusKewajiban(
+                    (float) $kewajiban->pokok_pajak, $perhitungan['total_dibayar']
+                ),
+            ]);
+
+            return ['pembayaran' => $pembayaran, 'denda' => $denda, 'perhitungan' => $perhitungan];
+        });
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Pembayaran berhasil dicatat.',
+            'data' => [
+                'pembayaran'     => $hasil['pembayaran'],
+                'denda'          => $hasil['denda'],
+                'pokok_pajak'    => (float) $kewajiban->pokok_pajak,
+                'total_dibayar'  => $hasil['perhitungan']['total_dibayar'],
+                'sisa_kewajiban' => $hasil['perhitungan']['kekurangan'],
+            ],
+        ], 201);
+    }
+}</code></pre>
+            <div class="callout success">
+              <div class="callout-title">Ini yang Benar-Benar Pakai <code>DB::transaction()</code></div>
+              Berbeda dari <code>WajibPajakController::store()</code> di R5, endpoint ini
+              menulis ke tiga tabel sekaligus (<code>pembayaran</code>, <code>denda</code>,
+              update <code>kewajiban_pajak</code>) dan memang dibungkus transaction &mdash;
+              kalau salah satu <code>create()</code>/<code>update()</code> gagal, semuanya
+              di-rollback otomatis.
+            </div>
+          </div>
+        </li>
+        <li>
+          <span class="step-num">4</span>
+          <div class="step-body">
+            <h4>Tambahkan route Pembayaran &amp; Denda</h4>
+            <div class="pre-label"><span class="file-icon">&#128196;</span> routes/api.php</div>
+            <pre><code>use App\Http\Controllers\DendaController;
+use App\Http\Controllers\PembayaranController;
+
+Route::post('/pembayaran', [PembayaranController::class, 'store'])->middleware('role:ADMIN,PETUGAS');
+Route::get('/denda/{id}', [DendaController::class, 'show']);</code></pre>
+          </div>
+        </li>
+        <li>
+          <span class="step-num">5</span>
+          <div class="step-body">
+            <h4>Buat <code>DatabaseSeeder</code> supaya ada akun &amp; data percobaan</h4>
+            <div class="pre-label"><span class="file-icon">&#128196;</span> database/seeders/DatabaseSeeder.php</div>
+            <pre><code>&lt;?php
+
+namespace Database\Seeders;
+
+use App\Models\Denda;
+use App\Models\KewajibanPajak;
+use App\Models\Pembayaran;
+use App\Models\User;
+use App\Models\WajibPajak;
+use App\Services\DendaService;
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
+
+class DatabaseSeeder extends Seeder
+{
+    public function run(): void
+    {
+        $dendaService = new DendaService();
+
+        // ----- Akun -----
+        User::updateOrCreate(['username' => 'admin'], [
+            'name' => 'Administrator', 'email' => 'admin@tps.test',
+            'password' => Hash::make('Pretest@2025'), 'role' => 'ADMIN',
+        ]);
+
+        User::updateOrCreate(['username' => 'petugas'], [
+            'name' => 'Petugas Pajak', 'email' => 'petugas@tps.test',
+            'password' => Hash::make('Petugas@2025'), 'role' => 'PETUGAS',
+        ]);
+
+        // ----- Wajib Pajak contoh -----
+        $individu = WajibPajak::updateOrCreate(['nik' => '1171010101900001'], [
+            'jenis' => 'INDIVIDU', 'nama' => 'Budi Santoso', 'email' => 'budi@example.com',
+            'telepon' => '081234567890', 'alamat' => 'Jl. Merdeka No. 1, Banda Aceh', 'status_aktif' => true,
+        ]);
+
+        $badan = WajibPajak::updateOrCreate(['npwp' => '091234567890123'], [
+            'jenis' => 'BADAN', 'nama' => 'PT Maju Bersama', 'nib' => '1234567890123',
+            'email' => 'info@majubersama.co.id', 'telepon' => '0651123456',
+            'alamat' => 'Jl. Sudirman No. 10, Banda Aceh', 'status_aktif' => true,
+        ]);
+
+        User::updateOrCreate(['username' => 'budi'], [
+            'name' => 'Budi Santoso', 'email' => 'budi@example.com',
+            'password' => Hash::make('Wajib@2025'), 'role' => 'WAJIB_PAJAK',
+            'wajib_pajak_id' => $individu->id,
+        ]);
+
+        // ----- Kewajiban + pembayaran contoh -----
+        $k1 = KewajibanPajak::create([
+            'wajib_pajak_id' => $individu->id, 'jenis_pajak' => 'PBB', 'masa_pajak' => '2026-01',
+            'pokok_pajak' => 1000000, 'jatuh_tempo' => '2026-03-31',
+        ]);
+        $this->catatPembayaran($dendaService, $k1, 1000000, '2026-03-20'); // lunas, tepat waktu
+
+        $k2 = KewajibanPajak::create([
+            'wajib_pajak_id' => $badan->id, 'jenis_pajak' => 'PPh', 'masa_pajak' => '2026-02',
+            'pokok_pajak' => 5000000, 'jatuh_tempo' => '2026-03-31',
+        ]);
+        $this->catatPembayaran($dendaService, $k2, 4000000, '2026-04-10'); // telat + kurang bayar
+    }
+
+    private function catatPembayaran(DendaService $service, KewajibanPajak $kewajiban, float $nominal, string $tanggal): void
+    {
+        $totalSebelumnya = (float) $kewajiban->pembayaran()->sum('nominal');
+        $perhitungan = $service->hitung($kewajiban, $nominal, $tanggal, $totalSebelumnya);
+
+        $pembayaran = Pembayaran::create([
+            'kewajiban_pajak_id' => $kewajiban->id, 'nominal' => $nominal, 'tanggal_bayar' => $tanggal,
+            'status' => $perhitungan['status_pembayaran'], 'keterangan' => 'Data contoh seeder',
+        ]);
+
+        Denda::create([
+            'pembayaran_id' => $pembayaran->id,
+            'denda_telat' => $perhitungan['denda_telat'],
+            'denda_kurang' => $perhitungan['denda_kurang'],
+            'total_denda' => $perhitungan['total_denda'],
+            'is_telat' => $perhitungan['is_telat'],
+            'is_kurang_bayar' => $perhitungan['is_kurang_bayar'],
+            'keterangan' => $perhitungan['keterangan'],
+        ]);
+
+        $kewajiban->update([
+            'status' => $service->statusKewajiban((float) $kewajiban->pokok_pajak, $perhitungan['total_dibayar']),
+        ]);
+    }
+}</code></pre>
+            <div class="pre-label">Terminal</div>
+            <pre><code>php artisan db:seed</code></pre>
+          </div>
+        </li>
+      </ol>
+
+      <div class="callout success">
+        <div class="callout-title">Kenapa <code>updateOrCreate</code>, Bukan <code>create</code>?</div>
+        Kolom pertama (mis. <code>username</code>) jadi kunci pencarian: kalau sudah ada,
+        di-update; kalau belum, dibuat baru. Ini membuat <code>php artisan db:seed</code> aman
+        dijalankan berkali-kali tanpa menghasilkan akun duplikat.
+      </div>
+      <div class="callout">
+        <div class="callout-title">Akun Hasil Seeder</div>
+        <div class="table-scroll">
+        <table>
+          <thead><tr><th>Username</th><th>Password</th><th>Role</th></tr></thead>
+          <tbody>
+            <tr><td><code>admin</code></td><td><code>Pretest@2025</code></td><td>ADMIN</td></tr>
+            <tr><td><code>petugas</code></td><td><code>Petugas@2025</code></td><td>PETUGAS</td></tr>
+            <tr><td><code>budi</code></td><td><code>Wajib@2025</code></td><td>WAJIB_PAJAK</td></tr>
+          </tbody>
+        </table>
+        </div>
+      </div>
+      <p>
+        Satu <code>kewajiban_pajak</code> mendukung banyak baris <code>pembayaran</code>
+        (cicilan) karena <code>totalDibayar()</code> di Model <code>KewajibanPajak</code>
+        menjumlahkan semua transaksi terdahulu &mdash; status baru berubah <code>LUNAS</code>
+        setelah akumulasinya &ge; <code>pokok_pajak</code>.
+      </p>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- ========== LAPORAN ========== -->
+    <div class="section" id="tps-laporan">
+      <h2>Laporan Pembayaran &amp; Filter</h2>
+
+      <div class="pre-label">Terminal</div>
+      <pre><code>php artisan make:controller LaporanController</code></pre>
+      <div class="pre-label"><span class="file-icon">&#128196;</span> app/Http/Controllers/LaporanController.php</div>
+      <pre><code>&lt;?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Pembayaran;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+
+class LaporanController extends Controller
+{
+    public function index(Request $request): JsonResponse
+    {
+        $request->validate([
+            'wajib_pajak_id' => ['nullable', 'integer', 'exists:wajib_pajak,id'],
+            'tanggal_mulai' => ['nullable', 'date'],
+            'tanggal_akhir' => ['nullable', 'date', 'after_or_equal:tanggal_mulai'],
+            'jenis_pajak' => ['nullable', 'string'],
+            'status' => ['nullable', 'in:LUNAS,KURANG_BAYAR,LEBIH_BAYAR'],
+        ]);
+
+        $query = Pembayaran::query()
+            ->with(['denda', 'kewajibanPajak.wajibPajak'])
+            ->when($request->query('wajib_pajak_id'), function ($q, $v) {
+                $q->whereHas('kewajibanPajak', fn ($k) => $k->where('wajib_pajak_id', $v));
+            })
+            ->when($request->query('tanggal_mulai'), fn ($q, $v) => $q->whereDate('tanggal_bayar', '>=', $v))
+            ->when($request->query('tanggal_akhir'), fn ($q, $v) => $q->whereDate('tanggal_bayar', '<=', $v))
+            ->when($request->query('status'), fn ($q, $v) => $q->where('status', $v))
+            ->when($request->query('jenis_pajak'), function ($q, $v) {
+                $q->whereHas('kewajibanPajak', fn ($k) => $k->where('jenis_pajak', $v));
+            });
+
+        $pembayaran = $query->get();
+
+        $totalDibayar = (float) $pembayaran->sum('nominal');
+        $totalDenda = (float) $pembayaran->sum(fn ($p) => (float) ($p->denda->total_denda ?? 0));
+
+        $kewajibanUnik = $pembayaran->pluck('kewajibanPajak')->filter()->unique('id');
+        $totalKewajiban = (float) $kewajibanUnik->sum(fn ($k) => (float) $k->pokok_pajak);
+        $sisaKewajiban = (float) $kewajibanUnik->sum(function ($k) {
+            $dibayar = (float) $k->pembayaran()->sum('nominal');
+            return max(0, (float) $k->pokok_pajak - $dibayar);
+        });
+
+        return response()->json([
+            'success' => true,
+            'filter' => $request->only(['wajib_pajak_id', 'tanggal_mulai', 'tanggal_akhir', 'jenis_pajak', 'status']),
+            'ringkasan' => [
+                'total_kewajiban'   => round($totalKewajiban, 2),
+                'total_dibayar'     => round($totalDibayar, 2),
+                'sisa_kewajiban'    => round($sisaKewajiban, 2),
+                'total_denda'       => round($totalDenda, 2),
+                'total_keseluruhan' => round($sisaKewajiban + $totalDenda, 2),
+                'jumlah_transaksi'  => $pembayaran->count(),
+            ],
+            'detail' => $pembayaran->map(fn ($p) => [
+                'pembayaran_id' => $p->id,
+                'wajib_pajak' => $p->kewajibanPajak->wajibPajak->nama ?? null,
+                'jenis_pajak' => $p->kewajibanPajak->jenis_pajak ?? null,
+                'pokok_pajak' => (float) ($p->kewajibanPajak->pokok_pajak ?? 0),
+                'tanggal_bayar' => $p->tanggal_bayar->toDateString(),
+                'nominal' => (float) $p->nominal,
+                'status' => $p->status,
+                'total_denda' => (float) ($p->denda->total_denda ?? 0),
+            ]),
+        ]);
+    }
+}</code></pre>
+
+      <div class="pre-label"><span class="file-icon">&#128196;</span> routes/api.php</div>
+      <pre><code>use App\Http\Controllers\LaporanController;
+
+Route::get('/laporan', [LaporanController::class, 'index'])->middleware('role:ADMIN,PETUGAS');</code></pre>
+
+      <div class="pre-label">Contoh pemanggilan dengan filter</div>
+      <pre><code>GET /laporan?wajib_pajak_id=3&tanggal_mulai=2026-01-01&tanggal_akhir=2026-06-30&jenis_pajak=PPh&status=LUNAS</code></pre>
+
+      <div class="callout">
+        <div class="callout-title">Kenapa Filter <code>wajib_pajak_id</code> Penting?</div>
+        Tanpa filter ini, PETUGAS/ADMIN harus menyaring manual dari seluruh riwayat transaksi
+        untuk mengecek satu wajib pajak tertentu. Query <code>whereHas</code> di atas menembus
+        relasi <code>Pembayaran &rarr; KewajibanPajak</code> supaya filter tetap bisa dilakukan
+        walau kolom <code>wajib_pajak_id</code> ada di tabel lain, bukan di <code>pembayaran</code>
+        langsung.
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- ========== AUDIT TRAIL ========== -->
+    <div class="section" id="tps-audit">
+      <h2>Audit Trail dengan Spatie Activity Log</h2>
+      <p>
+        Migrasi package sudah dipublish di R2. Trait <code>LogsActivity</code> +
+        <code>getActivitylogOptions()</code> juga sudah ditambahkan ke Model <code>User</code>,
+        <code>WajibPajak</code>, <code>KewajibanPajak</code>, dan <code>Pembayaran</code> pada
+        langkah-langkah sebelumnya &mdash; jadi setiap <code>create</code>/<code>update</code>/
+        <code>delete</code> pada model-model itu <strong>otomatis</strong> tercatat tanpa kode
+        tambahan. Yang tersisa hanya endpoint untuk membacanya.
+      </p>
+
+      <div class="pre-label">Terminal</div>
+      <pre><code>php artisan make:controller AuditLogController</code></pre>
+      <div class="pre-label"><span class="file-icon">&#128196;</span> app/Http/Controllers/AuditLogController.php</div>
+      <pre><code>&lt;?php
+
+namespace App\Http\Controllers;
+
+use App\Models\User;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Spatie\Activitylog\Models\Activity;
+
+class AuditLogController extends Controller
+{
+    public function index(Request $request): JsonResponse
+    {
+        $query = Activity::with('causer:id,username,role')->latest();
+
+        if ($logName = $request->query('log_name')) {
+            $query->inLog($logName);
+        }
+        if ($event = $request->query('event')) {
+            $query->where('event', $event);
+        }
+        if ($causerId = $request->query('causer_id')) {
+            $query->causedBy(User::find($causerId));
+        }
+        if ($subjectId = $request->query('subject_id')) {
+            $query->where('subject_id', $subjectId);
+        }
+
+        $data = $query->paginate((int) $request->query('per_page', 15));
+
+        return response()->json(['success' => true, 'data' => $data]);
+    }
+}</code></pre>
+
+      <div class="pre-label"><span class="file-icon">&#128196;</span> routes/api.php &mdash; hanya ADMIN</div>
+      <pre><code>use App\Http\Controllers\AuditLogController;
+
+Route::middleware('role:ADMIN')->group(function () {
+    Route::get('/audit-log', [AuditLogController::class, 'index']);
+});</code></pre>
+
+      <p>Contoh pemakaian trait di Model (sudah dipasang sejak R4/R5/R6/R7):</p>
+      <div class="pre-label">Pola yang diulang di setiap model</div>
+      <pre><code>use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
+
+class WajibPajak extends Model
+{
+    use LogsActivity;
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logFillable()          // catat semua kolom $fillable
+            ->logOnlyDirty()         // hanya kolom yang benar-benar berubah
+            ->dontSubmitEmptyLogs()  // jangan catat kalau tidak ada perubahan
+            ->useLogName('wajib_pajak');
+    }
+}</code></pre>
+
+      <div class="callout">
+        <div class="callout-title">Kenapa <code>logOnlyDirty()</code> Penting?</div>
+        Tanpa ini, setiap kali <code>update()</code> dipanggil &mdash; walau tidak ada nilai
+        yang berubah &mdash; satu baris log baru tetap tercatat. <code>logOnlyDirty()</code>
+        memastikan hanya kolom yang nilainya benar-benar berbeda yang masuk ke
+        <code>properties</code>, jadi tabel <code>activity_log</code> tidak membengkak dengan
+        entri kosong/redundan.
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- ========== SWAGGER ========== -->
+    <div class="section" id="tps-swagger">
+      <h2>Dokumentasi API dengan Swagger / OpenAPI 3.0</h2>
+      <p>
+        Dokumentasi ditulis sebagai <strong>PHP Attribute</strong> (<code>#[OA\...]</code>)
+        langsung di atas <code>class</code> dan method controller, lalu digenerate jadi
+        spesifikasi OpenAPI oleh <code>l5-swagger</code>. Ini menjaga dokumentasi tetap sinkron
+        dengan kode &mdash; tidak ada file terpisah yang bisa basi.
+      </p>
+
+      <ol class="step-list">
+        <li>
+          <span class="step-num">1</span>
+          <div class="step-body">
+            <h4>Definisikan info global &amp; skema keamanan di base <code>Controller</code></h4>
+            <div class="pre-label"><span class="file-icon">&#128196;</span> app/Http/Controllers/Controller.php</div>
+            <pre><code>&lt;?php
+
+namespace App\Http\Controllers;
+
+use OpenApi\Attributes as OA;
+
+#[OA\Info(
+    version: '1.0.0',
+    title: 'Tax Processing System (TPS) REST API',
+    description: 'REST API pengelolaan kewajiban pajak, pembayaran, dan denda otomatis.'
+)]
+#[OA\Server(url: 'http://localhost:8000', description: 'Local development server')]
+#[OA\SecurityScheme(
+    securityScheme: 'bearerAuth',
+    type: 'http',
+    scheme: 'bearer',
+    bearerFormat: 'JWT',
+    description: 'Masukkan token JWT yang diperoleh dari POST /auth/login.'
+)]
+#[OA\Tag(name: 'Auth', description: 'Autentikasi & token JWT')]
+#[OA\Tag(name: 'Wajib Pajak', description: 'Pengelolaan data wajib pajak')]
+#[OA\Tag(name: 'Kewajiban Pajak', description: 'Daftar kewajiban pajak per wajib pajak')]
+#[OA\Tag(name: 'Pembayaran', description: 'Pencatatan transaksi pembayaran pajak')]
+#[OA\Tag(name: 'Laporan', description: 'Laporan pembayaran pajak per periode')]
+#[OA\Tag(name: 'Audit Log', description: 'Riwayat aktivitas sistem (khusus ADMIN)')]
+abstract class Controller
+{
+    //
+}</code></pre>
+          </div>
+        </li>
+        <li>
+          <span class="step-num">2</span>
+          <div class="step-body">
+            <h4>Tambahkan anotasi di atas method controller</h4>
+            <p>Contoh nyata untuk <code>AuthController::login()</code> yang dibuat di R4
+              &mdash; tempelkan attribute ini tepat di atas <code>public function login(...)</code>:</p>
+            <div class="pre-label"><span class="file-icon">&#128196;</span> app/Http/Controllers/AuthController.php</div>
+            <pre><code>#[OA\Post(
+    path: '/auth/login',
+    summary: 'Login dan dapatkan token JWT',
+    tags: ['Auth'],
+    requestBody: new OA\RequestBody(
+        required: true,
+        content: new OA\JsonContent(
+            required: ['username', 'password'],
+            properties: [
+                new OA\Property(property: 'username', type: 'string', example: 'admin'),
+                new OA\Property(property: 'password', type: 'string', format: 'password', example: 'Pretest@2025'),
+            ]
+        )
+    ),
+    responses: [
+        new OA\Response(response: 200, description: 'Login berhasil'),
+        new OA\Response(response: 401, description: 'Kredensial salah'),
+    ]
+)]
+public function login(Request $request): JsonResponse
+{
+    // ...isi method tetap sama seperti di R4...
+}</code></pre>
+            <p>Untuk endpoint yang butuh token, tambahkan <code>security: [['bearerAuth' => []]]</code>
+              di dalam attribute-nya supaya Swagger UI menampilkan kolom "Authorize".</p>
+          </div>
+        </li>
+        <li>
+          <span class="step-num">3</span>
+          <div class="step-body">
+            <h4>Generate &amp; buka dokumentasi</h4>
+            <div class="pre-label">Terminal</div>
+            <pre><code>php artisan l5-swagger:generate
+php artisan serve</code></pre>
+            <p>Buka <code>http://localhost:8000/api/documentation</code> di browser.</p>
+          </div>
+        </li>
+      </ol>
+
+      <div class="callout warning">
+        <div class="callout-title">Jangan Lupa Generate Ulang</div>
+        Setiap kali anotasi <code>#[OA\...]</code> diubah, jalankan lagi
+        <code>php artisan l5-swagger:generate</code> &mdash; file JSON hasil generate di-cache,
+        tidak otomatis mengikuti perubahan kode.
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- ========== TESTING ========== -->
+    <div class="section" id="tps-testing">
+      <h2>Testing &mdash; Unit &amp; Feature</h2>
+
+      <ol class="step-list">
+        <li>
+          <span class="step-num">1</span>
+          <div class="step-body">
+            <h4>Konfigurasi test memakai SQLite in-memory</h4>
+            <div class="pre-label"><span class="file-icon">&#128196;</span> phpunit.xml</div>
+            <pre><code>&lt;env name="DB_CONNECTION" value="sqlite"/&gt;
+&lt;env name="DB_DATABASE" value=":memory:"/&gt;</code></pre>
+          </div>
+        </li>
+        <li>
+          <span class="step-num">2</span>
+          <div class="step-body">
+            <h4>Unit test <code>DendaService</code> &mdash; tanpa database</h4>
+            <div class="pre-label">Terminal</div>
+            <pre><code>php artisan make:test DendaServiceTest --unit</code></pre>
+            <div class="pre-label"><span class="file-icon">&#128196;</span> tests/Unit/DendaServiceTest.php</div>
+            <pre><code>&lt;?php
+
+namespace Tests\Unit;
+
+use App\Models\KewajibanPajak;
+use App\Services\DendaService;
+use Tests\TestCase;
+
+class DendaServiceTest extends TestCase
+{
+    private function kewajiban(float $pokok, string $jatuhTempo): KewajibanPajak
+    {
+        $k = new KewajibanPajak();
+        $k->pokok_pajak = $pokok;
+        $k->jatuh_tempo = $jatuhTempo;
+        return $k;
+    }
+
+    public function test_tepat_waktu_dan_lunas_tanpa_denda(): void
+    {
+        $hasil = (new DendaService())->hitung($this->kewajiban(1_000_000, '2026-03-31'), 1_000_000, '2026-03-20');
+
+        $this->assertSame(0.0, $hasil['total_denda']);
+        $this->assertSame('LUNAS', $hasil['status_pembayaran']);
+    }
+
+    public function test_telat_bayar_denda_2_persen_pokok(): void
+    {
+        // Bayar penuh tapi setelah jatuh tempo -> denda telat 2% x 1jt = 20.000
+        $hasil = (new DendaService())->hitung($this->kewajiban(1_000_000, '2026-03-31'), 1_000_000, '2026-04-05');
+
+        $this->assertSame(20_000.0, $hasil['denda_telat']);
+        $this->assertTrue($hasil['is_telat']);
+    }
+
+    public function test_denda_gabungan_telat_dan_kurang_bayar(): void
+    {
+        // Pokok 5jt, bayar 4jt setelah jatuh tempo: telat 2%x5jt=100rb + kurang 1%x1jt=10rb = 110rb
+        $hasil = (new DendaService())->hitung($this->kewajiban(5_000_000, '2026-03-31'), 4_000_000, '2026-04-10');
+
+        $this->assertSame(100_000.0, $hasil['denda_telat']);
+        $this->assertSame(10_000.0, $hasil['denda_kurang']);
+        $this->assertSame(110_000.0, $hasil['total_denda']);
+    }
+
+    public function test_pembayaran_kumulatif(): void
+    {
+        // Sudah dibayar 600rb, sekarang bayar 400rb tepat waktu -> lunas, tanpa denda.
+        $hasil = (new DendaService())->hitung($this->kewajiban(1_000_000, '2026-03-31'), 400_000, '2026-03-10', 600_000);
+
+        $this->assertSame('LUNAS', $hasil['status_pembayaran']);
+        $this->assertSame(1_000_000.0, $hasil['total_dibayar']);
+    }
+}</code></pre>
+          </div>
+        </li>
+        <li>
+          <span class="step-num">3</span>
+          <div class="step-body">
+            <h4>Feature test end-to-end &mdash; lewat HTTP stack sungguhan</h4>
+            <div class="pre-label">Terminal</div>
+            <pre><code>php artisan make:test ApiFlowTest</code></pre>
+            <div class="pre-label"><span class="file-icon">&#128196;</span> tests/Feature/ApiFlowTest.php (cuplikan)</div>
+            <pre><code>&lt;?php
+
+namespace Tests\Feature;
+
+use App\Models\KewajibanPajak;
+use App\Models\User;
+use App\Models\WajibPajak;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
+use Tests\TestCase;
+
+class ApiFlowTest extends TestCase
+{
+    use RefreshDatabase;
+
+    private function adminToken(): string
+    {
+        User::create([
+            'name' => 'Admin', 'username' => 'admin',
+            'password' => Hash::make('Pretest@2025'), 'role' => 'ADMIN',
+        ]);
+
+        return $this->postJson('/auth/login', [
+            'username' => 'admin', 'password' => 'Pretest@2025',
+        ])->json('token');
+    }
+
+    public function test_endpoint_dilindungi_tanpa_token_ditolak(): void
+    {
+        $this->getJson('/wajib-pajak')->assertStatus(401);
+    }
+
+    public function test_pembayaran_menghitung_denda_otomatis(): void
+    {
+        $token = $this->adminToken();
+
+        $wp = WajibPajak::create(['jenis' => 'BADAN', 'nama' => 'PT Test', 'npwp' => '091234567890999', 'status_aktif' => true]);
+        $kewajiban = KewajibanPajak::create([
+            'wajib_pajak_id' => $wp->id, 'jenis_pajak' => 'PPh', 'pokok_pajak' => 5_000_000, 'jatuh_tempo' => '2026-03-31',
+        ]);
+
+        $resp = $this->withToken($token)->postJson('/pembayaran', [
+            'kewajiban_pajak_id' => $kewajiban->id, 'nominal' => 4_000_000, 'tanggal_bayar' => '2026-04-10',
+        ])->assertStatus(201);
+
+        $resp->assertJsonPath('data.denda.total_denda', '110000.00');
+        $resp->assertJsonPath('data.pembayaran.status', 'KURANG_BAYAR');
+    }
+
+    public function test_wajib_pajak_hanya_lihat_data_sendiri(): void
+    {
+        $this->adminToken();
+
+        $wpA = WajibPajak::create(['jenis' => 'INDIVIDU', 'nama' => 'A', 'nik' => '1111111111111111', 'status_aktif' => true]);
+        $wpB = WajibPajak::create(['jenis' => 'INDIVIDU', 'nama' => 'B', 'nik' => '2222222222222222', 'status_aktif' => true]);
+
+        User::create([
+            'name' => 'A', 'username' => 'usera', 'password' => Hash::make('rahasia'),
+            'role' => 'WAJIB_PAJAK', 'wajib_pajak_id' => $wpA->id,
+        ]);
+        $tokenA = $this->postJson('/auth/login', ['username' => 'usera', 'password' => 'rahasia'])->json('token');
+
+        $this->withToken($tokenA)->getJson('/wajib-pajak')
+            ->assertOk()->assertJsonCount(1, 'data.data');
+
+        $this->withToken($tokenA)->getJson("/wajib-pajak/{$wpB->id}")->assertStatus(403);
+    }
+}</code></pre>
+          </div>
+        </li>
+        <li>
+          <span class="step-num">4</span>
+          <div class="step-body">
+            <h4>Jalankan test</h4>
+            <div class="pre-label">Terminal</div>
+            <pre><code>php artisan test
+php artisan test --testsuite=Unit
+php artisan test --filter test_telat_bayar_denda_2_persen_pokok</code></pre>
+          </div>
+        </li>
+      </ol>
+
+      <div class="callout">
+        <div class="callout-title">Kenapa SQLite In-Memory untuk Test?</div>
+        Menghilangkan ketergantungan pada instance MySQL eksternal saat CI berjalan, membuat
+        test selesai dalam hitungan detik, dan tiap kelas test yang memakai
+        <code>RefreshDatabase</code> selalu mulai dari skema bersih.
+      </div>
+      <div class="callout warning">
+        <div class="callout-title">Kalau Ada Test Gagal</div>
+        Penyebab paling umum: asersi angka desimal yang tidak cocok format
+        (<code>'110000.00'</code> sebagai string, bukan <code>110000</code> sebagai angka,
+        karena kolom <code>total_denda</code> di-cast <code>decimal:2</code>), atau data seed
+        yang berubah memengaruhi assertion berbasis ID. Perbaiki assertion yang gagal secara
+        spesifik &mdash; jangan ubah logika <code>DendaService</code> kalau perhitungannya
+        sendiri sudah benar.
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- ========== RINGKASAN ========== -->
+    <div class="section" id="tps-ringkasan">
+      <h2>Checklist &amp; Ringkasan Alur Pembangunan</h2>
+      <p>Urutan lengkap yang sudah dilewati kalau kamu mengikuti modul ini dari R2 sampai R11:</p>
+      <ol>
+        <li>Install Laravel + 3 package inti (JWT, Activity Log, Swagger), konfigurasi <code>.env</code> &amp; guard <code>api</code>.</li>
+        <li>Buat 4 migrasi baru (<code>wajib_pajak</code>, <code>kewajiban_pajak</code>, <code>pembayaran</code>, <code>denda</code>) + edit migrasi <code>users</code> bawaan.</li>
+        <li>Buat middleware <code>ForceJsonResponse</code> &amp; <code>RoleMiddleware</code>, daftarkan di <code>bootstrap/app.php</code>, jadikan <code>User</code> subjek JWT, buat <code>AuthController</code>.</li>
+        <li>Buat Model, Request, dan Controller <code>WajibPajak</code> dengan validasi NIK/NPWP/NIB kondisional.</li>
+        <li>Buat Model <code>KewajibanPajak</code> + <code>DendaService</code> + <code>KewajibanPajakController</code>.</li>
+        <li>Buat Model <code>Pembayaran</code>/<code>Denda</code>, <code>PembayaranController</code> (dengan <code>DB::transaction</code>), lalu <code>DatabaseSeeder</code> untuk data percobaan.</li>
+        <li>Buat <code>LaporanController</code> dengan filter tanggal/status/wajib pajak.</li>
+        <li>Buat <code>AuditLogController</code> untuk membaca activity log yang sudah otomatis tercatat sejak model-model di atas dipasangi trait <code>LogsActivity</code>.</li>
+        <li>Tambahkan anotasi Swagger di controller &amp; generate dokumentasi OpenAPI.</li>
+        <li>Tulis unit test untuk <code>DendaService</code> dan feature test end-to-end, jalankan <code>php artisan test</code>.</li>
+      </ol>
+
+      <div class="callout success">
+        <div class="callout-title">Verifikasi Akhir</div>
+        Setelah semua langkah selesai: jalankan <code>php artisan serve</code>, login sebagai
+        <code>admin</code>/<code>Pretest@2025</code> lewat <code>POST /auth/login</code>, coba
+        buat wajib pajak baru, catat pembayaran yang telat/kurang bayar untuk melihat denda
+        terhitung otomatis, lalu cek <code>/audit-log</code> untuk memastikan semua perubahan
+        tadi tercatat.
+      </div>
+      <div class="callout">
+        <div class="callout-title">Di Luar Cakupan Modul Ini</div>
+        Project aslinya juga punya <code>UserController</code> (CRUD akun sistem, khusus
+        ADMIN) dengan pola yang persis sama seperti <code>WajibPajakController</code> di R5
+        &mdash; tidak diulang di sini supaya modul tetap fokus ke alur bisnis pajak yang jadi
+        inti pembelajaran.
+      </div>
+    </div>
+
+   </div>
+  </main>
+
+  <!-- RIGHT TOC -->
+  <aside class="toc">
+    <div class="toc-title">Daftar Isi</div>
+
+    <a href="#tps-intro">Ringkasan &amp; Arsitektur</a>
+    <a href="#tps-setup" style="margin-top:12px;display:block">Setup Project</a>
+    <a href="#tps-database" style="margin-top:12px;display:block">Database &amp; Migrasi</a>
+    <a href="#tps-auth" style="margin-top:12px;display:block">Autentikasi &amp; RBAC</a>
+    <a href="#tps-wajibpajak" style="margin-top:12px;display:block">Wajib Pajak &amp; Validasi</a>
+    <a href="#tps-kewajiban" style="margin-top:12px;display:block">Kewajiban &amp; Denda</a>
+    <a href="#tps-pembayaran" style="margin-top:12px;display:block">Pembayaran &amp; Seeder</a>
+    <a href="#tps-laporan" style="margin-top:12px;display:block">Laporan &amp; Filter</a>
+    <a href="#tps-audit" style="margin-top:12px;display:block">Audit Trail</a>
+    <a href="#tps-swagger" style="margin-top:12px;display:block">Dokumentasi Swagger</a>
+    <a href="#tps-testing" style="margin-top:12px;display:block">Testing</a>
+    <a href="#tps-ringkasan" style="margin-top:12px;display:block">Ringkasan</a>
+  </aside>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'base',
+    themeVariables: {
+      primaryColor: '#e7f1ff',
+      primaryTextColor: '#212529',
+      primaryBorderColor: '#0d6efd',
+      lineColor: '#6c757d',
+      secondaryColor: '#f8f9fa',
+      tertiaryColor: '#ffffff',
+      fontSize: '14px'
+    }
+  });
+</script>
+<script>
+  // Sidebar accordion
+  document.querySelectorAll('.nav-group-title').forEach(title => {
+    title.addEventListener('click', () => {
+      title.parentElement.classList.toggle('open');
+    });
+  });
+
+  // Nav bar — sub navbar (dropdown) toggle, applies to Laravel, GIT and REST API dropdowns
+  document.querySelectorAll('.laravel-nav-trigger').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      btn.closest('.laravel-nav').classList.toggle('open');
+    });
+  });
+  document.addEventListener('click', (e) => {
+    document.querySelectorAll('.laravel-nav.open').forEach(nav => {
+      if (!nav.contains(e.target)) nav.classList.remove('open');
+    });
+  });
+
+  // Mobile sidebar toggle
+  const sidebarEl = document.querySelector('.sidebar');
+  const overlayEl = document.getElementById('sidebarOverlay');
+  const menuToggleBtn = document.getElementById('menuToggle');
+  function closeSidebar() {
+    sidebarEl.classList.remove('open');
+    overlayEl.classList.remove('show');
+  }
+  if (menuToggleBtn) {
+    menuToggleBtn.addEventListener('click', () => {
+      sidebarEl.classList.toggle('open');
+      overlayEl.classList.toggle('show');
+    });
+  }
+  if (overlayEl) overlayEl.addEventListener('click', closeSidebar);
+  document.querySelectorAll('.sidebar a').forEach(a => a.addEventListener('click', closeSidebar));
+
+  // Wrap tables so they scroll horizontally instead of breaking layout on small screens
+  document.querySelectorAll('.main table').forEach(t => {
+    if (t.closest('.table-scroll')) return;
+    const wrap = document.createElement('div');
+    wrap.className = 'table-scroll';
+    t.parentNode.insertBefore(wrap, t);
+    wrap.appendChild(t);
+  });
+
+  // Copy button on every code block
+  function copyText(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+      return navigator.clipboard.writeText(text);
+    }
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); } catch (err) {}
+    document.body.removeChild(ta);
+    return Promise.resolve();
+  }
+  document.querySelectorAll('pre').forEach(pre => {
+    const codeEl = pre.querySelector('code');
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'copy-btn';
+    btn.textContent = 'Copy';
+    btn.setAttribute('aria-label', 'Salin kode');
+    btn.addEventListener('click', () => {
+      const text = (codeEl ? codeEl.textContent : pre.textContent).trim();
+      copyText(text).then(() => {
+        btn.textContent = 'Copied!';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = 'Copy';
+          btn.classList.remove('copied');
+        }, 1500);
+      });
+    });
+    pre.appendChild(btn);
+  });
+
+  // Scroll spy for sidebar + TOC + all navbar dropdowns
+  const sections = document.querySelectorAll('.section[id]');
+  const navLinks = document.querySelectorAll('.nav-link');
+  const tocLinks = document.querySelectorAll('.toc a');
+  const dropdownLinks = document.querySelectorAll('.laravel-nav-item');
+
+  function setActive(links, id) {
+    links.forEach(l => {
+      l.classList.toggle('active', l.getAttribute('href') === '#' + id);
+    });
+  }
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        setActive(navLinks, entry.target.id);
+        setActive(tocLinks, entry.target.id);
+        setActive(dropdownLinks, entry.target.id);
+        const activeLink = document.querySelector('.nav-link.active');
+        if (activeLink) {
+          const group = activeLink.closest('.nav-group');
+          if (group) group.classList.add('open');
+        }
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+
+  sections.forEach(s => observer.observe(s));
+</script>
+
+<script src="../search-index.js"></script>
+<script>
+(function() {
+  var SEARCH_PREFIX = '../';
+  var input = document.getElementById('searchInput');
+  var resultsBox = document.getElementById('searchResults');
+  if (!input || !resultsBox || typeof SEARCH_INDEX === 'undefined') return;
+
+  function escapeHtml(s) {
+    return s.replace(/[&<>"']/g, function (c) {
+      return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c];
+    });
+  }
+  function highlight(text, q) {
+    if (!q) return escapeHtml(text);
+    var idx = text.toLowerCase().indexOf(q.toLowerCase());
+    if (idx === -1) return escapeHtml(text);
+    return escapeHtml(text.slice(0, idx)) + '<mark>' + escapeHtml(text.slice(idx, idx + q.length)) + '</mark>' + escapeHtml(text.slice(idx + q.length));
+  }
+
+  function search(query) {
+    var q = query.trim().toLowerCase();
+    if (!q) return [];
+    return SEARCH_INDEX
+      .map(function (entry) {
+        var hay = (entry.title + ' ' + entry.category + ' ' + entry.keywords + ' ' + entry.snippet).toLowerCase();
+        if (hay.indexOf(q) === -1) return null;
+        var score = 3;
+        if (entry.title.toLowerCase().indexOf(q) !== -1) score = 0;
+        else if (entry.category.toLowerCase().indexOf(q) !== -1) score = 1;
+        else if (entry.keywords.toLowerCase().indexOf(q) !== -1) score = 2;
+        return { entry: entry, score: score };
+      })
+      .filter(function (x) { return x; })
+      .sort(function (a, b) { return a.score - b.score; })
+      .slice(0, 20)
+      .map(function (x) { return x.entry; });
+  }
+
+  function render(query) {
+    var results = search(query);
+    if (!query.trim()) {
+      resultsBox.classList.remove('show');
+      resultsBox.innerHTML = '';
+      return;
+    }
+    if (results.length === 0) {
+      resultsBox.innerHTML = '<div class="site-search-empty">Tidak ada hasil untuk &quot;' + escapeHtml(query) + '&quot;</div>';
+      resultsBox.classList.add('show');
+      return;
+    }
+    resultsBox.innerHTML = results.map(function (r) {
+      return '<a class="site-search-item" href="' + SEARCH_PREFIX + r.url + '">' +
+        '<div class="ssi-title">' + highlight(r.title, query) + '</div>' +
+        '<div class="ssi-meta">' + escapeHtml(r.category) + '</div>' +
+        (r.snippet ? '<div class="ssi-snippet">' + escapeHtml(r.snippet) + '</div>' : '') +
+        '</a>';
+    }).join('');
+    resultsBox.classList.add('show');
+  }
+
+  input.addEventListener('input', function () { render(input.value); });
+  input.addEventListener('focus', function () { if (input.value.trim()) render(input.value); });
+  document.addEventListener('click', function (e) {
+    if (!e.target.closest('.site-search')) resultsBox.classList.remove('show');
+  });
+  input.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') { resultsBox.classList.remove('show'); input.blur(); }
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === '/' && document.activeElement !== input &&
+        document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+      e.preventDefault();
+      input.focus();
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

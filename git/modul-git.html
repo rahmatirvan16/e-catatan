@@ -49,6 +49,35 @@
     .topbar-subtitle {
       color: var(--muted); font-size: 13px; margin-left: auto;
     }
+
+    .site-search { position: relative; flex: 1 1 260px; max-width: 340px; margin-left: 12px; }
+    .site-search-input {
+      width: 100%; padding: 7px 12px; font-size: 13px;
+      border: 1px solid var(--border); border-radius: 6px;
+      font-family: inherit; outline: none; color: var(--text); background: #fff;
+    }
+    .site-search-input:focus { border-color: var(--accent); }
+    .site-search-results {
+      display: none;
+      position: absolute; top: calc(100% + 8px); left: 0; right: 0;
+      max-height: 70vh; overflow-y: auto;
+      background: #fff; border: 1px solid var(--border); border-radius: 10px;
+      box-shadow: 0 12px 32px rgba(0,0,0,.14);
+      padding: 6px; z-index: 250;
+    }
+    .site-search-results.show { display: block; }
+    .site-search-item {
+      display: block; padding: 8px 10px; border-radius: 8px;
+      text-decoration: none; color: var(--text);
+    }
+    .site-search-item:hover, .site-search-item.active { background: var(--accent-light); }
+    .site-search-item .ssi-title { font-size: 13px; font-weight: 600; }
+    .site-search-item .ssi-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .site-search-item .ssi-snippet { font-size: 12px; color: var(--muted); margin-top: 4px; }
+    .site-search-empty { padding: 14px; font-size: 13px; color: var(--muted); text-align: center; }
+    .site-search mark { background: #fff3cd; color: inherit; border-radius: 2px; padding: 0 1px; }
+    @media (max-width: 900px) { .site-search { flex-basis: 140px; } }
+
     /* LARAVEL NAV BAR + SUB NAVBAR (dropdown by Fokus Utama) */
     .laravel-nav { position: relative; margin-left: 24px; }
     .laravel-nav-trigger {
@@ -401,22 +430,22 @@
 <!-- TOP BAR -->
 <header class="topbar">
   <button class="menu-toggle" id="menuToggle" aria-label="Buka menu">&#9776;</button>
-  <a class="topbar-brand" href="index.html">Laravel Docs</a>
+  <a class="topbar-brand" href="../index.html">Laravel Docs</a>
   <span class="topbar-version">Git 2.x</span>
   <div class="laravel-nav" id="laravelNav">
     <button class="laravel-nav-trigger" type="button">Laravel <span class="caret">&#9662;</span></button>
     <div class="laravel-nav-menu">
-      <a class="laravel-nav-item" href="modul-rest-api-sanctum.html"><span class="lni-week">M1</span><span class="lni-title">Core Laravel &amp; Database</span></a>
-      <a class="laravel-nav-item" href="modul-arsitektur-otorisasi.html"><span class="lni-week">M2</span><span class="lni-title">Arsitektur Kode &amp; Otorisasi</span></a>
-      <a class="laravel-nav-item" href="modul-optimasi.html"><span class="lni-week">M3</span><span class="lni-title">Testing &amp; Optimasi</span></a>
-      <a class="laravel-nav-item" href="modul-observability.html"><span class="lni-week">M4</span><span class="lni-title">Observability</span></a>
-      <a class="laravel-nav-item" href="modul-api-design-realtime.html"><span class="lni-week">M5</span><span class="lni-title">API Design &amp; Real-time</span></a>
-      <a class="laravel-nav-item" href="modul-security-deepdive.html"><span class="lni-week">M6</span><span class="lni-title">Security Deep-dive</span></a>
-      <a class="laravel-nav-item" href="modul-capstone-ecommerce.html"><span class="lni-week">M7</span><span class="lni-title">Capstone Project: E-commerce</span></a>
-      <a class="laravel-nav-item" href="modul-containerization-deployment.html"><span class="lni-week">M8</span><span class="lni-title">Containerization &amp; Deployment</span></a>
-      <a class="laravel-nav-item" href="modul-cloud-infrastructure.html"><span class="lni-week">M9</span><span class="lni-title">Cloud &amp; Infrastructure</span></a>
-      <a class="laravel-nav-item" href="modul-skala-besar.html"><span class="lni-week">M10</span><span class="lni-title">Skala Besar</span></a>
-      <a class="laravel-nav-item" href="modul-system-design.html"><span class="lni-week">M11</span><span class="lni-title">System Design</span></a>
+      <a class="laravel-nav-item" href="../laravel/modul-rest-api-sanctum.html"><span class="lni-week">M1</span><span class="lni-title">Core Laravel &amp; Database</span></a>
+      <a class="laravel-nav-item" href="../laravel/modul-arsitektur-otorisasi.html"><span class="lni-week">M2</span><span class="lni-title">Arsitektur Kode &amp; Otorisasi</span></a>
+      <a class="laravel-nav-item" href="../laravel/modul-optimasi.html"><span class="lni-week">M3</span><span class="lni-title">Testing &amp; Optimasi</span></a>
+      <a class="laravel-nav-item" href="../laravel/modul-observability.html"><span class="lni-week">M4</span><span class="lni-title">Observability</span></a>
+      <a class="laravel-nav-item" href="../laravel/modul-api-design-realtime.html"><span class="lni-week">M5</span><span class="lni-title">API Design &amp; Real-time</span></a>
+      <a class="laravel-nav-item" href="../laravel/modul-security-deepdive.html"><span class="lni-week">M6</span><span class="lni-title">Security Deep-dive</span></a>
+      <a class="laravel-nav-item" href="../laravel/modul-capstone-ecommerce.html"><span class="lni-week">M7</span><span class="lni-title">Capstone Project: E-commerce</span></a>
+      <a class="laravel-nav-item" href="../laravel/modul-containerization-deployment.html"><span class="lni-week">M8</span><span class="lni-title">Containerization &amp; Deployment</span></a>
+      <a class="laravel-nav-item" href="../laravel/modul-cloud-infrastructure.html"><span class="lni-week">M9</span><span class="lni-title">Cloud &amp; Infrastructure</span></a>
+      <a class="laravel-nav-item" href="../laravel/modul-skala-besar.html"><span class="lni-week">M10</span><span class="lni-title">Skala Besar</span></a>
+      <a class="laravel-nav-item" href="../laravel/modul-system-design.html"><span class="lni-week">M11</span><span class="lni-title">System Design</span></a>
     </div>
   </div>
   <div class="laravel-nav" id="gitNav">
@@ -432,6 +461,10 @@
       <a class="laravel-nav-item" href="#git-best-practice"><span class="lni-week">G8</span><span class="lni-title">Best Practice</span></a>
       <a class="laravel-nav-item" href="#git-ringkasan"><span class="lni-week">G9</span><span class="lni-title">Ringkasan</span></a>
     </div>
+  </div>
+    <div class="site-search" id="siteSearch">
+    <input type="text" id="searchInput" class="site-search-input" placeholder="Cari modul... ( tekan / )" autocomplete="off" />
+    <div class="site-search-results" id="searchResults"></div>
   </div>
   <span class="topbar-subtitle">Git &mdash; Version Control Pemula sampai Profesional</span>
 </header>
@@ -1005,7 +1038,7 @@ test: tambah unit test untuk CartService</code></pre>
       <div class="callout success">
         <div class="callout-title">Selamat! Modul Git Selesai</div>
         Kombinasikan kebiasaan di modul ini dengan alur kerja Laravel di
-        <a href="index.html">roadmap utama</a> &mdash; setiap fitur yang kamu kerjakan di
+        <a href="../index.html">roadmap utama</a> &mdash; setiap fitur yang kamu kerjakan di
         project Laravel sebaiknya melewati alur branch &amp; PR yang sudah dipelajari di sini.
       </div>
     </div>
@@ -1173,6 +1206,85 @@ test: tambah unit test untuk CartService</code></pre>
   }, { rootMargin: '-20% 0px -70% 0px' });
 
   sections.forEach(s => observer.observe(s));
+</script>
+
+<script src="../search-index.js"></script>
+<script>
+(function() {
+  var SEARCH_PREFIX = '../';
+  var input = document.getElementById('searchInput');
+  var resultsBox = document.getElementById('searchResults');
+  if (!input || !resultsBox || typeof SEARCH_INDEX === 'undefined') return;
+
+  function escapeHtml(s) {
+    return s.replace(/[&<>"']/g, function (c) {
+      return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c];
+    });
+  }
+  function highlight(text, q) {
+    if (!q) return escapeHtml(text);
+    var idx = text.toLowerCase().indexOf(q.toLowerCase());
+    if (idx === -1) return escapeHtml(text);
+    return escapeHtml(text.slice(0, idx)) + '<mark>' + escapeHtml(text.slice(idx, idx + q.length)) + '</mark>' + escapeHtml(text.slice(idx + q.length));
+  }
+
+  function search(query) {
+    var q = query.trim().toLowerCase();
+    if (!q) return [];
+    return SEARCH_INDEX
+      .map(function (entry) {
+        var hay = (entry.title + ' ' + entry.category + ' ' + entry.keywords + ' ' + entry.snippet).toLowerCase();
+        if (hay.indexOf(q) === -1) return null;
+        var score = 3;
+        if (entry.title.toLowerCase().indexOf(q) !== -1) score = 0;
+        else if (entry.category.toLowerCase().indexOf(q) !== -1) score = 1;
+        else if (entry.keywords.toLowerCase().indexOf(q) !== -1) score = 2;
+        return { entry: entry, score: score };
+      })
+      .filter(function (x) { return x; })
+      .sort(function (a, b) { return a.score - b.score; })
+      .slice(0, 20)
+      .map(function (x) { return x.entry; });
+  }
+
+  function render(query) {
+    var results = search(query);
+    if (!query.trim()) {
+      resultsBox.classList.remove('show');
+      resultsBox.innerHTML = '';
+      return;
+    }
+    if (results.length === 0) {
+      resultsBox.innerHTML = '<div class="site-search-empty">Tidak ada hasil untuk &quot;' + escapeHtml(query) + '&quot;</div>';
+      resultsBox.classList.add('show');
+      return;
+    }
+    resultsBox.innerHTML = results.map(function (r) {
+      return '<a class="site-search-item" href="' + SEARCH_PREFIX + r.url + '">' +
+        '<div class="ssi-title">' + highlight(r.title, query) + '</div>' +
+        '<div class="ssi-meta">' + escapeHtml(r.category) + '</div>' +
+        (r.snippet ? '<div class="ssi-snippet">' + escapeHtml(r.snippet) + '</div>' : '') +
+        '</a>';
+    }).join('');
+    resultsBox.classList.add('show');
+  }
+
+  input.addEventListener('input', function () { render(input.value); });
+  input.addEventListener('focus', function () { if (input.value.trim()) render(input.value); });
+  document.addEventListener('click', function (e) {
+    if (!e.target.closest('.site-search')) resultsBox.classList.remove('show');
+  });
+  input.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') { resultsBox.classList.remove('show'); input.blur(); }
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === '/' && document.activeElement !== input &&
+        document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+      e.preventDefault();
+      input.focus();
+    }
+  });
+})();
 </script>
 
 </body>

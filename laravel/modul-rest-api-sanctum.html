@@ -49,6 +49,35 @@
     .topbar-subtitle {
       color: var(--muted); font-size: 13px; margin-left: auto;
     }
+
+    .site-search { position: relative; flex: 1 1 260px; max-width: 340px; margin-left: 12px; }
+    .site-search-input {
+      width: 100%; padding: 7px 12px; font-size: 13px;
+      border: 1px solid var(--border); border-radius: 6px;
+      font-family: inherit; outline: none; color: var(--text); background: #fff;
+    }
+    .site-search-input:focus { border-color: var(--accent); }
+    .site-search-results {
+      display: none;
+      position: absolute; top: calc(100% + 8px); left: 0; right: 0;
+      max-height: 70vh; overflow-y: auto;
+      background: #fff; border: 1px solid var(--border); border-radius: 10px;
+      box-shadow: 0 12px 32px rgba(0,0,0,.14);
+      padding: 6px; z-index: 250;
+    }
+    .site-search-results.show { display: block; }
+    .site-search-item {
+      display: block; padding: 8px 10px; border-radius: 8px;
+      text-decoration: none; color: var(--text);
+    }
+    .site-search-item:hover, .site-search-item.active { background: var(--accent-light); }
+    .site-search-item .ssi-title { font-size: 13px; font-weight: 600; }
+    .site-search-item .ssi-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .site-search-item .ssi-snippet { font-size: 12px; color: var(--muted); margin-top: 4px; }
+    .site-search-empty { padding: 14px; font-size: 13px; color: var(--muted); text-align: center; }
+    .site-search mark { background: #fff3cd; color: inherit; border-radius: 2px; padding: 0 1px; }
+    @media (max-width: 900px) { .site-search { flex-basis: 140px; } }
+
     /* LARAVEL NAV BAR + SUB NAVBAR (dropdown by Fokus Utama) */
     .laravel-nav { position: relative; margin-left: 24px; }
     .laravel-nav-trigger {
@@ -389,7 +418,7 @@
 <!-- TOP BAR -->
 <header class="topbar">
   <button class="menu-toggle" id="menuToggle" aria-label="Buka menu">&#9776;</button>
-  <a class="topbar-brand" href="index.html">Laravel Docs</a>
+  <a class="topbar-brand" href="../index.html">Laravel Docs</a>
   <span class="topbar-version">v12.x</span>
   <div class="laravel-nav" id="laravelNav">
     <button class="laravel-nav-trigger" type="button">Laravel <span class="caret">&#9662;</span></button>
@@ -406,6 +435,10 @@
       <a class="laravel-nav-item" href="modul-skala-besar.html"><span class="lni-week">M10</span><span class="lni-title">Skala Besar</span></a>
       <a class="laravel-nav-item" href="modul-system-design.html"><span class="lni-week">M11</span><span class="lni-title">System Design</span></a>
     </div>
+  </div>
+    <div class="site-search" id="siteSearch">
+    <input type="text" id="searchInput" class="site-search-input" placeholder="Cari modul... ( tekan / )" autocomplete="off" />
+    <div class="site-search-results" id="searchResults"></div>
   </div>
   <span class="topbar-subtitle">CRUD Produk &amp; REST API Sanctum &mdash; Modul Belajar</span>
 </header>
@@ -433,6 +466,7 @@
         <a class="nav-link" href="#crud-model">Model</a>
         <a class="nav-link" href="#crud-controller">Controller</a>
         <a class="nav-link" href="#crud-views">Views</a>
+        <a class="nav-link" href="#crud-styling">Styling (Bootstrap)</a>
         <a class="nav-link" href="#crud-routes">Routes</a>
       </div>
     </div>
@@ -779,6 +813,66 @@ php artisan migrate:fresh     <span class="cm"># reset dan jalankan ulang semua<
         <code>id</code>, <code>nama_produk</code>, <code>harga</code>, <code>stok</code>,
         <code>deskripsi</code> (nullable), <code>created_at</code>, <code>updated_at</code>
       </div>
+
+      <h3><code>migrate</code> vs <code>rollback</code> vs <code>fresh</code> &mdash; Kapan Pakai yang Mana?</h3>
+      <p>
+        Laravel mencatat setiap migration yang sudah dijalankan di tabel internal
+        <code>migrations</code>. Ketiga command ini berinteraksi dengan catatan itu secara berbeda,
+        dan bedanya penting begitu tabel sudah punya data sungguhan.
+      </p>
+      <table>
+        <thead><tr><th>Command</th><th>Yang dilakukan</th><th>Efek ke data yang sudah ada</th></tr></thead>
+        <tbody>
+          <tr><td><code>migrate</code></td><td>Menjalankan <code>up()</code> hanya dari migration yang <strong>belum tercatat</strong> pernah jalan</td><td>Aman &mdash; tabel/data lama tidak disentuh</td></tr>
+          <tr><td><code>migrate:rollback</code></td><td>Menjalankan <code>down()</code> dari migration <strong>batch terakhir</strong>, urutan dibalik</td><td>Tabel/kolom yang dibuat migration itu ikut di-drop &mdash; data di dalamnya hilang</td></tr>
+          <tr><td><code>migrate:fresh</code></td><td><code>DROP</code> semua tabel, lalu jalankan ulang <strong>seluruh</strong> migration dari awal</td><td>Semua data di semua tabel hilang, tanpa kecuali</td></tr>
+        </tbody>
+      </table>
+
+      <h4>Ilustrasi: menambah kolom ke tabel yang sudah berisi data</h4>
+      <ol>
+        <li><strong>Hari 1</strong> &mdash; <code>make:migration create_produks_table</code> (kolom <code>id</code>, <code>nama_produk</code>, <code>harga</code>, <code>stok</code>), lalu <code>php artisan migrate</code>. Laravel mencatat file ini sebagai "sudah dijalankan". Tabel <code>produks</code> dibuat, masih kosong.</li>
+        <li><strong>Hari 2</strong> &mdash; User memakai aplikasi, input 5 produk lewat form. Tabel <code>produks</code> sekarang punya 5 baris data asli.</li>
+        <li><strong>Hari 3</strong> &mdash; Butuh kolom <code>deskripsi</code> tambahan. Ada dua cara, hasilnya jauh berbeda:</li>
+      </ol>
+
+      <div class="callout danger">
+        <div class="callout-title">Cara Salah &mdash; Edit Migration Lama yang Sudah Pernah Dijalankan</div>
+        Membuka lagi <code>..._create_produks_table.php</code> dan menambahkan
+        <code>$table-&gt;text('deskripsi')</code> di dalamnya, lalu menjalankan
+        <code>php artisan migrate</code> lagi. <strong>Hasilnya: tidak terjadi apa-apa.</strong>
+        Laravel melihat file itu sudah tercatat pernah jalan (dari Hari 1) dan otomatis
+        di-<em>skip</em> &mdash; walau isinya sudah diubah. Kolom <code>deskripsi</code> tidak
+        pernah muncul di database, dan tidak ada pesan error yang memberi tahu kenapa.
+      </div>
+
+      <div class="callout success">
+        <div class="callout-title">Cara Benar &mdash; Migration Baru</div>
+        <code>php artisan make:migration add_deskripsi_to_produks_table</code>, isi <code>up()</code>
+        dengan <code>Schema::table('produks', ...)</code> menambahkan kolom, lalu
+        <code>php artisan migrate</code>. Karena file ini <strong>belum pernah tercatat</strong>,
+        migration dijalankan. Kolom <code>deskripsi</code> ditambahkan ke tabel yang sudah berisi
+        5 produk tadi &mdash; data lama tetap utuh, kolom baru terisi <code>NULL</code> untuk
+        semua baris karena <code>nullable()</code>.
+      </div>
+
+      <h4>Tabel Keputusan</h4>
+      <table>
+        <thead><tr><th>Kondisi</th><th>Command</th><th>Alasan</th></tr></thead>
+        <tbody>
+          <tr><td>Migration baru, belum pernah dijalankan</td><td><code>migrate</code></td><td>Aman, hanya menjalankan yang baru</td></tr>
+          <tr><td>Baru saja <code>migrate</code>, sadar ada typo/salah tipe kolom, <strong>belum ada data penting</strong></td><td><code>migrate:rollback</code> &rarr; edit migration &rarr; <code>migrate</code> lagi</td><td>Migration masih "segar", rollback tidak menghilangkan data berharga</td></tr>
+          <tr><td>Migration lama, tabel <strong>sudah ada data penting</strong>, butuh diubah</td><td>Migration <strong>baru</strong> (<code>add_xxx</code> / <code>modify_xxx</code>)</td><td>Rollback akan drop tabel/kolom lama &mdash; data ikut hilang</td></tr>
+          <tr><td>Development lokal, struktur masih sering berubah, isi cuma data dummy</td><td><code>migrate:fresh</code></td><td>Reset total, cepat, tidak ada data berharga yang hilang</td></tr>
+          <tr><td>Production / data penting apapun</td><td>Jangan <code>rollback</code> atau <code>fresh</code></td><td>Keduanya berpotensi menghapus data yang tidak bisa dikembalikan</td></tr>
+        </tbody>
+      </table>
+      <div class="callout warning">
+        <div class="callout-title">Satu Aturan untuk Diingat</div>
+        Migration yang sudah pernah dijalankan dianggap Laravel sebagai "final". Kalau butuh
+        perubahan, buat migration <strong>baru</strong> &mdash; jangan edit file migration lama
+        yang sudah jalan, karena <code>migrate</code> berikutnya akan mengabaikannya begitu saja.
+      </div>
     </div>
 
     <!-- MODEL -->
@@ -993,6 +1087,113 @@ php artisan migrate:fresh     <span class="cm"># reset dan jalankan ulang semua<
       </table>
     </div>
 
+    <!-- STYLING BOOTSTRAP -->
+    <div class="section" id="crud-styling">
+      <h2>Styling dengan Bootstrap</h2>
+      <p>
+        Perhatikan lagi view <code>index.blade.php</code>, <code>create.blade.php</code>, dan
+        <code>edit.blade.php</code> di atas &mdash; semuanya sudah memakai class Bootstrap
+        (<code>btn btn-primary</code>, <code>table table-bordered</code>, <code>form-control</code>,
+        dst). Tapi kalau file CSS Bootstrap-nya belum pernah dimuat lewat tag <code>&lt;link&gt;</code>,
+        class-class itu tidak berefek sama sekali &mdash; tampilan akan tetap polos/mentah
+        walau nama class-nya sudah benar.
+      </p>
+      <div class="callout warning">
+        <div class="callout-title">Class Saja Tidak Cukup</div>
+        Menulis <code>class="btn btn-primary"</code> hanya menempelkan <em>nama</em> class ke elemen HTML.
+        Browser baru tahu bagaimana merender class itu (warna, padding, border-radius) kalau ada
+        stylesheet yang mendefinisikan aturan untuk class tersebut. Itu sebabnya Bootstrap
+        (atau CSS apapun) harus di-<em>link</em> dulu di <code>&lt;head&gt;</code>.
+      </div>
+
+      <h3>Langkah 1 &mdash; Buat Layout Bersama</h3>
+      <p>
+        Daripada menambahkan <code>&lt;head&gt;</code> dan tag <code>&lt;link&gt;</code> Bootstrap
+        di setiap file view, buat satu <strong>layout</strong> yang dipakai bersama oleh semua
+        halaman CRUD Produk.
+      </p>
+      <div class="pre-label">resources/views/layouts/app.blade.php (file baru)</div>
+      <pre><code>&lt;!DOCTYPE html&gt;
+&lt;html lang="id"&gt;
+&lt;head&gt;
+  &lt;meta charset="UTF-8"&gt;
+  &lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
+  &lt;title&gt;@yield('title', 'Produk')&lt;/title&gt;
+  &lt;link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"&gt;
+&lt;/head&gt;
+&lt;body&gt;
+  &lt;nav class="navbar navbar-expand navbar-dark bg-dark"&gt;
+    &lt;div class="container"&gt;
+      &lt;a class="navbar-brand" href="{{ route('produk.index') }}"&gt;Produk App&lt;/a&gt;
+    &lt;/div&gt;
+  &lt;/nav&gt;
+
+  &lt;div class="container mt-4"&gt;
+    @yield('content')
+  &lt;/div&gt;
+
+  &lt;script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"&gt;&lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+      <div class="callout">
+        <div class="callout-title">Kenapa Lewat CDN?</div>
+        CDN (<code>cdn.jsdelivr.net</code>) paling cepat untuk belajar &mdash; tidak perlu install
+        apapun, tinggal <code>&lt;link&gt;</code>. Konsekuensinya, komputer harus terkoneksi internet
+        saat membuka halaman. Untuk project production biasanya Bootstrap di-install lewat npm
+        dan di-bundle oleh Vite, tapi itu di luar cakupan modul ini.
+      </div>
+
+      <h3>Langkah 2 &mdash; Pakai Layout di Setiap View</h3>
+      <p>
+        Ganti <code>&lt;!DOCTYPE html&gt;&hellip;&lt;/html&gt;</code> yang ditulis manual di
+        <code>index.blade.php</code> dengan <code>@extends('layouts.app')</code>, dan bungkus
+        konten yang tampil dengan <code>@section('content') &hellip; @endsection</code>.
+      </p>
+      <div class="pre-label">resources/views/produk/index.blade.php &mdash; Sebelum</div>
+      <pre><code>&lt;!DOCTYPE html&gt;&lt;html&gt;&lt;body class="container mt-5"&gt;
+  &lt;h2&gt;Daftar Produk&lt;/h2&gt;
+  ...
+&lt;/body&gt;&lt;/html&gt;</code></pre>
+      <div class="pre-label">resources/views/produk/index.blade.php &mdash; Sesudah</div>
+      <pre><code>@extends('layouts.app')
+
+@section('title', 'Daftar Produk')
+
+@section('content')
+  &lt;h2&gt;Daftar Produk&lt;/h2&gt;
+  &lt;a href="{{ route('produk.create') }}" class="btn btn-primary mb-3"&gt;Tambah Produk&lt;/a&gt;
+
+  @if ($message = Session::get('success'))
+    &lt;div class="alert alert-success"&gt;{{ $message }}&lt;/div&gt;
+  @endif
+
+  &lt;table class="table table-bordered"&gt;
+    ...
+  &lt;/table&gt;
+@endsection</code></pre>
+      <p>
+        Lakukan hal yang sama untuk <code>create.blade.php</code> dan <code>edit.blade.php</code>:
+        hapus tag <code>&lt;form&gt;&hellip;&lt;/form&gt;</code> yang berdiri sendiri, bungkus dengan
+        <code>@extends('layouts.app')</code> + <code>@section('content') &hellip; @endsection</code>,
+        isinya (form, input, tombol) tetap sama persis.
+      </p>
+
+      <h3>Langkah 3 &mdash; Verifikasi</h3>
+      <div class="pre-label">Terminal</div>
+      <pre><code>php artisan serve</code></pre>
+      <p>Buka <code>/produk</code> di browser &mdash; tombol, tabel, dan alert sekarang harus
+        tampil dengan warna dan spacing ala Bootstrap.</p>
+      <div class="callout warning">
+        <div class="callout-title">Stylingnya Masih Belum Muncul?</div>
+        <ul>
+          <li>Pastikan komputer terkoneksi internet &mdash; CSS/JS Bootstrap dimuat dari CDN.</li>
+          <li>Pastikan setiap view CRUD sudah pakai <code>@extends('layouts.app')</code>,
+            bukan lagi <code>&lt;html&gt;&lt;body&gt;</code> sendiri.</li>
+          <li>Hard refresh browser (<code>Ctrl+Shift+R</code>) untuk membuang cache lama.</li>
+        </ul>
+      </div>
+    </div>
+
     <!-- ROUTES CRUD -->
     <div class="section" id="crud-routes">
       <h2>Routes Web (CRUD)</h2>
@@ -1004,16 +1205,20 @@ php artisan migrate:fresh     <span class="cm"># reset dan jalankan ulang semua<
 <span class="cl">Route</span>::<span class="fn">get</span>(<span class="str">'/'</span>, fn() =&gt; <span class="fn">redirect</span>()-&gt;<span class="fn">route</span>(<span class="str">'produk.index'</span>));
 <span class="cl">Route</span>::<span class="fn">resource</span>(<span class="str">'produk'</span>, <span class="cl">ProdukController</span>::class);</code></pre>
 
-      <p><code>Route::resource()</code> otomatis membuat 6 route sekaligus:</p>
+      <p>
+        <code>Route::resource()</code> bukan 1 route, tapi <strong>shortcut untuk mendaftarkan
+        6 route sekaligus</strong> ke controller yang sama &mdash; Laravel memilih method mana
+        yang dipanggil berdasarkan kombinasi method HTTP + URL yang diakses:
+      </p>
       <table>
-        <thead><tr><th>Method</th><th>URL</th><th>Route Name</th><th>Controller</th></tr></thead>
+        <thead><tr><th>User melakukan apa</th><th>Method HTTP + URL</th><th>Dilempar ke</th></tr></thead>
         <tbody>
-          <tr><td><span class="badge badge-blue">GET</span></td><td><code>/produk</code></td><td><code>produk.index</code></td><td><code>index()</code></td></tr>
-          <tr><td><span class="badge badge-blue">GET</span></td><td><code>/produk/create</code></td><td><code>produk.create</code></td><td><code>create()</code></td></tr>
-          <tr><td><span class="badge badge-green">POST</span></td><td><code>/produk</code></td><td><code>produk.store</code></td><td><code>store()</code></td></tr>
-          <tr><td><span class="badge badge-blue">GET</span></td><td><code>/produk/{id}/edit</code></td><td><code>produk.edit</code></td><td><code>edit()</code></td></tr>
-          <tr><td><span class="badge badge-yellow">PUT</span></td><td><code>/produk/{id}</code></td><td><code>produk.update</code></td><td><code>update()</code></td></tr>
-          <tr><td><span class="badge badge-red">DELETE</span></td><td><code>/produk/{id}</code></td><td><code>produk.destroy</code></td><td><code>destroy()</code></td></tr>
+          <tr><td>Buka halaman <code>/produk</code></td><td><span class="badge badge-blue">GET</span> <code>/produk</code></td><td><code>ProdukController::index()</code></td></tr>
+          <tr><td>Klik "Tambah Produk"</td><td><span class="badge badge-blue">GET</span> <code>/produk/create</code></td><td><code>ProdukController::create()</code></td></tr>
+          <tr><td>Submit form tambah</td><td><span class="badge badge-green">POST</span> <code>/produk</code></td><td><code>ProdukController::store()</code></td></tr>
+          <tr><td>Klik "Edit" pada baris tertentu</td><td><span class="badge badge-blue">GET</span> <code>/produk/5/edit</code></td><td><code>ProdukController::edit($produk)</code> &mdash; <code>5</code> otomatis di-resolve jadi objek <code>Produk</code></td></tr>
+          <tr><td>Submit form edit (pakai <code>@method('PUT')</code>)</td><td><span class="badge badge-yellow">PUT</span> <code>/produk/5</code></td><td><code>ProdukController::update($request, $produk)</code></td></tr>
+          <tr><td>Klik "Hapus" (pakai <code>@method('DELETE')</code>)</td><td><span class="badge badge-red">DELETE</span> <code>/produk/5</code></td><td><code>ProdukController::destroy($produk)</code></td></tr>
         </tbody>
       </table>
       <div class="callout">
@@ -1063,6 +1268,20 @@ php artisan migrate:fresh     <span class="cm"># reset dan jalankan ulang semua<
       <div class="pre-label">Terminal</div>
       <pre><code>php artisan make:migration create_kategoris_table
 php artisan make:migration add_kategori_id_to_produks_table</code></pre>
+      <div class="pre-label">database/migrations/..._create_kategoris_table.php</div>
+      <pre><code><span class="kw">public function</span> <span class="fn">up</span>(): <span class="kw">void</span>
+{
+    <span class="cl">Schema</span>::<span class="fn">create</span>(<span class="str">'kategoris'</span>, <span class="kw">function</span> (<span class="cl">Blueprint</span> $table) {
+        $table-&gt;<span class="fn">id</span>();
+        $table-&gt;<span class="fn">string</span>(<span class="str">'nama_kategori'</span>);
+        $table-&gt;<span class="fn">timestamps</span>();
+    });
+}
+<span class="kw">public function</span> <span class="fn">down</span>(): <span class="kw">void</span>
+{
+    <span class="cl">Schema</span>::<span class="fn">dropIfExists</span>(<span class="str">'kategoris'</span>);
+}</code></pre>
+
       <div class="pre-label">database/migrations/..._add_kategori_id_to_produks_table.php</div>
       <pre><code><span class="kw">public function</span> <span class="fn">up</span>(): <span class="kw">void</span>
 {
@@ -1118,6 +1337,101 @@ $kategori = <span class="cl">Kategori</span>::<span class="fn">find</span>(<span
           <tr><td><code>belongsToMany</code></td><td>Produk &harr; Tag</td><td>Relasi banyak-ke-banyak (butuh tabel pivot)</td></tr>
         </tbody>
       </table>
+
+      <h3>Implementasi di CRUD Produk</h3>
+      <p>
+        Migration dan model di atas baru menyiapkan strukturnya saja. Supaya <code>kategori_id</code>
+        benar-benar terpakai di CRUD Produk yang sudah berjalan, ada 4 bagian yang perlu disentuh:
+        isi data kategori, controller, form, dan daftar produk.
+      </p>
+
+      <h4>1. Isi Data Kategori</h4>
+      <p>Belum ada CRUD khusus untuk Kategori di modul ini, jadi cara tercepat mengisi datanya
+        lewat Tinker.</p>
+      <div class="pre-label">Terminal</div>
+      <pre><code>php artisan tinker</code></pre>
+      <div class="pre-label">Tinker</div>
+      <pre><code><span class="cl">Kategori</span>::<span class="fn">create</span>([<span class="str">'nama_kategori'</span> =&gt; <span class="str">'Elektronik'</span>]);
+<span class="cl">Kategori</span>::<span class="fn">create</span>([<span class="str">'nama_kategori'</span> =&gt; <span class="str">'Makanan'</span>]);</code></pre>
+
+      <h4>2. Update ProdukController</h4>
+      <p>Tambahkan import <code>Kategori</code>, kirim daftar kategori ke form, dan validasi
+        <code>kategori_id</code> saat simpan/update.</p>
+      <div class="pre-label">app/Http/Controllers/ProdukController.php</div>
+      <pre><code><span class="kw">use</span> App\Models\Kategori;
+
+<span class="cm">// index() — eager load supaya tidak N+1 saat menampilkan nama kategori</span>
+<span class="kw">public function</span> <span class="fn">index</span>()
+{
+    $produks = <span class="cl">Produk</span>::<span class="fn">with</span>(<span class="str">'kategori'</span>)-&gt;<span class="fn">get</span>();
+    <span class="kw">return</span> <span class="fn">view</span>(<span class="str">'produk.index'</span>, <span class="fn">compact</span>(<span class="str">'produks'</span>));
+}
+
+<span class="cm">// create() — kirim daftar kategori untuk dropdown</span>
+<span class="kw">public function</span> <span class="fn">create</span>()
+{
+    $kategoris = <span class="cl">Kategori</span>::<span class="fn">all</span>();
+    <span class="kw">return</span> <span class="fn">view</span>(<span class="str">'produk.create'</span>, <span class="fn">compact</span>(<span class="str">'kategoris'</span>));
+}
+
+<span class="cm">// store() — tambahkan validasi kategori_id ke aturan yang sudah ada</span>
+$request-&gt;<span class="fn">validate</span>([
+    <span class="cm">// ...aturan lain yang sudah ada</span>
+    <span class="str">'kategori_id'</span> =&gt; <span class="str">'nullable|exists:kategoris,id'</span>,
+]);
+
+<span class="cm">// edit() — kirim juga daftar kategori</span>
+<span class="kw">public function</span> <span class="fn">edit</span>(<span class="cl">Produk</span> $produk)
+{
+    $kategoris = <span class="cl">Kategori</span>::<span class="fn">all</span>();
+    <span class="kw">return</span> <span class="fn">view</span>(<span class="str">'produk.edit'</span>, <span class="fn">compact</span>(<span class="str">'produk'</span>, <span class="str">'kategoris'</span>));
+}
+
+<span class="cm">// update() — validasi kategori_id yang sama seperti store()</span></code></pre>
+      <div class="callout warning">
+        <div class="callout-title">Jangan Lupa <code>with('kategori')</code></div>
+        Kalau tetap pakai <code>Produk::all()</code> lalu view mengakses
+        <code>$p-&gt;kategori-&gt;nama_kategori</code> di dalam <code>@foreach</code>, itu memicu
+        masalah <strong>N+1 Query</strong> yang dibahas di bagian berikutnya.
+        <code>with('kategori')</code> menyatukannya jadi 2 query saja.
+      </div>
+
+      <h4>3. Tambahkan Dropdown Kategori di Form</h4>
+      <div class="pre-label">resources/views/produk/create.blade.php &amp; edit.blade.php</div>
+      <pre><code>&lt;div class="mb-3"&gt;&lt;label&gt;Kategori&lt;/label&gt;
+  &lt;select name="kategori_id" class="form-control"&gt;
+    &lt;option value=""&gt;-- Pilih Kategori --&lt;/option&gt;
+    @foreach ($kategoris as $k)
+      &lt;option value="{{ $k-&gt;id }}"
+        {{ old('kategori_id', $produk-&gt;kategori_id ?? '') == $k-&gt;id ? 'selected' : '' }}&gt;
+        {{ $k-&gt;nama_kategori }}
+      &lt;/option&gt;
+    @endforeach
+  &lt;/select&gt;
+&lt;/div&gt;</code></pre>
+      <p>Di <code>create.blade.php</code> variabel <code>$produk</code> belum ada, jadi bagian
+        <code>$produk-&gt;kategori_id ?? ''</code> otomatis jatuh ke <code>''</code> &mdash;
+        aman dipakai di kedua form tanpa diubah.</p>
+
+      <h4>4. Tampilkan Nama Kategori di Daftar Produk</h4>
+      <div class="pre-label">resources/views/produk/index.blade.php</div>
+      <pre><code>&lt;tr&gt;&lt;th&gt;Nama&lt;/th&gt;&lt;th&gt;Kategori&lt;/th&gt;&lt;th&gt;Harga&lt;/th&gt;&lt;th&gt;Stok&lt;/th&gt;&lt;th&gt;Aksi&lt;/th&gt;&lt;/tr&gt;
+@foreach ($produks as $p)
+&lt;tr&gt;
+  &lt;td&gt;{{ $p-&gt;nama_produk }}&lt;/td&gt;
+  &lt;td&gt;{{ $p-&gt;kategori-&gt;nama_kategori ?? '-' }}&lt;/td&gt;
+  &lt;td&gt;{{ $p-&gt;harga }}&lt;/td&gt;
+  &lt;td&gt;{{ $p-&gt;stok }}&lt;/td&gt;
+  ...
+&lt;/tr&gt;
+@endforeach</code></pre>
+      <div class="callout success">
+        <div class="callout-title">Kenapa Pakai <code>?? '-'</code>?</div>
+        Kolom <code>kategori_id</code> dibuat <code>nullable()</code>, jadi produk lama yang belum
+        diberi kategori punya <code>$p-&gt;kategori</code> bernilai <code>null</code>. Tanpa
+        <code>?? '-'</code>, mengakses <code>$p-&gt;kategori-&gt;nama_kategori</code> pada baris
+        seperti itu akan melempar error <em>"Attempt to read property on null"</em>.
+      </div>
     </div>
 
     <!-- ========== QUERY OPTIMIZATION ========== -->
@@ -2006,6 +2320,7 @@ Penyerang bisa login sebagai user manapun tanpa password!</code></pre>
     <a class="sub" href="#crud-model">Model</a>
     <a class="sub" href="#crud-controller">Controller</a>
     <a class="sub" href="#crud-views">Views</a>
+    <a class="sub" href="#crud-styling">Styling Bootstrap</a>
     <a class="sub" href="#crud-routes">Routes</a>
 
     <a href="#eloquent-dasar" style="margin-top:12px;display:block">Eloquent &amp; Relasi</a>
@@ -2153,6 +2468,85 @@ Penyerang bisa login sebagai user manapun tanpa password!</code></pre>
   }, { rootMargin: '-20% 0px -70% 0px' });
 
   sections.forEach(s => observer.observe(s));
+</script>
+
+<script src="../search-index.js"></script>
+<script>
+(function() {
+  var SEARCH_PREFIX = '../';
+  var input = document.getElementById('searchInput');
+  var resultsBox = document.getElementById('searchResults');
+  if (!input || !resultsBox || typeof SEARCH_INDEX === 'undefined') return;
+
+  function escapeHtml(s) {
+    return s.replace(/[&<>"']/g, function (c) {
+      return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c];
+    });
+  }
+  function highlight(text, q) {
+    if (!q) return escapeHtml(text);
+    var idx = text.toLowerCase().indexOf(q.toLowerCase());
+    if (idx === -1) return escapeHtml(text);
+    return escapeHtml(text.slice(0, idx)) + '<mark>' + escapeHtml(text.slice(idx, idx + q.length)) + '</mark>' + escapeHtml(text.slice(idx + q.length));
+  }
+
+  function search(query) {
+    var q = query.trim().toLowerCase();
+    if (!q) return [];
+    return SEARCH_INDEX
+      .map(function (entry) {
+        var hay = (entry.title + ' ' + entry.category + ' ' + entry.keywords + ' ' + entry.snippet).toLowerCase();
+        if (hay.indexOf(q) === -1) return null;
+        var score = 3;
+        if (entry.title.toLowerCase().indexOf(q) !== -1) score = 0;
+        else if (entry.category.toLowerCase().indexOf(q) !== -1) score = 1;
+        else if (entry.keywords.toLowerCase().indexOf(q) !== -1) score = 2;
+        return { entry: entry, score: score };
+      })
+      .filter(function (x) { return x; })
+      .sort(function (a, b) { return a.score - b.score; })
+      .slice(0, 20)
+      .map(function (x) { return x.entry; });
+  }
+
+  function render(query) {
+    var results = search(query);
+    if (!query.trim()) {
+      resultsBox.classList.remove('show');
+      resultsBox.innerHTML = '';
+      return;
+    }
+    if (results.length === 0) {
+      resultsBox.innerHTML = '<div class="site-search-empty">Tidak ada hasil untuk &quot;' + escapeHtml(query) + '&quot;</div>';
+      resultsBox.classList.add('show');
+      return;
+    }
+    resultsBox.innerHTML = results.map(function (r) {
+      return '<a class="site-search-item" href="' + SEARCH_PREFIX + r.url + '">' +
+        '<div class="ssi-title">' + highlight(r.title, query) + '</div>' +
+        '<div class="ssi-meta">' + escapeHtml(r.category) + '</div>' +
+        (r.snippet ? '<div class="ssi-snippet">' + escapeHtml(r.snippet) + '</div>' : '') +
+        '</a>';
+    }).join('');
+    resultsBox.classList.add('show');
+  }
+
+  input.addEventListener('input', function () { render(input.value); });
+  input.addEventListener('focus', function () { if (input.value.trim()) render(input.value); });
+  document.addEventListener('click', function (e) {
+    if (!e.target.closest('.site-search')) resultsBox.classList.remove('show');
+  });
+  input.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') { resultsBox.classList.remove('show'); input.blur(); }
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === '/' && document.activeElement !== input &&
+        document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+      e.preventDefault();
+      input.focus();
+    }
+  });
+})();
 </script>
 
 </body>

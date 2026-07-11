@@ -1,0 +1,1725 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Modul PostgreSQL &mdash; Database Dasar sampai Lanjutan</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --sidebar-w: 260px;
+      --toc-w: 220px;
+      --accent: #0d6efd;
+      --accent-light: #e7f1ff;
+      --text: #212529;
+      --muted: #6c757d;
+      --border: #dee2e6;
+      --code-bg: #f8f9fa;
+      --code-border: #e9ecef;
+      --sidebar-bg: #f8f9fa;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 15px;
+      line-height: 1.7;
+      color: var(--text);
+      background: #fff;
+    }
+
+    /* TOP BAR */
+    .topbar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      height: 56px;
+      background: #fff;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; padding: 0 24px;
+      gap: 16px;
+    }
+    .topbar-brand {
+      font-weight: 700; font-size: 17px; color: var(--accent);
+      text-decoration: none;
+    }
+    .topbar-version {
+      background: var(--accent-light); color: var(--accent);
+      font-size: 11px; font-weight: 600; padding: 2px 8px;
+      border-radius: 20px;
+    }
+    .topbar-subtitle {
+      color: var(--muted); font-size: 13px; margin-left: auto;
+    }
+
+    .site-search { position: relative; flex: 1 1 260px; max-width: 340px; margin-left: 12px; }
+    .site-search-input {
+      width: 100%; padding: 7px 12px; font-size: 13px;
+      border: 1px solid var(--border); border-radius: 6px;
+      font-family: inherit; outline: none; color: var(--text); background: #fff;
+    }
+    .site-search-input:focus { border-color: var(--accent); }
+    .site-search-results {
+      display: none;
+      position: absolute; top: calc(100% + 8px); left: 0; right: 0;
+      max-height: 70vh; overflow-y: auto;
+      background: #fff; border: 1px solid var(--border); border-radius: 10px;
+      box-shadow: 0 12px 32px rgba(0,0,0,.14);
+      padding: 6px; z-index: 250;
+    }
+    .site-search-results.show { display: block; }
+    .site-search-item {
+      display: block; padding: 8px 10px; border-radius: 8px;
+      text-decoration: none; color: var(--text);
+    }
+    .site-search-item:hover, .site-search-item.active { background: var(--accent-light); }
+    .site-search-item .ssi-title { font-size: 13px; font-weight: 600; }
+    .site-search-item .ssi-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .site-search-item .ssi-snippet { font-size: 12px; color: var(--muted); margin-top: 4px; }
+    .site-search-empty { padding: 14px; font-size: 13px; color: var(--muted); text-align: center; }
+    .site-search mark { background: #fff3cd; color: inherit; border-radius: 2px; padding: 0 1px; }
+    @media (max-width: 900px) { .site-search { flex-basis: 140px; } }
+
+    /* LARAVEL NAV BAR + SUB NAVBAR (dropdown by Fokus Utama) */
+    .laravel-nav { position: relative; margin-left: 24px; }
+    .laravel-nav-trigger {
+      display: flex; align-items: center; gap: 6px;
+      background: none; border: 1px solid var(--border); border-radius: 6px;
+      padding: 6px 14px; font-size: 13px; font-weight: 600;
+      color: var(--text); cursor: pointer; font-family: inherit;
+    }
+    .laravel-nav-trigger:hover { background: var(--accent-light); color: var(--accent); border-color: var(--accent); }
+    .laravel-nav.open .laravel-nav-trigger { background: var(--accent-light); color: var(--accent); border-color: var(--accent); }
+    .laravel-nav-trigger .caret { font-size: 10px; transition: transform .15s; }
+    .laravel-nav.open .laravel-nav-trigger .caret { transform: rotate(180deg); }
+    .laravel-nav-menu {
+      display: none;
+      position: absolute; top: calc(100% + 8px); left: 0;
+      width: 360px; max-height: 75vh; overflow-y: auto;
+      background: #fff; border: 1px solid var(--border); border-radius: 10px;
+      box-shadow: 0 12px 32px rgba(0,0,0,.14);
+      padding: 8px; z-index: 200;
+    }
+    .laravel-nav.open .laravel-nav-menu { display: block; }
+    .laravel-nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 12px; border-radius: 8px;
+      text-decoration: none; color: var(--text); font-size: 13px;
+    }
+    .laravel-nav-item:hover { background: var(--accent-light); }
+    .laravel-nav-item.active { background: var(--accent-light); color: var(--accent); font-weight: 600; }
+    .laravel-nav-item .lni-week {
+      flex-shrink: 0; width: 34px; font-size: 11px; font-weight: 700; color: var(--muted);
+    }
+    .laravel-nav-item.active .lni-week { color: var(--accent); }
+    .laravel-nav-item .lni-title { flex: 1; }
+    .laravel-nav-item .lni-soon {
+      flex-shrink: 0; font-size: 10px; font-weight: 700; text-transform: uppercase;
+      background: #e9ecef; color: #495057; padding: 2px 6px; border-radius: 20px;
+    }
+
+    /* LAYOUT */
+    .layout {
+      display: flex;
+      padding-top: 56px;
+      min-height: 100vh;
+    }
+
+    /* LEFT SIDEBAR */
+    .sidebar {
+      width: var(--sidebar-w);
+      flex-shrink: 0;
+      position: fixed;
+      top: 56px; bottom: 0; left: 0;
+      overflow-y: auto;
+      background: var(--sidebar-bg);
+      border-right: 1px solid var(--border);
+      padding: 20px 0 40px;
+    }
+    .sidebar::-webkit-scrollbar { width: 4px; }
+    .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    .nav-group { margin-bottom: 4px; }
+    .nav-group-title {
+      display: flex; align-items: center; gap: 8px;
+      padding: 6px 20px;
+      font-size: 12px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .06em;
+      color: var(--text);
+      cursor: pointer;
+      user-select: none;
+    }
+    .nav-group-title .arrow {
+      display: inline-block; transition: transform .2s;
+      font-size: 10px; color: var(--muted);
+    }
+    .nav-group.open .arrow { transform: rotate(90deg); }
+    .nav-group-items { display: none; }
+    .nav-group.open .nav-group-items { display: block; }
+
+    .nav-link {
+      display: block;
+      padding: 5px 20px 5px 36px;
+      font-size: 14px; color: var(--muted);
+      text-decoration: none;
+      border-left: 3px solid transparent;
+      transition: color .15s, border-color .15s, background .15s;
+    }
+    .nav-link:hover { color: var(--accent); background: var(--accent-light); }
+    .nav-link.active {
+      color: var(--accent); font-weight: 600;
+      border-left-color: var(--accent);
+      background: var(--accent-light);
+    }
+
+    /* MAIN CONTENT */
+    .main {
+      margin-left: var(--sidebar-w);
+      margin-right: var(--toc-w);
+      flex: 1;
+      min-width: 0;
+    }
+    .main-inner {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 48px 56px;
+    }
+
+    /* MOBILE MENU TOGGLE */
+    .menu-toggle {
+      display: none;
+      align-items: center; justify-content: center;
+      width: 32px; height: 32px; flex-shrink: 0;
+      border: 1px solid var(--border); border-radius: 6px;
+      background: none; cursor: pointer; font-size: 16px;
+      color: var(--text);
+    }
+    .menu-toggle:hover { background: var(--accent-light); color: var(--accent); border-color: var(--accent); }
+    .sidebar-overlay {
+      display: none;
+      position: fixed; inset: 56px 0 0 0;
+      background: rgba(0,0,0,.35);
+      z-index: 95;
+    }
+    .sidebar-overlay.show { display: block; }
+
+    /* TABLES THAT OVERFLOW SCROLL INSTEAD OF BREAKING LAYOUT */
+    .table-scroll { overflow-x: auto; margin: 16px 0; -webkit-overflow-scrolling: touch; }
+    .table-scroll table { margin: 0; }
+
+    /* RESPONSIVE */
+    @media (max-width: 1300px) {
+      .toc { display: none; }
+      .main { margin-right: 0; }
+    }
+    @media (max-width: 900px) {
+      .menu-toggle { display: inline-flex; }
+      .topbar-subtitle { display: none; }
+      .sidebar {
+        transform: translateX(-100%);
+        transition: transform .2s ease;
+        z-index: 96;
+        box-shadow: 4px 0 24px rgba(0,0,0,.15);
+      }
+      .sidebar.open { transform: translateX(0); }
+      .main { margin-left: 0; }
+      .main-inner { padding: 32px 24px; }
+      .laravel-nav-menu { width: min(360px, 88vw); }
+    }
+    @media (max-width: 560px) {
+      .topbar { padding: 0 14px; gap: 10px; }
+      .topbar-brand { font-size: 15px; }
+      .topbar-version { display: none; }
+      .page-title { font-size: 28px; }
+      .page-lead { font-size: 15px; padding-bottom: 24px; margin-bottom: 28px; }
+      .main-inner { padding: 24px 16px; }
+      h2 { font-size: 21px; }
+    }
+
+    /* RIGHT TOC */
+    .toc {
+      width: var(--toc-w);
+      flex-shrink: 0;
+      position: fixed;
+      top: 56px; bottom: 0; right: 0;
+      overflow-y: auto;
+      padding: 24px 16px;
+      border-left: 1px solid var(--border);
+    }
+    .toc-title {
+      font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .06em;
+      color: var(--muted); margin-bottom: 12px;
+    }
+    .toc a {
+      display: block; font-size: 13px; color: var(--muted);
+      text-decoration: none; padding: 3px 0 3px 8px;
+      border-left: 2px solid transparent;
+      transition: color .15s, border-color .15s;
+    }
+    .toc a:hover, .toc a.active {
+      color: var(--accent); border-left-color: var(--accent);
+    }
+    .toc a.sub { padding-left: 20px; font-size: 12px; }
+
+    /* CONTENT TYPOGRAPHY */
+    .page-title {
+      font-size: 40px; font-weight: 700;
+      margin-bottom: 12px; line-height: 1.2;
+    }
+    .page-lead {
+      font-size: 18px; color: var(--muted);
+      margin-bottom: 40px; border-bottom: 1px solid var(--border);
+      padding-bottom: 32px;
+    }
+    .section { margin-bottom: 56px; }
+    h2 {
+      font-size: 26px; font-weight: 700;
+      margin-bottom: 16px; padding-top: 8px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 8px;
+    }
+    h3 {
+      font-size: 18px; font-weight: 600;
+      margin: 24px 0 10px;
+    }
+    h4 {
+      font-size: 15px; font-weight: 600;
+      margin: 18px 0 8px; color: var(--text);
+    }
+    p { margin-bottom: 14px; }
+    ul, ol { padding-left: 24px; margin-bottom: 14px; }
+    li { margin-bottom: 6px; }
+    strong { font-weight: 600; }
+
+    /* CODE */
+    code {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      font-size: 13px;
+      background: var(--code-bg);
+      border: 1px solid var(--code-border);
+      padding: 1px 5px; border-radius: 4px;
+      color: #d63384;
+    }
+    pre {
+      background: #1e1e2e;
+      border-radius: 8px;
+      padding: 20px 24px;
+      overflow-x: auto;
+      margin: 16px 0 20px;
+      position: relative;
+    }
+    pre code {
+      background: none; border: none; padding: 0;
+      color: #cdd6f4; font-size: 13px; line-height: 1.65;
+    }
+    .pre-label {
+      font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .06em;
+      color: #6c757d; margin-bottom: 6px;
+    }
+
+    /* COPY BUTTON */
+    .copy-btn {
+      position: absolute; top: 10px; right: 10px;
+      display: flex; align-items: center; gap: 5px;
+      background: rgba(255,255,255,.08);
+      color: #cdd6f4;
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 6px;
+      font-family: inherit; font-size: 11px; font-weight: 600;
+      padding: 4px 9px;
+      cursor: pointer;
+      opacity: .55;
+      transition: opacity .15s, background .15s;
+    }
+    pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
+    .copy-btn:hover { background: rgba(255,255,255,.2); }
+    .copy-btn.copied {
+      opacity: 1; background: #198754; border-color: #198754; color: #fff;
+    }
+    @media (max-width: 900px) { .copy-btn { opacity: .8; } }
+    @media print { .copy-btn { display: none; } }
+
+    .kw  { color: #cba6f7; }
+    .fn  { color: #89b4fa; }
+    .str { color: #a6e3a1; }
+    .cm  { color: #6c7086; }
+    .cl  { color: #fab387; }
+    .nb  { color: #89dceb; }
+    .op  { color: #89dceb; }
+
+    /* MERMAID DIAGRAM WRAPPER */
+    .diagram-wrap {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px;
+      margin: 16px 0 20px;
+      overflow-x: auto;
+      text-align: center;
+    }
+    .diagram-wrap .mermaid { display: inline-block; }
+
+    /* BADGES / CALLOUTS */
+    .badge {
+      display: inline-block; font-size: 11px; font-weight: 700;
+      padding: 2px 8px; border-radius: 4px;
+      text-transform: uppercase; letter-spacing: .04em;
+    }
+    .badge-blue  { background: #cfe2ff; color: #084298; }
+    .badge-green { background: #d1e7dd; color: #0a3622; }
+    .badge-red   { background: #f8d7da; color: #842029; }
+    .badge-yellow{ background: #fff3cd; color: #664d03; }
+    .badge-purple{ background: #e8d5fb; color: #5e2d91; }
+    .badge-orange{ background: #ffe5d0; color: #8a3800; }
+
+    .callout {
+      border-left: 4px solid var(--accent);
+      background: var(--accent-light);
+      padding: 14px 18px; border-radius: 0 6px 6px 0;
+      margin: 16px 0;
+    }
+    .callout.warning { border-left-color: #ffc107; background: #fff3cd; }
+    .callout.danger  { border-left-color: #dc3545; background: #f8d7da; }
+    .callout.success { border-left-color: #198754; background: #d1e7dd; }
+    .callout-title { font-weight: 700; margin-bottom: 4px; font-size: 13px; }
+
+    /* TABLE */
+    table {
+      width: 100%; border-collapse: collapse;
+      margin: 16px 0; font-size: 14px;
+    }
+    th {
+      background: var(--code-bg); font-weight: 600;
+      padding: 10px 14px; border: 1px solid var(--border);
+      text-align: left;
+    }
+    td { padding: 9px 14px; border: 1px solid var(--border); }
+    tr:nth-child(even) td { background: #fafafa; }
+
+    /* STEP LIST */
+    .step-list { list-style: none; padding: 0; }
+    .step-list li { display: flex; gap: 16px; margin-bottom: 20px; }
+    .step-num {
+      flex-shrink: 0;
+      width: 28px; height: 28px;
+      background: var(--accent); color: #fff;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700; margin-top: 2px;
+    }
+    .step-body h4 { margin-top: 0; }
+
+    /* DIVIDER */
+    .divider { border: none; border-top: 2px solid var(--border); margin: 56px 0; }
+
+    /* PRINT */
+    @media print {
+      .topbar, .sidebar, .toc { display: none; }
+      .main { margin: 0; }
+      .main-inner { padding: 24px 32px; max-width: 100%; }
+      pre { background: #f8f9fa !important; }
+      pre code { color: #212529 !important; }
+      .kw,.fn,.str,.cm,.cl,.nb,.op { color: #212529 !important; }
+      h2 { page-break-before: always; }
+      .section:first-of-type h2 { page-break-before: avoid; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<header class="topbar">
+  <button class="menu-toggle" id="menuToggle" aria-label="Buka menu">&#9776;</button>
+  <a class="topbar-brand" href="../index.html">Laravel Docs</a>
+  <span class="topbar-version">PostgreSQL 16.x</span>
+  <div class="laravel-nav" id="laravelNav">
+    <button class="laravel-nav-trigger" type="button">Laravel <span class="caret">&#9662;</span></button>
+    <div class="laravel-nav-menu">
+      <a class="laravel-nav-item" href="../laravel/modul-rest-api-sanctum.html"><span class="lni-week">M1</span><span class="lni-title">Core Laravel &amp; Database</span></a>
+      <a class="laravel-nav-item" href="../laravel/modul-arsitektur-otorisasi.html"><span class="lni-week">M2</span><span class="lni-title">Arsitektur Kode &amp; Otorisasi</span></a>
+      <a class="laravel-nav-item" href="../laravel/modul-optimasi.html"><span class="lni-week">M3</span><span class="lni-title">Testing &amp; Optimasi</span></a>
+      <a class="laravel-nav-item" href="../laravel/modul-observability.html"><span class="lni-week">M4</span><span class="lni-title">Observability</span></a>
+      <a class="laravel-nav-item" href="../laravel/modul-api-design-realtime.html"><span class="lni-week">M5</span><span class="lni-title">API Design &amp; Real-time</span></a>
+      <a class="laravel-nav-item" href="../laravel/modul-security-deepdive.html"><span class="lni-week">M6</span><span class="lni-title">Security Deep-dive</span></a>
+      <a class="laravel-nav-item" href="../laravel/modul-capstone-ecommerce.html"><span class="lni-week">M7</span><span class="lni-title">Capstone Project: E-commerce</span></a>
+      <a class="laravel-nav-item" href="../laravel/modul-containerization-deployment.html"><span class="lni-week">M8</span><span class="lni-title">Containerization &amp; Deployment</span></a>
+      <a class="laravel-nav-item" href="../laravel/modul-cloud-infrastructure.html"><span class="lni-week">M9</span><span class="lni-title">Cloud &amp; Infrastructure</span></a>
+      <a class="laravel-nav-item" href="../laravel/modul-skala-besar.html"><span class="lni-week">M10</span><span class="lni-title">Skala Besar</span></a>
+      <a class="laravel-nav-item" href="../laravel/modul-system-design.html"><span class="lni-week">M11</span><span class="lni-title">System Design</span></a>
+    </div>
+  </div>
+  <div class="laravel-nav" id="postgresNav">
+    <button class="laravel-nav-trigger" type="button">POSTGRESQL <span class="caret">&#9662;</span></button>
+    <div class="laravel-nav-menu">
+      <a class="laravel-nav-item active" href="#pg-intro"><span class="lni-week">P1</span><span class="lni-title">Pengenalan &amp; Instalasi</span></a>
+      <a class="laravel-nav-item" href="#pg-crud"><span class="lni-week">P2</span><span class="lni-title">SQL Dasar &amp; Tipe Data</span></a>
+      <a class="laravel-nav-item" href="#pg-relasi"><span class="lni-week">P3</span><span class="lni-title">Relasi, Constraint &amp; Index Dasar</span></a>
+      <a class="laravel-nav-item" href="#pg-transaksi"><span class="lni-week">P4</span><span class="lni-title">Transaksi &amp; Concurrency</span></a>
+      <a class="laravel-nav-item" href="#pg-laravel-setup"><span class="lni-week">P5</span><span class="lni-title">Integrasi dengan Laravel</span></a>
+      <a class="laravel-nav-item" href="#pg-query-lanjutan"><span class="lni-week">P6</span><span class="lni-title">Query Lanjutan</span></a>
+      <a class="laravel-nav-item" href="#pg-views"><span class="lni-week">P7</span><span class="lni-title">Views, Function &amp; Trigger</span></a>
+      <a class="laravel-nav-item" href="#pg-jsonb"><span class="lni-week">P8</span><span class="lni-title">Fitur Lanjutan PostgreSQL</span></a>
+      <a class="laravel-nav-item" href="#pg-roles"><span class="lni-week">P9</span><span class="lni-title">Roles &amp; Row-Level Security</span></a>
+      <a class="laravel-nav-item" href="#pg-explain"><span class="lni-week">P10</span><span class="lni-title">Indexing &amp; Performance Tuning</span></a>
+      <a class="laravel-nav-item" href="#pg-partitioning"><span class="lni-week">P11</span><span class="lni-title">Table Partitioning</span></a>
+      <a class="laravel-nav-item" href="#pg-backup"><span class="lni-week">P12</span><span class="lni-title">Backup, Restore &amp; Replikasi</span></a>
+      <a class="laravel-nav-item" href="#pg-ringkasan"><span class="lni-week">P13</span><span class="lni-title">Best Practice &amp; Ringkasan</span></a>
+    </div>
+  </div>
+    <div class="site-search" id="siteSearch">
+    <input type="text" id="searchInput" class="site-search-input" placeholder="Cari modul... ( tekan / )" autocomplete="off" />
+    <div class="site-search-results" id="searchResults"></div>
+  </div>
+  <span class="topbar-subtitle">PostgreSQL &mdash; Database Dasar sampai Lanjutan</span>
+</header>
+
+<div class="layout">
+
+  <!-- LEFT SIDEBAR -->
+  <nav class="sidebar">
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Pengenalan &amp; Instalasi</div>
+      <div class="nav-group-items">
+        <a class="nav-link active" href="#pg-intro">Apa itu PostgreSQL &amp; Kenapa Penting</a>
+        <a class="nav-link" href="#pg-install">Instalasi &amp; Konfigurasi Awal</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> SQL Dasar &amp; Tipe Data</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#pg-crud">CRUD Dasar (SELECT, INSERT, UPDATE, DELETE)</a>
+        <a class="nav-link" href="#pg-tipe-data">Tipe Data Khusus PostgreSQL</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Relasi, Constraint &amp; Index Dasar</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#pg-relasi">Primary/Foreign Key &amp; Constraint</a>
+        <a class="nav-link" href="#pg-index-dasar">Index Dasar (B-tree)</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Transaksi &amp; Concurrency</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#pg-transaksi">BEGIN, COMMIT, ROLLBACK &amp; ACID</a>
+        <a class="nav-link" href="#pg-isolasi">Isolation Level &amp; Deadlock</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Integrasi dengan Laravel</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#pg-laravel-setup">Konfigurasi Koneksi</a>
+        <a class="nav-link" href="#pg-laravel-migrasi">Migrasi &amp; Schema Builder</a>
+        <a class="nav-link" href="#pg-laravel-eloquent">Eloquent &amp; Query Builder</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Query Lanjutan</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#pg-query-lanjutan">Join, Subquery &amp; CTE</a>
+        <a class="nav-link" href="#pg-window">Window Functions</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Views, Function &amp; Trigger</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#pg-views">View &amp; Materialized View</a>
+        <a class="nav-link" href="#pg-function">Function (PL/pgSQL)</a>
+        <a class="nav-link" href="#pg-trigger">Trigger</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Fitur Lanjutan PostgreSQL</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#pg-jsonb">JSONB &amp; Operator JSON</a>
+        <a class="nav-link" href="#pg-fulltext">Full-text Search</a>
+        <a class="nav-link" href="#pg-array">Array &amp; Composite Types</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Roles &amp; Row-Level Security</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#pg-roles">Role, GRANT &amp; REVOKE</a>
+        <a class="nav-link" href="#pg-rls">Row-Level Security</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Indexing &amp; Performance Tuning</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#pg-explain">EXPLAIN ANALYZE</a>
+        <a class="nav-link" href="#pg-index-lanjutan">Index Lanjutan (GIN, GiST, BRIN, Partial)</a>
+        <a class="nav-link" href="#pg-optimasi">Tips Optimasi Query</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Table Partitioning</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#pg-partitioning">Partition by Range/List/Hash</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Backup, Restore &amp; Replikasi</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#pg-backup">pg_dump &amp; pg_restore</a>
+        <a class="nav-link" href="#pg-replikasi">Replikasi Dasar (Streaming Replication)</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> Best Practice &amp; Ringkasan</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#pg-best-practice">Best Practice Umum</a>
+        <a class="nav-link" href="#pg-ringkasan">Roadmap Pemula &rarr; Profesional</a>
+      </div>
+    </div>
+
+  </nav>
+
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- MAIN CONTENT -->
+  <main class="main">
+   <div class="main-inner">
+
+    <!-- ========== PENGENALAN ========== -->
+    <div class="section" id="pg-intro">
+      <h1 class="page-title">PostgreSQL &mdash; Database Dasar sampai Lanjutan</h1>
+      <p class="page-lead">
+        Panduan lengkap belajar <strong>PostgreSQL</strong> dari nol sampai level yang dipakai
+        di production: instalasi, SQL dasar, integrasi penuh dengan Laravel, fitur khas
+        Postgres (JSONB, full-text search), sampai indexing, performance tuning, backup, dan
+        replikasi.
+      </p>
+
+      <h2>Apa itu PostgreSQL &amp; Kenapa Penting?</h2>
+      <p>
+        <strong>PostgreSQL</strong> (sering disebut "Postgres") adalah <em>object-relational
+        database management system</em> open-source yang dikenal karena kepatuhannya pada
+        standar SQL, dukungan tipe data yang kaya, dan kemampuan menangani beban kerja yang
+        kompleks &mdash; mulai dari aplikasi CRUD sederhana sampai sistem analitik skala besar.
+      </p>
+      <p>
+        Banyak tim memilih Postgres ketika kebutuhan aplikasi mulai melampaui apa yang mudah
+        dilakukan MySQL: query JSON yang fleksibel, full-text search bawaan, index khusus
+        (GIN/GiST/BRIN), dan jaminan konsistensi transaksi yang sangat ketat.
+      </p>
+      <div class="table-scroll">
+      <table>
+        <thead><tr><th>Aspek</th><th>MySQL</th><th>PostgreSQL</th></tr></thead>
+        <tbody>
+          <tr><td>Tipe data JSON</td><td>JSON (tanpa index native yang efisien)</td><td><code>JSONB</code> biner, bisa di-index dengan GIN</td></tr>
+          <tr><td>Full-text search</td><td>Terbatas, butuh <code>MATCH AGAINST</code></td><td>Bawaan lewat <code>tsvector</code>/<code>tsquery</code></td></tr>
+          <tr><td>Concurrency</td><td>Row-level locking (tergantung engine)</td><td>MVCC penuh sejak awal, minim blocking baca/tulis</td></tr>
+          <tr><td>Ekstensibilitas</td><td>Terbatas</td><td>Extension (PostGIS, pgcrypto, pg_trgm, dll)</td></tr>
+          <tr><td>Constraint &amp; tipe custom</td><td>Dasar</td><td>CHECK kompleks, domain, tipe data custom, array</td></tr>
+        </tbody>
+      </table>
+      </div>
+      <div class="callout">
+        <div class="callout-title">Bukan "lebih baik" secara mutlak</div>
+        MySQL tetap pilihan valid untuk kasus sederhana dengan tooling hosting yang lebih
+        umum. Postgres unggul saat aplikasi butuh query data kompleks, integritas data ketat,
+        atau fitur lanjutan seperti pencarian teks dan data semi-terstruktur (JSON).
+      </div>
+    </div>
+
+    <!-- INSTALASI -->
+    <div class="section" id="pg-install">
+      <h2>Instalasi &amp; Konfigurasi Awal</h2>
+      <p>XAMPP secara default hanya menyertakan MySQL/MariaDB, jadi PostgreSQL perlu
+        diinstal terpisah.</p>
+
+      <h3>Langkah 1 &mdash; Install PostgreSQL</h3>
+      <p>Di Windows, unduh installer resmi dari situs PostgreSQL (menyertakan
+        <strong>pgAdmin</strong> sebagai GUI client) lalu jalankan wizard-nya. Saat instalasi,
+        catat password superuser <code>postgres</code> dan port yang dipakai (default
+        <code>5432</code>).</p>
+
+      <h3>Langkah 2 &mdash; Cek Instalasi via Terminal</h3>
+      <div class="pre-label">Terminal</div>
+      <pre><code>psql --version
+psql -U postgres -h 127.0.0.1</code></pre>
+
+      <h3>Langkah 3 &mdash; Buat Role &amp; Database Baru</h3>
+      <p>Hindari memakai user <code>postgres</code> langsung untuk aplikasi. Buat role
+        khusus dengan hak akses terbatas ke database aplikasinya saja.</p>
+      <div class="pre-label">psql</div>
+      <pre><code>CREATE USER app_user WITH PASSWORD 'app_password';
+CREATE DATABASE app_db OWNER app_user;
+GRANT ALL PRIVILEGES ON DATABASE app_db TO app_user;</code></pre>
+
+      <div class="callout success">
+        <div class="callout-title">Tips</div>
+        Gunakan <strong>pgAdmin</strong> atau ekstensi database client di editor kamu untuk
+        eksplorasi visual, tapi tetap biasakan diri dengan perintah <code>psql</code> karena
+        itu yang tersedia di server production lewat SSH.
+      </div>
+    </div>
+
+    <!-- ========== SQL DASAR ========== -->
+    <div class="section" id="pg-crud">
+      <h2>CRUD Dasar (SELECT, INSERT, UPDATE, DELETE)</h2>
+      <p>Sintaks dasar PostgreSQL sangat dekat dengan standar SQL ANSI.</p>
+
+      <h3>Membuat Tabel</h3>
+      <div class="pre-label">SQL</div>
+      <pre><code>CREATE TABLE produk (
+  id BIGSERIAL PRIMARY KEY,
+  nama VARCHAR(150) NOT NULL,
+  harga NUMERIC(12,2) NOT NULL DEFAULT 0,
+  stok INTEGER NOT NULL DEFAULT 0,
+  dibuat_pada TIMESTAMPTZ NOT NULL DEFAULT now()
+);</code></pre>
+
+      <h3>INSERT</h3>
+      <div class="pre-label">SQL</div>
+      <pre><code>INSERT INTO produk (nama, harga, stok)
+VALUES ('Keyboard Mekanik', 450000, 25)
+RETURNING id;</code></pre>
+      <p><code>RETURNING</code> adalah fitur khas Postgres &mdash; langsung mengambil kolom
+        hasil insert tanpa query <code>SELECT</code> tambahan.</p>
+
+      <h3>SELECT</h3>
+      <div class="pre-label">SQL</div>
+      <pre><code>SELECT id, nama, harga
+FROM produk
+WHERE stok &gt; 0
+ORDER BY harga DESC
+LIMIT 10;</code></pre>
+
+      <h3>UPDATE &amp; DELETE</h3>
+      <div class="pre-label">SQL</div>
+      <pre><code>UPDATE produk SET stok = stok - 1 WHERE id = 1;
+DELETE FROM produk WHERE stok = 0 AND dibuat_pada &lt; now() - INTERVAL '1 year';</code></pre>
+    </div>
+
+    <div class="section" id="pg-tipe-data">
+      <h2>Tipe Data Khusus PostgreSQL</h2>
+      <p>Selain tipe standar (<code>INTEGER</code>, <code>VARCHAR</code>, <code>BOOLEAN</code>),
+        Postgres punya beberapa tipe data yang jarang ada di database lain.</p>
+      <div class="table-scroll">
+      <table>
+        <thead><tr><th>Tipe</th><th>Kegunaan</th></tr></thead>
+        <tbody>
+          <tr><td><code>SERIAL</code> / <code>BIGSERIAL</code></td><td>Auto-increment integer, umum untuk primary key</td></tr>
+          <tr><td><code>NUMERIC(p,s)</code></td><td>Angka presisi tetap, wajib untuk uang &mdash; hindari <code>FLOAT</code></td></tr>
+          <tr><td><code>TEXT</code></td><td>String tanpa batas panjang, tanpa penalti performa dibanding <code>VARCHAR(n)</code></td></tr>
+          <tr><td><code>TIMESTAMPTZ</code></td><td>Timestamp yang menyimpan &amp; menormalkan timezone &mdash; default pilihan untuk kolom waktu</td></tr>
+          <tr><td><code>UUID</code></td><td>Identifier unik global, cocok untuk sistem terdistribusi</td></tr>
+          <tr><td><code>JSONB</code></td><td>Data semi-terstruktur dalam format biner, bisa di-index &amp; di-query</td></tr>
+          <tr><td><code>ARRAY</code></td><td>Kolom berisi array dari tipe data lain, misal <code>TEXT[]</code></td></tr>
+          <tr><td><code>ENUM</code></td><td>Tipe data custom dengan nilai terbatas, misal status pesanan</td></tr>
+        </tbody>
+      </table>
+      </div>
+      <div class="callout warning">
+        <div class="callout-title">Hati-hati</div>
+        Jangan pakai <code>FLOAT</code>/<code>DOUBLE PRECISION</code> untuk nilai uang &mdash;
+        keduanya floating point dan rawan kesalahan pembulatan. Selalu pakai
+        <code>NUMERIC</code>.
+      </div>
+    </div>
+
+    <!-- ========== RELASI & INDEX DASAR ========== -->
+    <div class="section" id="pg-relasi">
+      <h2>Primary/Foreign Key &amp; Constraint</h2>
+      <p>Constraint menjaga integritas data langsung di level database, sebagai lapisan
+        pertahanan terakhir setelah validasi aplikasi.</p>
+      <div class="pre-label">SQL</div>
+      <pre><code>CREATE TABLE kategori (
+  id BIGSERIAL PRIMARY KEY,
+  nama VARCHAR(100) NOT NULL UNIQUE
+);
+
+CREATE TABLE produk (
+  id BIGSERIAL PRIMARY KEY,
+  kategori_id BIGINT NOT NULL REFERENCES kategori(id) ON DELETE RESTRICT,
+  nama VARCHAR(150) NOT NULL,
+  harga NUMERIC(12,2) NOT NULL CHECK (harga &gt;= 0),
+  stok INTEGER NOT NULL DEFAULT 0 CHECK (stok &gt;= 0)
+);</code></pre>
+      <div class="table-scroll">
+      <table>
+        <thead><tr><th>Constraint</th><th>Fungsi</th></tr></thead>
+        <tbody>
+          <tr><td><code>PRIMARY KEY</code></td><td>Identitas unik &amp; wajib per baris</td></tr>
+          <tr><td><code>FOREIGN KEY / REFERENCES</code></td><td>Menjamin nilai kolom ada di tabel relasi</td></tr>
+          <tr><td><code>UNIQUE</code></td><td>Mencegah duplikasi nilai kolom</td></tr>
+          <tr><td><code>CHECK</code></td><td>Validasi kondisi custom pada nilai kolom</td></tr>
+          <tr><td><code>NOT NULL</code></td><td>Kolom wajib diisi</td></tr>
+          <tr><td><code>ON DELETE CASCADE/RESTRICT/SET NULL</code></td><td>Aturan saat baris induk dihapus</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+    <div class="section" id="pg-index-dasar">
+      <h2>Index Dasar (B-tree)</h2>
+      <p>Index mempercepat pencarian dengan mengorbankan sedikit ruang penyimpanan dan
+        kecepatan tulis. <code>PRIMARY KEY</code> dan <code>UNIQUE</code> otomatis membuat
+        index B-tree.</p>
+      <div class="pre-label">SQL</div>
+      <pre><code>CREATE INDEX idx_produk_kategori ON produk (kategori_id);
+CREATE INDEX idx_produk_nama ON produk (nama);</code></pre>
+      <div class="callout">
+        <div class="callout-title">Kapan Butuh Index?</div>
+        Tambahkan index pada kolom yang sering dipakai di <code>WHERE</code>,
+        <code>JOIN</code>, dan <code>ORDER BY</code> &mdash; terutama foreign key, karena
+        Postgres tidak otomatis meng-index kolom foreign key seperti beberapa database lain.
+      </div>
+    </div>
+
+    <!-- ========== TRANSAKSI & CONCURRENCY ========== -->
+    <div class="section" id="pg-transaksi">
+      <h2>BEGIN, COMMIT, ROLLBACK &amp; ACID</h2>
+      <p>Transaksi membungkus beberapa perintah SQL jadi satu unit kerja yang
+        <strong>all-or-nothing</strong> &mdash; semuanya berhasil disimpan, atau semuanya
+        dibatalkan kalau ada yang gagal. Ini fondasi dari properti <strong>ACID</strong>
+        (Atomicity, Consistency, Isolation, Durability) yang jadi alasan utama orang tetap
+        percaya pada database relasional untuk data penting seperti transaksi keuangan.</p>
+      <div class="pre-label">SQL</div>
+      <pre><code>BEGIN;
+
+UPDATE akun SET saldo = saldo - 100000 WHERE id = 1;
+UPDATE akun SET saldo = saldo + 100000 WHERE id = 2;
+
+-- Kalau salah satu UPDATE gagal (misal saldo jadi negatif karena CHECK constraint),
+-- seluruh transaksi otomatis batal.
+COMMIT;</code></pre>
+      <p>Kalau terjadi kesalahan sebelum <code>COMMIT</code>, batalkan manual dengan
+        <code>ROLLBACK</code>. <code>SAVEPOINT</code> berguna untuk membatalkan sebagian saja
+        tanpa membatalkan seluruh transaksi.</p>
+      <div class="pre-label">SQL</div>
+      <pre><code>BEGIN;
+UPDATE akun SET saldo = saldo - 100000 WHERE id = 1;
+
+SAVEPOINT sebelum_bonus;
+UPDATE akun SET saldo = saldo + 5000 WHERE id = 1; -- bonus, ternyata salah aturan
+
+ROLLBACK TO SAVEPOINT sebelum_bonus; -- batalkan bonus saja, transfer di atas tetap jalan
+COMMIT;</code></pre>
+      <div class="callout warning">
+        <div class="callout-title">Kesalahan Umum Pemula</div>
+        Menganggap tiap statement Laravel (<code>Model::create()</code>,
+        <code>DB::table()-&gt;update()</code>) otomatis aman digabung. Kalau ada beberapa
+        perintah yang harus berhasil/gagal bersama-sama (misal kurangi stok + catat
+        transaksi), bungkus dengan <code>DB::transaction()</code> di Laravel, yang di baliknya
+        memakai <code>BEGIN</code>/<code>COMMIT</code>/<code>ROLLBACK</code> Postgres.
+      </div>
+      <div class="pre-label">PHP</div>
+      <pre><code>DB::transaction(function () {
+    DB::table('produk')-&gt;where('id', 1)-&gt;decrement('stok');
+    DB::table('transaksi')-&gt;insert(['produk_id' =&gt; 1, 'jumlah' =&gt; 1]);
+});</code></pre>
+    </div>
+
+    <div class="section" id="pg-isolasi">
+      <h2>Isolation Level &amp; Deadlock</h2>
+      <p>Isolation level menentukan seberapa "terlihat" perubahan dari transaksi lain yang
+        berjalan bersamaan. Postgres memakai <strong>MVCC</strong> (Multi-Version Concurrency
+        Control) sehingga pembaca tidak pernah diblokir oleh penulis, tapi kamu tetap perlu
+        memahami level isolasinya untuk kasus tertentu.</p>
+      <div class="table-scroll">
+      <table>
+        <thead><tr><th>Isolation Level</th><th>Perilaku</th></tr></thead>
+        <tbody>
+          <tr><td><code>READ COMMITTED</code> (default)</td><td>Tiap statement melihat data yang sudah ter-commit saat statement itu dijalankan &mdash; bisa berubah antar statement dalam transaksi yang sama</td></tr>
+          <tr><td><code>REPEATABLE READ</code></td><td>Seluruh transaksi melihat snapshot data yang konsisten sejak transaksi dimulai</td></tr>
+          <tr><td><code>SERIALIZABLE</code></td><td>Level paling ketat &mdash; hasil akhir dijamin sama seperti transaksi dijalankan satu per satu (serial), tapi lebih rawan perlu retry saat konflik</td></tr>
+        </tbody>
+      </table>
+      </div>
+      <div class="pre-label">SQL</div>
+      <pre><code>BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+SELECT stok FROM produk WHERE id = 1; -- misal 5
+-- ...proses lain...
+UPDATE produk SET stok = stok - 1 WHERE id = 1;
+COMMIT;</code></pre>
+
+      <h3>Row Locking &amp; Deadlock</h3>
+      <p><code>SELECT ... FOR UPDATE</code> mengunci baris agar transaksi lain menunggu
+        sebelum bisa mengubahnya &mdash; berguna untuk mencegah <em>race condition</em> seperti
+        dua request mengurangi stok yang sama secara bersamaan.</p>
+      <div class="pre-label">SQL</div>
+      <pre><code>BEGIN;
+SELECT stok FROM produk WHERE id = 1 FOR UPDATE; -- transaksi lain menunggu di sini
+UPDATE produk SET stok = stok - 1 WHERE id = 1;
+COMMIT;</code></pre>
+      <div class="callout danger">
+        <div class="callout-title">Deadlock</div>
+        Terjadi saat dua transaksi saling menunggu kunci yang dipegang satu sama lain
+        (transaksi A menunggu baris yang dikunci B, sementara B menunggu baris yang dikunci
+        A). Postgres otomatis mendeteksi dan membatalkan salah satu transaksi dengan error
+        <code>deadlock detected</code> &mdash; aplikasi harus siap menangkap error ini dan
+        retry. Hindari dengan selalu mengunci baris dalam urutan yang konsisten (misal selalu
+        urut berdasarkan ID terkecil dulu).
+      </div>
+    </div>
+
+    <!-- ========== INTEGRASI LARAVEL ========== -->
+    <div class="section" id="pg-laravel-setup">
+      <h2>Konfigurasi Koneksi Laravel &rarr; PostgreSQL</h2>
+      <p>Pastikan ekstensi PHP <code>pdo_pgsql</code> dan <code>pgsql</code> aktif (di XAMPP,
+        buka <code>php.ini</code> dan hapus tanda <code>;</code> di depan kedua baris
+        tersebut, lalu restart Apache).</p>
+
+      <h3>.env</h3>
+      <div class="pre-label">.env</div>
+      <pre><code>DB_CONNECTION=pgsql
+DB_HOST=127.0.0.1
+DB_PORT=5432
+DB_DATABASE=app_db
+DB_USERNAME=app_user
+DB_PASSWORD=app_password</code></pre>
+
+      <h3>config/database.php</h3>
+      <p>Laravel sudah menyediakan koneksi <code>pgsql</code> secara default &mdash; cukup
+        pastikan blok berikut ada dan cocok dengan <code>.env</code>:</p>
+      <div class="pre-label">config/database.php</div>
+      <pre><code>'pgsql' =&gt; [
+    'driver' =&gt; 'pgsql',
+    'host' =&gt; env('DB_HOST', '127.0.0.1'),
+    'port' =&gt; env('DB_PORT', '5432'),
+    'database' =&gt; env('DB_DATABASE', 'forge'),
+    'username' =&gt; env('DB_USERNAME', 'forge'),
+    'password' =&gt; env('DB_PASSWORD', ''),
+    'charset' =&gt; 'utf8',
+    'search_path' =&gt; 'public',
+    'sslmode' =&gt; 'prefer',
+],</code></pre>
+      <div class="callout success">
+        <div class="callout-title">Tips</div>
+        Uji koneksi cepat dengan <code>php artisan tinker</code> lalu jalankan
+        <code>DB::connection()-&gt;getPdo();</code> &mdash; kalau tidak ada error, koneksi
+        berhasil.
+      </div>
+    </div>
+
+    <div class="section" id="pg-laravel-migrasi">
+      <h2>Migrasi &amp; Schema Builder</h2>
+      <p>Migration Laravel bekerja sama untuk semua driver, tapi kamu bisa memakai tipe
+        kolom khusus Postgres lewat schema builder.</p>
+      <div class="pre-label">database/migrations/xxxx_create_produk_table.php</div>
+      <pre><code>Schema::create('produk', function (Blueprint $table) {
+    $table-&gt;id();
+    $table-&gt;foreignId('kategori_id')-&gt;constrained()-&gt;restrictOnDelete();
+    $table-&gt;string('nama');
+    $table-&gt;decimal('harga', 12, 2);
+    $table-&gt;unsignedInteger('stok')-&gt;default(0);
+    $table-&gt;jsonb('atribut')-&gt;nullable();
+    $table-&gt;uuid('public_id')-&gt;unique();
+    $table-&gt;timestampsTz();
+});</code></pre>
+      <p><code>jsonb()</code> dan <code>timestampsTz()</code> hanya masuk akal dipakai kalau
+        koneksi default kamu memang PostgreSQL &mdash; keduanya memetakan langsung ke tipe
+        <code>JSONB</code> dan <code>TIMESTAMPTZ</code>.</p>
+    </div>
+
+    <div class="section" id="pg-laravel-eloquent">
+      <h2>Eloquent &amp; Query Builder Khusus Postgres</h2>
+      <p>Eloquent tetap dipakai seperti biasa, tapi query builder menyediakan method
+        tambahan untuk fitur khas Postgres seperti JSON.</p>
+      <div class="pre-label">PHP</div>
+      <pre><code>// Query kolom JSONB
+$produk = Produk::whereJsonContains('atribut-&gt;warna', 'merah')-&gt;get();
+
+// Full-text search sederhana
+$hasil = Produk::whereRaw(
+    "to_tsvector('indonesian', nama) @@ plainto_tsquery('indonesian', ?)",
+    [$keyword]
+)-&gt;get();
+
+// Insert dengan RETURNING otomatis lewat Eloquent
+$produk = Produk::create([
+    'nama' =&gt; 'Mouse Wireless',
+    'harga' =&gt; 250000,
+    'atribut' =&gt; ['warna' =&gt; 'hitam', 'garansi_bulan' =&gt; 12],
+]);</code></pre>
+      <div class="callout">
+        <div class="callout-title">Portabilitas</div>
+        Method seperti <code>whereJsonContains</code> ditulis Laravel agar tetap bekerja di
+        MySQL &amp; Postgres, tapi query mentah (<code>whereRaw</code>) dengan sintaks
+        <code>tsvector</code> sudah spesifik Postgres dan tidak portable.
+      </div>
+    </div>
+
+    <!-- ========== QUERY LANJUTAN ========== -->
+    <div class="section" id="pg-query-lanjutan">
+      <h2>Join, Subquery &amp; CTE</h2>
+
+      <h3>Join</h3>
+      <div class="pre-label">SQL</div>
+      <pre><code>SELECT p.nama, k.nama AS kategori
+FROM produk p
+JOIN kategori k ON k.id = p.kategori_id
+WHERE p.stok &gt; 0;</code></pre>
+
+      <h3>Common Table Expression (CTE)</h3>
+      <p><code>WITH</code> membuat query sementara yang lebih mudah dibaca dibanding
+        subquery bersarang, dan bisa dipakai berulang dalam query utama.</p>
+      <div class="pre-label">SQL</div>
+      <pre><code>WITH penjualan_bulan_ini AS (
+  SELECT produk_id, SUM(jumlah) AS total_terjual
+  FROM transaksi
+  WHERE dibuat_pada &gt;= date_trunc('month', now())
+  GROUP BY produk_id
+)
+SELECT p.nama, COALESCE(pb.total_terjual, 0) AS total_terjual
+FROM produk p
+LEFT JOIN penjualan_bulan_ini pb ON pb.produk_id = p.id
+ORDER BY total_terjual DESC;</code></pre>
+    </div>
+
+    <div class="section" id="pg-window">
+      <h2>Window Functions</h2>
+      <p>Window function menghitung agregat <em>tanpa</em> menggabungkan baris seperti
+        <code>GROUP BY</code> &mdash; setiap baris asli tetap tampil, dengan kolom tambahan
+        hasil perhitungan window.</p>
+      <div class="pre-label">SQL</div>
+      <pre><code>SELECT
+  nama,
+  kategori_id,
+  harga,
+  RANK() OVER (PARTITION BY kategori_id ORDER BY harga DESC) AS rank_termahal,
+  AVG(harga) OVER (PARTITION BY kategori_id) AS rata_rata_kategori
+FROM produk;</code></pre>
+      <div class="callout">
+        <div class="callout-title">Kapan Dipakai</div>
+        Cocok untuk kebutuhan seperti "produk termahal per kategori", "running total",
+        atau "ranking user per bulan" &mdash; hal yang sulit dilakukan dengan
+        <code>GROUP BY</code> biasa karena butuh detail per baris sekaligus agregat.
+      </div>
+    </div>
+
+    <!-- ========== VIEWS, FUNCTION & TRIGGER ========== -->
+    <div class="section" id="pg-views">
+      <h2>View &amp; Materialized View</h2>
+      <p><strong>View</strong> menyimpan definisi query sebagai "tabel virtual" yang selalu
+        dihitung ulang saat diakses &mdash; berguna untuk menyederhanakan query kompleks yang
+        sering dipakai berulang.</p>
+      <div class="pre-label">SQL</div>
+      <pre><code>CREATE VIEW ringkasan_penjualan AS
+SELECT p.id AS produk_id, p.nama, SUM(t.jumlah) AS total_terjual
+FROM produk p
+JOIN transaksi t ON t.produk_id = p.id
+GROUP BY p.id, p.nama;
+
+SELECT * FROM ringkasan_penjualan WHERE total_terjual &gt; 100;</code></pre>
+      <p><strong>Materialized view</strong> menyimpan hasil query secara fisik seperti tabel
+        biasa &mdash; jauh lebih cepat dibaca, tapi datanya tidak otomatis update dan perlu
+        di-refresh manual.</p>
+      <div class="pre-label">SQL</div>
+      <pre><code>CREATE MATERIALIZED VIEW ringkasan_penjualan_harian AS
+SELECT date_trunc('day', t.dibuat_pada) AS tanggal, SUM(t.jumlah) AS total
+FROM transaksi t
+GROUP BY 1;
+
+-- Jalankan berkala (cron/scheduler), idealnya dengan CONCURRENTLY agar tidak mengunci baca
+REFRESH MATERIALIZED VIEW CONCURRENTLY ringkasan_penjualan_harian;</code></pre>
+      <div class="callout">
+        <div class="callout-title">Kapan Pakai yang Mana</div>
+        Pakai <strong>view</strong> biasa untuk menyederhanakan query yang datanya harus
+        selalu real-time. Pakai <strong>materialized view</strong> untuk laporan/dashboard
+        berat yang boleh sedikit tertinggal (misal di-refresh tiap jam), demi menghindari
+        query agregat berat dijalankan berulang kali.
+      </div>
+    </div>
+
+    <div class="section" id="pg-function">
+      <h2>Function (PL/pgSQL)</h2>
+      <p>Function menyimpan logika di sisi database &mdash; berguna untuk komputasi yang
+        harus konsisten dipakai banyak query/aplikasi, atau untuk memindahkan proses berat
+        agar tidak bolak-balik data ke aplikasi.</p>
+      <div class="pre-label">SQL</div>
+      <pre><code>CREATE OR REPLACE FUNCTION hitung_diskon(harga NUMERIC, persen NUMERIC)
+RETURNS NUMERIC AS $$
+BEGIN
+  IF persen &lt; 0 OR persen &gt; 100 THEN
+    RAISE EXCEPTION 'Persen diskon tidak valid: %', persen;
+  END IF;
+  RETURN harga - (harga * persen / 100);
+END;
+$$ LANGUAGE plpgsql;
+
+SELECT hitung_diskon(100000, 15); -- 85000</code></pre>
+      <div class="callout warning">
+        <div class="callout-title">Jangan Berlebihan</div>
+        Logika bisnis yang sering berubah (aturan harga, promo) lebih baik tetap di kode
+        aplikasi (Laravel) supaya mudah di-test dan di-deploy lewat proses CI/CD biasa.
+        Simpan di database hanya untuk logika yang benar-benar stabil dan erat kaitannya
+        dengan integritas data.
+      </div>
+    </div>
+
+    <div class="section" id="pg-trigger">
+      <h2>Trigger</h2>
+      <p>Trigger menjalankan function secara otomatis saat event tertentu terjadi
+        (<code>INSERT</code>/<code>UPDATE</code>/<code>DELETE</code>) &mdash; sering dipakai
+        untuk audit log atau menjaga kolom turunan tetap konsisten.</p>
+      <div class="pre-label">SQL</div>
+      <pre><code>CREATE OR REPLACE FUNCTION set_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_produk_updated_at
+BEFORE UPDATE ON produk
+FOR EACH ROW
+EXECUTE FUNCTION set_updated_at();</code></pre>
+      <div class="callout">
+        <div class="callout-title">Tips</div>
+        Laravel sudah menangani <code>updated_at</code> otomatis lewat Eloquent, jadi contoh
+        di atas lebih relevan untuk perubahan lewat <code>psql</code> langsung atau aplikasi
+        lain yang mengakses database yang sama. Trigger paling berguna sebagai jaring
+        pengaman di level database untuk aturan yang tidak boleh dilanggar siapa pun,
+        termasuk query manual.
+      </div>
+    </div>
+
+    <!-- ========== FITUR LANJUTAN ========== -->
+    <div class="section" id="pg-jsonb">
+      <h2>JSONB &amp; Operator JSON</h2>
+      <p><code>JSONB</code> menyimpan JSON dalam bentuk biner yang sudah di-parse, sehingga
+        query terhadap isinya jauh lebih cepat dibanding tipe <code>JSON</code> teks biasa,
+        dan bisa di-index.</p>
+      <div class="pre-label">SQL</div>
+      <pre><code>-- Ambil nilai field
+SELECT atribut-&gt;&gt;'warna' AS warna FROM produk WHERE id = 1;
+
+-- Cek apakah JSON mengandung key/value tertentu
+SELECT * FROM produk WHERE atribut @&gt; '{"warna": "merah"}';
+
+-- Update satu field dalam JSONB tanpa menimpa seluruh isi
+UPDATE produk
+SET atribut = jsonb_set(atribut, '{garansi_bulan}', '24')
+WHERE id = 1;
+
+-- Index GIN untuk mempercepat query JSONB
+CREATE INDEX idx_produk_atribut ON produk USING GIN (atribut);</code></pre>
+      <div class="table-scroll">
+      <table>
+        <thead><tr><th>Operator</th><th>Fungsi</th></tr></thead>
+        <tbody>
+          <tr><td><code>-&gt;</code></td><td>Ambil field, hasil tetap JSONB</td></tr>
+          <tr><td><code>-&gt;&gt;</code></td><td>Ambil field, hasil sebagai teks</td></tr>
+          <tr><td><code>@&gt;</code></td><td>Cek apakah JSON kiri mengandung JSON kanan</td></tr>
+          <tr><td><code>?</code></td><td>Cek apakah key tertentu ada</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+    <div class="section" id="pg-fulltext">
+      <h2>Full-text Search</h2>
+      <p>Postgres punya mesin pencarian teks bawaan lewat tipe <code>tsvector</code> (dokumen
+        yang sudah di-normalisasi) dan <code>tsquery</code> (kata kunci pencarian).</p>
+      <div class="pre-label">SQL</div>
+      <pre><code>-- Pencarian langsung
+SELECT nama FROM produk
+WHERE to_tsvector('indonesian', nama) @@ plainto_tsquery('indonesian', 'keyboard mekanik');
+
+-- Kolom tersimpan (generated column) + index GIN agar cepat di tabel besar
+ALTER TABLE produk ADD COLUMN nama_tsv tsvector
+  GENERATED ALWAYS AS (to_tsvector('indonesian', nama)) STORED;
+CREATE INDEX idx_produk_nama_tsv ON produk USING GIN (nama_tsv);
+
+SELECT nama FROM produk
+WHERE nama_tsv @@ plainto_tsquery('indonesian', 'keyboard mekanik');</code></pre>
+      <div class="callout warning">
+        <div class="callout-title">Untuk Kebutuhan Search yang Sangat Berat</div>
+        Full-text search bawaan Postgres cukup untuk kebanyakan aplikasi. Kalau butuh fitur
+        seperti typo-tolerance canggih atau skala jutaan dokumen dengan relevansi kompleks,
+        pertimbangkan Elasticsearch/Meilisearch sebagai pelengkap.
+      </div>
+    </div>
+
+    <div class="section" id="pg-array">
+      <h2>Array &amp; Composite Types</h2>
+      <p>Kolom array berguna untuk data multi-nilai sederhana tanpa perlu tabel relasi
+        terpisah &mdash; misalnya daftar tag.</p>
+      <div class="pre-label">SQL</div>
+      <pre><code>ALTER TABLE produk ADD COLUMN tags TEXT[];
+
+UPDATE produk SET tags = ARRAY['gaming', 'wireless', 'best-seller'] WHERE id = 1;
+
+-- Cari produk yang punya tag tertentu
+SELECT nama FROM produk WHERE 'gaming' = ANY(tags);
+
+-- Pecah array jadi baris
+SELECT nama, unnest(tags) AS tag FROM produk;</code></pre>
+      <div class="callout">
+        <div class="callout-title">Kapan Pakai Array vs Tabel Relasi</div>
+        Array cocok untuk data sederhana yang tidak butuh query relasional sendiri (tidak
+        perlu di-join, tidak butuh atribut tambahan per tag). Kalau tag butuh metadata sendiri
+        (warna, deskripsi, dsb), tetap gunakan tabel relasi biasa.
+      </div>
+    </div>
+
+    <!-- ========== ROLES & ROW-LEVEL SECURITY ========== -->
+    <div class="section" id="pg-roles">
+      <h2>Role, GRANT &amp; REVOKE</h2>
+      <p>Jangan pernah memakai role superuser (<code>postgres</code>) untuk koneksi
+        aplikasi. Buat role dengan hak akses seminimal mungkin sesuai kebutuhan &mdash;
+        prinsip <em>least privilege</em>.</p>
+      <div class="pre-label">SQL</div>
+      <pre><code>-- Role hanya boleh baca (untuk laporan/analytics)
+CREATE ROLE readonly_app LOGIN PASSWORD 'secret';
+GRANT CONNECT ON DATABASE app_db TO readonly_app;
+GRANT USAGE ON SCHEMA public TO readonly_app;
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO readonly_app;
+
+-- Role aplikasi utama, tanpa hak DROP/ALTER tabel
+CREATE ROLE app_writer LOGIN PASSWORD 'secret2';
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO app_writer;
+
+-- Cabut akses tertentu
+REVOKE DELETE ON transaksi FROM app_writer;</code></pre>
+      <div class="callout">
+        <div class="callout-title">Kenapa Penting</div>
+        Kalau kredensial aplikasi bocor, kerusakan yang bisa ditimbulkan terbatas sesuai hak
+        akses role-nya. Role read-only untuk dashboard analytics, misalnya, tidak akan pernah
+        bisa dipakai untuk mengubah data produksi meskipun kredensialnya bocor.
+      </div>
+    </div>
+
+    <div class="section" id="pg-rls">
+      <h2>Row-Level Security (RLS)</h2>
+      <p><strong>Row-Level Security</strong> membatasi baris mana saja yang boleh dilihat/diubah
+        oleh role tertentu &mdash; sangat berguna untuk aplikasi <em>multi-tenant</em> di mana
+        satu tabel dipakai bersama oleh banyak pelanggan/organisasi.</p>
+      <div class="pre-label">SQL</div>
+      <pre><code>ALTER TABLE pesanan ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY pesanan_isolasi_tenant ON pesanan
+  USING (tenant_id = current_setting('app.current_tenant')::bigint);</code></pre>
+      <p>Aplikasi cukup mengatur variabel sesi sebelum query, dan Postgres otomatis
+        menyaring baris di belakang layar tanpa perlu menambahkan <code>WHERE tenant_id = ?</code>
+        di setiap query manual:</p>
+      <div class="pre-label">PHP</div>
+      <pre><code>DB::statement("SET app.current_tenant = ?", [$tenantId]);
+$pesanan = DB::table('pesanan')-&gt;get(); // otomatis hanya baris milik tenant ini</code></pre>
+      <div class="callout warning">
+        <div class="callout-title">Bukan Pengganti Validasi Aplikasi</div>
+        RLS adalah lapisan pertahanan tambahan di database, bukan pengganti pengecekan
+        otorisasi di kode aplikasi. Tetap validasi akses di level aplikasi (misal policy
+        Laravel), dan gunakan RLS sebagai jaring pengaman terakhir kalau ada bug atau akses
+        langsung ke database yang terlewat dari lapisan aplikasi.
+      </div>
+    </div>
+
+    <!-- ========== INDEXING & PERFORMANCE ========== -->
+    <div class="section" id="pg-explain">
+      <h2>Membaca EXPLAIN ANALYZE</h2>
+      <p><code>EXPLAIN ANALYZE</code> menjalankan query sungguhan dan menampilkan rencana
+        eksekusi beserta waktu nyata tiap langkah &mdash; alat utama untuk diagnosis query
+        lambat.</p>
+      <div class="pre-label">SQL</div>
+      <pre><code>EXPLAIN ANALYZE
+SELECT * FROM produk WHERE kategori_id = 3 ORDER BY harga DESC;</code></pre>
+      <div class="table-scroll">
+      <table>
+        <thead><tr><th>Istilah</th><th>Arti</th></tr></thead>
+        <tbody>
+          <tr><td><code>Seq Scan</code></td><td>Membaca seluruh tabel baris demi baris &mdash; tanda index belum dipakai/tidak ada</td></tr>
+          <tr><td><code>Index Scan</code></td><td>Mencari lewat index lalu ambil baris dari tabel</td></tr>
+          <tr><td><code>Index Only Scan</code></td><td>Semua data diambil langsung dari index, tanpa sentuh tabel &mdash; paling cepat</td></tr>
+          <tr><td><code>cost</code></td><td>Estimasi biaya relatif (bukan waktu nyata) sebelum eksekusi</td></tr>
+          <tr><td><code>actual time</code></td><td>Waktu nyata dalam milidetik saat query benar-benar dijalankan</td></tr>
+        </tbody>
+      </table>
+      </div>
+      <div class="callout warning">
+        <div class="callout-title">Perhatian</div>
+        Jangan jalankan <code>EXPLAIN ANALYZE</code> untuk query <code>UPDATE</code>/<code>DELETE</code>
+        di production tanpa hati-hati &mdash; perintah ini benar-benar mengeksekusi query,
+        bukan sekadar simulasi.
+      </div>
+    </div>
+
+    <div class="section" id="pg-index-lanjutan">
+      <h2>Index Lanjutan (GIN, GiST, BRIN, Partial, Composite)</h2>
+      <div class="table-scroll">
+      <table>
+        <thead><tr><th>Jenis Index</th><th>Cocok Untuk</th></tr></thead>
+        <tbody>
+          <tr><td>B-tree (default)</td><td>Perbandingan <code>=</code>, <code>&lt;</code>, <code>&gt;</code>, <code>ORDER BY</code></td></tr>
+          <tr><td>GIN</td><td>JSONB, array, full-text search &mdash; data dengan banyak nilai per baris</td></tr>
+          <tr><td>GiST</td><td>Data geometris/spasial (PostGIS), pencarian rentang &amp; kemiripan</td></tr>
+          <tr><td>BRIN</td><td>Tabel sangat besar dengan data urut alami (misal kolom timestamp log)</td></tr>
+        </tbody>
+      </table>
+      </div>
+
+      <h3>Partial Index</h3>
+      <p>Index hanya untuk subset baris yang relevan &mdash; lebih kecil &amp; lebih cepat.</p>
+      <div class="pre-label">SQL</div>
+      <pre><code>CREATE INDEX idx_produk_aktif ON produk (nama) WHERE stok &gt; 0;</code></pre>
+
+      <h3>Composite Index</h3>
+      <p>Index atas lebih dari satu kolom, urutan kolom penting &mdash; taruh kolom dengan
+        filter kesetaraan (<code>=</code>) di depan.</p>
+      <div class="pre-label">SQL</div>
+      <pre><code>CREATE INDEX idx_produk_kategori_harga ON produk (kategori_id, harga DESC);</code></pre>
+    </div>
+
+    <div class="section" id="pg-optimasi">
+      <h2>Tips Optimasi Query</h2>
+      <ul>
+        <li>Hindari <code>SELECT *</code> &mdash; ambil hanya kolom yang dibutuhkan.</li>
+        <li>Index kolom foreign key secara eksplisit &mdash; Postgres tidak membuatnya otomatis.</li>
+        <li>Jalankan <code>VACUUM</code> &amp; <code>ANALYZE</code> secara rutin (biasanya otomatis
+          lewat <em>autovacuum</em>) agar statistik query planner tetap akurat dan ruang bekas
+          baris terhapus bisa dipakai ulang.</li>
+        <li>Gunakan connection pooling (misal <strong>PgBouncer</strong>) saat aplikasi punya
+          banyak koneksi pendek &mdash; membuka koneksi baru ke Postgres relatif mahal.</li>
+        <li>Pantau query lambat lewat ekstensi <code>pg_stat_statements</code>.</li>
+        <li>Batasi hasil besar dengan <code>LIMIT</code> + keyset pagination (bukan
+          <code>OFFSET</code> besar) untuk data yang terus bertambah.</li>
+      </ul>
+    </div>
+
+    <!-- ========== TABLE PARTITIONING ========== -->
+    <div class="section" id="pg-partitioning">
+      <h2>Partition by Range/List/Hash</h2>
+      <p>Saat sebuah tabel tumbuh sampai puluhan/ratusan juta baris, query dan maintenance
+        (vacuum, index rebuild) mulai melambat meski sudah punya index yang tepat. Table
+        <strong>partitioning</strong> memecah satu tabel logis menjadi beberapa tabel fisik
+        yang lebih kecil di belakang layar, tapi tetap terasa seperti satu tabel dari sisi
+        query.</p>
+      <div class="pre-label">SQL</div>
+      <pre><code>CREATE TABLE log_aktivitas (
+  id BIGSERIAL,
+  pesan TEXT,
+  dibuat_pada TIMESTAMPTZ NOT NULL
+) PARTITION BY RANGE (dibuat_pada);
+
+CREATE TABLE log_aktivitas_2026_01 PARTITION OF log_aktivitas
+  FOR VALUES FROM ('2026-01-01') TO ('2026-02-01');
+
+CREATE TABLE log_aktivitas_2026_02 PARTITION OF log_aktivitas
+  FOR VALUES FROM ('2026-02-01') TO ('2026-03-01');</code></pre>
+      <p>Query yang menyertakan filter tanggal otomatis hanya membaca partisi yang relevan
+        (<em>partition pruning</em>), bukan seluruh tabel:</p>
+      <div class="pre-label">SQL</div>
+      <pre><code>EXPLAIN SELECT * FROM log_aktivitas
+WHERE dibuat_pada &gt;= '2026-02-01' AND dibuat_pada &lt; '2026-02-15';
+-- planner hanya menyentuh log_aktivitas_2026_02, bukan partisi Januari</code></pre>
+      <div class="table-scroll">
+      <table>
+        <thead><tr><th>Jenis</th><th>Cocok Untuk</th></tr></thead>
+        <tbody>
+          <tr><td><code>RANGE</code></td><td>Data berbasis rentang waktu/angka &mdash; log, transaksi per bulan</td></tr>
+          <tr><td><code>LIST</code></td><td>Data dengan kategori diskrit &mdash; misal partisi per region/negara</td></tr>
+          <tr><td><code>HASH</code></td><td>Distribusi merata tanpa pola alami &mdash; sekadar memecah beban tulis</td></tr>
+        </tbody>
+      </table>
+      </div>
+      <div class="callout">
+        <div class="callout-title">Kapan Baru Butuh Ini</div>
+        Jangan mulai dari partitioning &mdash; ini kompleksitas tambahan yang hanya sepadan
+        saat tabel benar-benar besar (biasanya puluhan juta baris ke atas) atau butuh
+        menghapus data lama dengan cepat (<code>DROP TABLE</code> satu partisi jauh lebih
+        cepat daripada <code>DELETE</code> jutaan baris).
+      </div>
+    </div>
+
+    <!-- ========== BACKUP & REPLIKASI ========== -->
+    <div class="section" id="pg-backup">
+      <h2>pg_dump &amp; pg_restore</h2>
+      <div class="pre-label">Terminal</div>
+      <pre><code># Backup satu database ke file custom-format (terkompresi, bisa restore parsial)
+pg_dump -U app_user -F c -f app_db.backup app_db
+
+# Restore ke database baru
+pg_restore -U postgres -d app_db_baru app_db.backup
+
+# Backup semua database + role di server (untuk migrasi server)
+pg_dumpall -U postgres -f semua_db.sql</code></pre>
+      <div class="callout success">
+        <div class="callout-title">Tips</div>
+        Jadwalkan <code>pg_dump</code> otomatis (cron/Task Scheduler) dan simpan hasilnya di
+        lokasi terpisah dari server database &mdash; backup yang hanya ada di server yang sama
+        tidak melindungi dari kegagalan disk/server itu sendiri.
+      </div>
+    </div>
+
+    <div class="section" id="pg-replikasi">
+      <h2>Replikasi Dasar (Streaming Replication)</h2>
+      <p>Streaming replication menyalin perubahan dari server <strong>primary</strong> ke satu
+        atau lebih server <strong>replica</strong> secara nyaris real-time lewat
+        <em>write-ahead log</em> (WAL).</p>
+      <div class="diagram-wrap">
+        <div class="mermaid">
+graph LR
+  A[Aplikasi] -->|Tulis| P[(Primary)]
+  P -->|WAL Streaming| R1[(Replica 1)]
+  P -->|WAL Streaming| R2[(Replica 2)]
+  A -->|Baca| R1
+  A -->|Baca| R2
+        </div>
+      </div>
+      <p>Replica biasanya dipakai untuk:</p>
+      <ul>
+        <li><strong>Scaling baca</strong> &mdash; arahkan query <code>SELECT</code> berat ke replica.</li>
+        <li><strong>High availability</strong> &mdash; replica bisa dipromosikan jadi primary baru saat primary gagal.</li>
+        <li><strong>Backup tanpa membebani primary</strong> &mdash; jalankan <code>pg_dump</code> dari replica.</li>
+      </ul>
+      <div class="callout warning">
+        <div class="callout-title">Perlu Diingat</div>
+        Replica bersifat <em>read-only</em> dan datanya sedikit tertinggal (replication lag).
+        Jangan arahkan query yang butuh data paling baru (misal setelah user baru saja
+        submit form) ke replica tanpa strategi tambahan.
+      </div>
+    </div>
+
+    <!-- ========== BEST PRACTICE & RINGKASAN ========== -->
+    <div class="section" id="pg-best-practice">
+      <h2>Best Practice Umum</h2>
+      <ul>
+        <li>Gunakan <code>snake_case</code> untuk nama tabel &amp; kolom (konvensi Postgres, juga default Laravel).</li>
+        <li>Selalu definisikan <code>NOT NULL</code> dan <code>CHECK</code> di level database, jangan andalkan validasi aplikasi saja.</li>
+        <li>Beri nama eksplisit pada constraint &amp; index (mis. <code>idx_produk_kategori</code>) agar mudah dicari di migrasi berikutnya.</li>
+        <li>Pisahkan role database per aplikasi/tim dengan hak akses minimum yang dibutuhkan.</li>
+        <li>Aktifkan <code>pg_stat_statements</code> di lingkungan production untuk memantau query yang paling sering/lambat.</li>
+        <li>Uji migrasi skema besar di staging dengan volume data mirip production sebelum dijalankan di server nyata.</li>
+      </ul>
+    </div>
+
+    <div class="section" id="pg-ringkasan">
+      <h2>Ringkasan &amp; Roadmap Belajar</h2>
+      <ul class="step-list">
+        <li>
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <h4>Level Dasar</h4>
+            <p>Bisa instalasi, membuat database/tabel, dan menjalankan CRUD dasar dengan
+              tipe data yang tepat (terutama <code>NUMERIC</code> untuk uang &amp;
+              <code>TIMESTAMPTZ</code> untuk waktu).</p>
+          </div>
+        </li>
+        <li>
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <h4>Level Menengah</h4>
+            <p>Terbiasa mendesain relasi dengan constraint yang benar, menghubungkan
+              Postgres ke Laravel lewat migrasi &amp; Eloquent, serta menulis query
+              gabungan (join, CTE).</p>
+          </div>
+        </li>
+        <li>
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <h4>Level Lanjutan</h4>
+            <p>Memanfaatkan fitur khas Postgres (JSONB, full-text search, window
+              function), membaca <code>EXPLAIN ANALYZE</code>, dan memilih jenis index yang
+              tepat untuk kasusnya.</p>
+          </div>
+        </li>
+        <li>
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <h4>Level Profesional</h4>
+            <p>Percaya diri mengelola backup &amp; restore, memahami dasar replikasi untuk
+              scaling &amp; high availability, serta rutin memonitor performa lewat
+              <code>pg_stat_statements</code>.</p>
+          </div>
+        </li>
+      </ul>
+
+      <div class="callout success">
+        <div class="callout-title">Selamat! Modul PostgreSQL Selesai</div>
+        Kombinasikan modul ini dengan integrasi Laravel di
+        <a href="../index.html">roadmap utama</a> &mdash; sebagian besar konsep di sini
+        (migrasi, Eloquent, indexing) langsung dipakai di project Laravel manapun yang
+        memilih PostgreSQL sebagai database-nya.
+      </div>
+    </div>
+
+   </div>
+  </main>
+
+  <!-- RIGHT TOC -->
+  <aside class="toc">
+    <div class="toc-title">Daftar Isi</div>
+
+    <a href="#pg-intro">Pengenalan &amp; Instalasi</a>
+    <a class="sub" href="#pg-intro">Apa itu &amp; Kenapa Penting</a>
+    <a class="sub" href="#pg-install">Instalasi &amp; Konfigurasi</a>
+
+    <a href="#pg-crud" style="margin-top:12px;display:block">SQL Dasar &amp; Tipe Data</a>
+    <a class="sub" href="#pg-crud">CRUD Dasar</a>
+    <a class="sub" href="#pg-tipe-data">Tipe Data Khusus</a>
+
+    <a href="#pg-relasi" style="margin-top:12px;display:block">Relasi &amp; Index Dasar</a>
+    <a class="sub" href="#pg-relasi">Constraint</a>
+    <a class="sub" href="#pg-index-dasar">Index B-tree</a>
+
+    <a href="#pg-transaksi" style="margin-top:12px;display:block">Transaksi &amp; Concurrency</a>
+    <a class="sub" href="#pg-transaksi">BEGIN/COMMIT/ROLLBACK</a>
+    <a class="sub" href="#pg-isolasi">Isolation Level &amp; Deadlock</a>
+
+    <a href="#pg-laravel-setup" style="margin-top:12px;display:block">Integrasi Laravel</a>
+    <a class="sub" href="#pg-laravel-setup">Konfigurasi Koneksi</a>
+    <a class="sub" href="#pg-laravel-migrasi">Migrasi</a>
+    <a class="sub" href="#pg-laravel-eloquent">Eloquent</a>
+
+    <a href="#pg-query-lanjutan" style="margin-top:12px;display:block">Query Lanjutan</a>
+    <a class="sub" href="#pg-query-lanjutan">Join &amp; CTE</a>
+    <a class="sub" href="#pg-window">Window Functions</a>
+
+    <a href="#pg-views" style="margin-top:12px;display:block">Views, Function &amp; Trigger</a>
+    <a class="sub" href="#pg-views">View &amp; Materialized View</a>
+    <a class="sub" href="#pg-function">Function (PL/pgSQL)</a>
+    <a class="sub" href="#pg-trigger">Trigger</a>
+
+    <a href="#pg-jsonb" style="margin-top:12px;display:block">Fitur Lanjutan</a>
+    <a class="sub" href="#pg-jsonb">JSONB</a>
+    <a class="sub" href="#pg-fulltext">Full-text Search</a>
+    <a class="sub" href="#pg-array">Array</a>
+
+    <a href="#pg-roles" style="margin-top:12px;display:block">Roles &amp; RLS</a>
+    <a class="sub" href="#pg-roles">Role, GRANT &amp; REVOKE</a>
+    <a class="sub" href="#pg-rls">Row-Level Security</a>
+
+    <a href="#pg-explain" style="margin-top:12px;display:block">Indexing &amp; Performance</a>
+    <a class="sub" href="#pg-explain">EXPLAIN ANALYZE</a>
+    <a class="sub" href="#pg-index-lanjutan">Index Lanjutan</a>
+    <a class="sub" href="#pg-optimasi">Tips Optimasi</a>
+
+    <a href="#pg-partitioning" style="margin-top:12px;display:block">Table Partitioning</a>
+
+    <a href="#pg-backup" style="margin-top:12px;display:block">Backup &amp; Replikasi</a>
+    <a class="sub" href="#pg-backup">pg_dump/pg_restore</a>
+    <a class="sub" href="#pg-replikasi">Replikasi</a>
+
+    <a href="#pg-best-practice" style="margin-top:12px;display:block">Best Practice</a>
+    <a href="#pg-ringkasan" style="margin-top:12px;display:block">Ringkasan</a>
+  </aside>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'base',
+    themeVariables: {
+      primaryColor: '#e7f1ff',
+      primaryTextColor: '#212529',
+      primaryBorderColor: '#0d6efd',
+      lineColor: '#6c757d',
+      secondaryColor: '#f8f9fa',
+      tertiaryColor: '#ffffff',
+      fontSize: '14px'
+    }
+  });
+</script>
+<script>
+  // Sidebar accordion
+  document.querySelectorAll('.nav-group-title').forEach(title => {
+    title.addEventListener('click', () => {
+      title.parentElement.classList.toggle('open');
+    });
+  });
+
+  // Nav bar — sub navbar (dropdown) toggle, applies to Laravel and PostgreSQL dropdowns
+  document.querySelectorAll('.laravel-nav-trigger').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      btn.closest('.laravel-nav').classList.toggle('open');
+    });
+  });
+  document.addEventListener('click', (e) => {
+    document.querySelectorAll('.laravel-nav.open').forEach(nav => {
+      if (!nav.contains(e.target)) nav.classList.remove('open');
+    });
+  });
+
+  // Mobile sidebar toggle
+  const sidebarEl = document.querySelector('.sidebar');
+  const overlayEl = document.getElementById('sidebarOverlay');
+  const menuToggleBtn = document.getElementById('menuToggle');
+  function closeSidebar() {
+    sidebarEl.classList.remove('open');
+    overlayEl.classList.remove('show');
+  }
+  if (menuToggleBtn) {
+    menuToggleBtn.addEventListener('click', () => {
+      sidebarEl.classList.toggle('open');
+      overlayEl.classList.toggle('show');
+    });
+  }
+  if (overlayEl) overlayEl.addEventListener('click', closeSidebar);
+  document.querySelectorAll('.sidebar a').forEach(a => a.addEventListener('click', closeSidebar));
+
+  // Wrap tables so they scroll horizontally instead of breaking layout on small screens
+  document.querySelectorAll('.main table').forEach(t => {
+    if (t.closest('.table-scroll')) return;
+    const wrap = document.createElement('div');
+    wrap.className = 'table-scroll';
+    t.parentNode.insertBefore(wrap, t);
+    wrap.appendChild(t);
+  });
+
+  // Copy button on every code block
+  function copyText(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+      return navigator.clipboard.writeText(text);
+    }
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); } catch (err) {}
+    document.body.removeChild(ta);
+    return Promise.resolve();
+  }
+  document.querySelectorAll('pre').forEach(pre => {
+    const codeEl = pre.querySelector('code');
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'copy-btn';
+    btn.textContent = 'Copy';
+    btn.setAttribute('aria-label', 'Salin kode');
+    btn.addEventListener('click', () => {
+      const text = (codeEl ? codeEl.textContent : pre.textContent).trim();
+      copyText(text).then(() => {
+        btn.textContent = 'Copied!';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = 'Copy';
+          btn.classList.remove('copied');
+        }, 1500);
+      });
+    });
+    pre.appendChild(btn);
+  });
+
+  // Scroll spy for sidebar + TOC + both navbar dropdowns
+  const sections = document.querySelectorAll('.section[id]');
+  const navLinks = document.querySelectorAll('.nav-link');
+  const tocLinks = document.querySelectorAll('.toc a');
+  const dropdownLinks = document.querySelectorAll('.laravel-nav-item');
+
+  function setActive(links, id) {
+    links.forEach(l => {
+      l.classList.toggle('active', l.getAttribute('href') === '#' + id);
+    });
+  }
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        setActive(navLinks, entry.target.id);
+        setActive(tocLinks, entry.target.id);
+        setActive(dropdownLinks, entry.target.id);
+        const activeLink = document.querySelector('.nav-link.active');
+        if (activeLink) {
+          const group = activeLink.closest('.nav-group');
+          if (group) group.classList.add('open');
+        }
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+
+  sections.forEach(s => observer.observe(s));
+</script>
+
+<script src="../search-index.js"></script>
+<script>
+(function() {
+  var SEARCH_PREFIX = '../';
+  var input = document.getElementById('searchInput');
+  var resultsBox = document.getElementById('searchResults');
+  if (!input || !resultsBox || typeof SEARCH_INDEX === 'undefined') return;
+
+  function escapeHtml(s) {
+    return s.replace(/[&<>"']/g, function (c) {
+      return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c];
+    });
+  }
+  function highlight(text, q) {
+    if (!q) return escapeHtml(text);
+    var idx = text.toLowerCase().indexOf(q.toLowerCase());
+    if (idx === -1) return escapeHtml(text);
+    return escapeHtml(text.slice(0, idx)) + '<mark>' + escapeHtml(text.slice(idx, idx + q.length)) + '</mark>' + escapeHtml(text.slice(idx + q.length));
+  }
+
+  function search(query) {
+    var q = query.trim().toLowerCase();
+    if (!q) return [];
+    return SEARCH_INDEX
+      .map(function (entry) {
+        var hay = (entry.title + ' ' + entry.category + ' ' + entry.keywords + ' ' + entry.snippet).toLowerCase();
+        if (hay.indexOf(q) === -1) return null;
+        var score = 3;
+        if (entry.title.toLowerCase().indexOf(q) !== -1) score = 0;
+        else if (entry.category.toLowerCase().indexOf(q) !== -1) score = 1;
+        else if (entry.keywords.toLowerCase().indexOf(q) !== -1) score = 2;
+        return { entry: entry, score: score };
+      })
+      .filter(function (x) { return x; })
+      .sort(function (a, b) { return a.score - b.score; })
+      .slice(0, 20)
+      .map(function (x) { return x.entry; });
+  }
+
+  function render(query) {
+    var results = search(query);
+    if (!query.trim()) {
+      resultsBox.classList.remove('show');
+      resultsBox.innerHTML = '';
+      return;
+    }
+    if (results.length === 0) {
+      resultsBox.innerHTML = '<div class="site-search-empty">Tidak ada hasil untuk &quot;' + escapeHtml(query) + '&quot;</div>';
+      resultsBox.classList.add('show');
+      return;
+    }
+    resultsBox.innerHTML = results.map(function (r) {
+      return '<a class="site-search-item" href="' + SEARCH_PREFIX + r.url + '">' +
+        '<div class="ssi-title">' + highlight(r.title, query) + '</div>' +
+        '<div class="ssi-meta">' + escapeHtml(r.category) + '</div>' +
+        (r.snippet ? '<div class="ssi-snippet">' + escapeHtml(r.snippet) + '</div>' : '') +
+        '</a>';
+    }).join('');
+    resultsBox.classList.add('show');
+  }
+
+  input.addEventListener('input', function () { render(input.value); });
+  input.addEventListener('focus', function () { if (input.value.trim()) render(input.value); });
+  document.addEventListener('click', function (e) {
+    if (!e.target.closest('.site-search')) resultsBox.classList.remove('show');
+  });
+  input.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') { resultsBox.classList.remove('show'); input.blur(); }
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === '/' && document.activeElement !== input &&
+        document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+      e.preventDefault();
+      input.focus();
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

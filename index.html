@@ -50,6 +50,35 @@
       color: var(--muted); font-size: 13px; margin-left: auto;
       white-space: nowrap;
     }
+
+    .site-search { position: relative; flex: 1 1 260px; max-width: 340px; margin-left: 12px; }
+    .site-search-input {
+      width: 100%; padding: 7px 12px; font-size: 13px;
+      border: 1px solid var(--border); border-radius: 6px;
+      font-family: inherit; outline: none; color: var(--text); background: #fff;
+    }
+    .site-search-input:focus { border-color: var(--accent); }
+    .site-search-results {
+      display: none;
+      position: absolute; top: calc(100% + 8px); left: 0; right: 0;
+      max-height: 70vh; overflow-y: auto;
+      background: #fff; border: 1px solid var(--border); border-radius: 10px;
+      box-shadow: 0 12px 32px rgba(0,0,0,.14);
+      padding: 6px; z-index: 250;
+    }
+    .site-search-results.show { display: block; }
+    .site-search-item {
+      display: block; padding: 8px 10px; border-radius: 8px;
+      text-decoration: none; color: var(--text);
+    }
+    .site-search-item:hover, .site-search-item.active { background: var(--accent-light); }
+    .site-search-item .ssi-title { font-size: 13px; font-weight: 600; }
+    .site-search-item .ssi-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .site-search-item .ssi-snippet { font-size: 12px; color: var(--muted); margin-top: 4px; }
+    .site-search-empty { padding: 14px; font-size: 13px; color: var(--muted); text-align: center; }
+    .site-search mark { background: #fff3cd; color: inherit; border-radius: 2px; padding: 0 1px; }
+    @media (max-width: 900px) { .site-search { flex-basis: 140px; } }
+
     /* LARAVEL NAV BAR + SUB NAVBAR (dropdown by Fokus Utama) */
     .laravel-nav { position: relative; margin-left: 24px; }
     .laravel-nav-trigger {
@@ -335,31 +364,70 @@
     <button class="laravel-nav-trigger" type="button">Laravel <span class="caret">&#9662;</span></button>
     <div class="laravel-nav-menu">
       <a class="laravel-nav-item" href="#minggu-1"><span class="lni-week">M1</span><span class="lni-title">Core Laravel &amp; Database</span></a>
-      <a class="laravel-nav-item" href="modul-arsitektur-otorisasi.html"><span class="lni-week">M2</span><span class="lni-title">Arsitektur Kode &amp; Otorisasi</span></a>
+      <a class="laravel-nav-item" href="laravel/modul-arsitektur-otorisasi.html"><span class="lni-week">M2</span><span class="lni-title">Arsitektur Kode &amp; Otorisasi</span></a>
       <a class="laravel-nav-item" href="#minggu-3"><span class="lni-week">M3</span><span class="lni-title">Testing &amp; Optimasi</span></a>
-      <a class="laravel-nav-item" href="modul-observability.html"><span class="lni-week">M4</span><span class="lni-title">Observability</span></a>
-      <a class="laravel-nav-item" href="modul-api-design-realtime.html"><span class="lni-week">M5</span><span class="lni-title">API Design &amp; Real-time</span></a>
-      <a class="laravel-nav-item" href="modul-security-deepdive.html"><span class="lni-week">M6</span><span class="lni-title">Security Deep-dive</span></a>
-      <a class="laravel-nav-item" href="modul-capstone-ecommerce.html"><span class="lni-week">M7</span><span class="lni-title">Capstone Project: E-commerce</span></a>
-      <a class="laravel-nav-item" href="modul-containerization-deployment.html"><span class="lni-week">M8</span><span class="lni-title">Containerization &amp; Deployment</span></a>
-      <a class="laravel-nav-item" href="modul-cloud-infrastructure.html"><span class="lni-week">M9</span><span class="lni-title">Cloud &amp; Infrastructure</span></a>
-      <a class="laravel-nav-item" href="modul-skala-besar.html"><span class="lni-week">M10</span><span class="lni-title">Skala Besar</span></a>
-      <a class="laravel-nav-item" href="modul-system-design.html"><span class="lni-week">M11</span><span class="lni-title">System Design</span></a>
+      <a class="laravel-nav-item" href="laravel/modul-observability.html"><span class="lni-week">M4</span><span class="lni-title">Observability</span></a>
+      <a class="laravel-nav-item" href="laravel/modul-api-design-realtime.html"><span class="lni-week">M5</span><span class="lni-title">API Design &amp; Real-time</span></a>
+      <a class="laravel-nav-item" href="laravel/modul-security-deepdive.html"><span class="lni-week">M6</span><span class="lni-title">Security Deep-dive</span></a>
+      <a class="laravel-nav-item" href="laravel/modul-capstone-ecommerce.html"><span class="lni-week">M7</span><span class="lni-title">Capstone Project: E-commerce</span></a>
+      <a class="laravel-nav-item" href="laravel/modul-containerization-deployment.html"><span class="lni-week">M8</span><span class="lni-title">Containerization &amp; Deployment</span></a>
+      <a class="laravel-nav-item" href="laravel/modul-cloud-infrastructure.html"><span class="lni-week">M9</span><span class="lni-title">Cloud &amp; Infrastructure</span></a>
+      <a class="laravel-nav-item" href="laravel/modul-skala-besar.html"><span class="lni-week">M10</span><span class="lni-title">Skala Besar</span></a>
+      <a class="laravel-nav-item" href="laravel/modul-system-design.html"><span class="lni-week">M11</span><span class="lni-title">System Design</span></a>
     </div>
   </div>
   <div class="laravel-nav" id="gitNav">
     <button class="laravel-nav-trigger" type="button">GIT <span class="caret">&#9662;</span></button>
     <div class="laravel-nav-menu">
-      <a class="laravel-nav-item" href="modul-git.html#git-intro"><span class="lni-week">G1</span><span class="lni-title">Pengenalan Git</span></a>
-      <a class="laravel-nav-item" href="modul-git.html#git-konsep"><span class="lni-week">G2</span><span class="lni-title">Konsep &amp; Alur Kerja</span></a>
-      <a class="laravel-nav-item" href="modul-git.html#git-dasar"><span class="lni-week">G3</span><span class="lni-title">Perintah Dasar</span></a>
-      <a class="laravel-nav-item" href="modul-git.html#git-branch"><span class="lni-week">G4</span><span class="lni-title">Branching &amp; Merging</span></a>
-      <a class="laravel-nav-item" href="modul-git.html#git-remote"><span class="lni-week">G5</span><span class="lni-title">Remote &amp; Kolaborasi</span></a>
-      <a class="laravel-nav-item" href="modul-git.html#git-strategi"><span class="lni-week">G6</span><span class="lni-title">Strategi Branching</span></a>
-      <a class="laravel-nav-item" href="modul-git.html#git-rebase"><span class="lni-week">G7</span><span class="lni-title">Teknik Lanjutan</span></a>
-      <a class="laravel-nav-item" href="modul-git.html#git-best-practice"><span class="lni-week">G8</span><span class="lni-title">Best Practice</span></a>
-      <a class="laravel-nav-item" href="modul-git.html#git-ringkasan"><span class="lni-week">G9</span><span class="lni-title">Ringkasan</span></a>
+      <a class="laravel-nav-item" href="git/modul-git.html#git-intro"><span class="lni-week">G1</span><span class="lni-title">Pengenalan Git</span></a>
+      <a class="laravel-nav-item" href="git/modul-git.html#git-konsep"><span class="lni-week">G2</span><span class="lni-title">Konsep &amp; Alur Kerja</span></a>
+      <a class="laravel-nav-item" href="git/modul-git.html#git-dasar"><span class="lni-week">G3</span><span class="lni-title">Perintah Dasar</span></a>
+      <a class="laravel-nav-item" href="git/modul-git.html#git-branch"><span class="lni-week">G4</span><span class="lni-title">Branching &amp; Merging</span></a>
+      <a class="laravel-nav-item" href="git/modul-git.html#git-remote"><span class="lni-week">G5</span><span class="lni-title">Remote &amp; Kolaborasi</span></a>
+      <a class="laravel-nav-item" href="git/modul-git.html#git-strategi"><span class="lni-week">G6</span><span class="lni-title">Strategi Branching</span></a>
+      <a class="laravel-nav-item" href="git/modul-git.html#git-rebase"><span class="lni-week">G7</span><span class="lni-title">Teknik Lanjutan</span></a>
+      <a class="laravel-nav-item" href="git/modul-git.html#git-best-practice"><span class="lni-week">G8</span><span class="lni-title">Best Practice</span></a>
+      <a class="laravel-nav-item" href="git/modul-git.html#git-ringkasan"><span class="lni-week">G9</span><span class="lni-title">Ringkasan</span></a>
     </div>
+  </div>
+  <div class="laravel-nav" id="restApiNav">
+    <button class="laravel-nav-trigger" type="button">REST API <span class="caret">&#9662;</span></button>
+    <div class="laravel-nav-menu">
+      <a class="laravel-nav-item" href="rest-api-tps/modul-rest-api-tps.html#tps-intro"><span class="lni-week">R1</span><span class="lni-title">Ringkasan &amp; Arsitektur</span></a>
+      <a class="laravel-nav-item" href="rest-api-tps/modul-rest-api-tps.html#tps-setup"><span class="lni-week">R2</span><span class="lni-title">Setup Project (Laravel, JWT, Swagger)</span></a>
+      <a class="laravel-nav-item" href="rest-api-tps/modul-rest-api-tps.html#tps-database"><span class="lni-week">R3</span><span class="lni-title">Database &amp; Migrasi</span></a>
+      <a class="laravel-nav-item" href="rest-api-tps/modul-rest-api-tps.html#tps-auth"><span class="lni-week">R4</span><span class="lni-title">Autentikasi JWT &amp; RBAC</span></a>
+      <a class="laravel-nav-item" href="rest-api-tps/modul-rest-api-tps.html#tps-wajibpajak"><span class="lni-week">R5</span><span class="lni-title">Wajib Pajak &amp; Validasi</span></a>
+      <a class="laravel-nav-item" href="rest-api-tps/modul-rest-api-tps.html#tps-kewajiban"><span class="lni-week">R6</span><span class="lni-title">Kewajiban Pajak &amp; Denda Otomatis</span></a>
+      <a class="laravel-nav-item" href="rest-api-tps/modul-rest-api-tps.html#tps-pembayaran"><span class="lni-week">R7</span><span class="lni-title">Pembayaran Cicilan</span></a>
+      <a class="laravel-nav-item" href="rest-api-tps/modul-rest-api-tps.html#tps-laporan"><span class="lni-week">R8</span><span class="lni-title">Laporan &amp; Filter</span></a>
+      <a class="laravel-nav-item" href="rest-api-tps/modul-rest-api-tps.html#tps-audit"><span class="lni-week">R9</span><span class="lni-title">Audit Trail</span></a>
+      <a class="laravel-nav-item" href="rest-api-tps/modul-rest-api-tps.html#tps-swagger"><span class="lni-week">R10</span><span class="lni-title">Dokumentasi API (Swagger)</span></a>
+      <a class="laravel-nav-item" href="rest-api-tps/modul-rest-api-tps.html#tps-testing"><span class="lni-week">R11</span><span class="lni-title">Testing</span></a>
+      <a class="laravel-nav-item" href="rest-api-tps/modul-rest-api-tps.html#tps-ringkasan"><span class="lni-week">R12</span><span class="lni-title">Ringkasan Alur Iteratif</span></a>
+    </div>
+  </div>
+  <div class="laravel-nav" id="postgresNav">
+    <button class="laravel-nav-trigger" type="button">POSTGRESQL <span class="caret">&#9662;</span></button>
+    <div class="laravel-nav-menu">
+      <a class="laravel-nav-item" href="postgresql/modul-postgresql.html#pg-intro"><span class="lni-week">P1</span><span class="lni-title">Pengenalan &amp; Instalasi</span></a>
+      <a class="laravel-nav-item" href="postgresql/modul-postgresql.html#pg-crud"><span class="lni-week">P2</span><span class="lni-title">SQL Dasar &amp; Tipe Data</span></a>
+      <a class="laravel-nav-item" href="postgresql/modul-postgresql.html#pg-relasi"><span class="lni-week">P3</span><span class="lni-title">Relasi, Constraint &amp; Index Dasar</span></a>
+      <a class="laravel-nav-item" href="postgresql/modul-postgresql.html#pg-transaksi"><span class="lni-week">P4</span><span class="lni-title">Transaksi &amp; Concurrency</span></a>
+      <a class="laravel-nav-item" href="postgresql/modul-postgresql.html#pg-laravel-setup"><span class="lni-week">P5</span><span class="lni-title">Integrasi dengan Laravel</span></a>
+      <a class="laravel-nav-item" href="postgresql/modul-postgresql.html#pg-query-lanjutan"><span class="lni-week">P6</span><span class="lni-title">Query Lanjutan</span></a>
+      <a class="laravel-nav-item" href="postgresql/modul-postgresql.html#pg-views"><span class="lni-week">P7</span><span class="lni-title">Views, Function &amp; Trigger</span></a>
+      <a class="laravel-nav-item" href="postgresql/modul-postgresql.html#pg-jsonb"><span class="lni-week">P8</span><span class="lni-title">Fitur Lanjutan PostgreSQL</span></a>
+      <a class="laravel-nav-item" href="postgresql/modul-postgresql.html#pg-roles"><span class="lni-week">P9</span><span class="lni-title">Roles &amp; Row-Level Security</span></a>
+      <a class="laravel-nav-item" href="postgresql/modul-postgresql.html#pg-explain"><span class="lni-week">P10</span><span class="lni-title">Indexing &amp; Performance Tuning</span></a>
+      <a class="laravel-nav-item" href="postgresql/modul-postgresql.html#pg-partitioning"><span class="lni-week">P11</span><span class="lni-title">Table Partitioning</span></a>
+      <a class="laravel-nav-item" href="postgresql/modul-postgresql.html#pg-backup"><span class="lni-week">P12</span><span class="lni-title">Backup, Restore &amp; Replikasi</span></a>
+      <a class="laravel-nav-item" href="postgresql/modul-postgresql.html#pg-ringkasan"><span class="lni-week">P13</span><span class="lni-title">Best Practice &amp; Ringkasan</span></a>
+    </div>
+  </div>
+    <div class="site-search" id="siteSearch">
+    <input type="text" id="searchInput" class="site-search-input" placeholder="Cari modul... ( tekan / )" autocomplete="off" />
+    <div class="site-search-results" id="searchResults"></div>
   </div>
   <span class="topbar-subtitle">Roadmap Belajar Laravel &mdash; E-Catatan</span>
 </header>
@@ -390,6 +458,20 @@
       <div class="nav-group-title"><span class="arrow">&#9654;</span> Git</div>
       <div class="nav-group-items">
         <a class="nav-link done" href="#modul-git"><span class="dot"></span> Version Control Pemula &mdash; Profesional</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> REST API</div>
+      <div class="nav-group-items">
+        <a class="nav-link done" href="#modul-rest-api-tps"><span class="dot"></span> Studi Kasus Tax Processing System</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> PostgreSQL</div>
+      <div class="nav-group-items">
+        <a class="nav-link done" href="#modul-postgresql"><span class="dot"></span> Dasar sampai Lanjutan</a>
       </div>
     </div>
 
@@ -424,6 +506,8 @@
           <tr><td>10</td><td>Skala Besar</td><td><span class="badge badge-green">Tersedia</span></td></tr>
           <tr><td>11</td><td>System Design</td><td><span class="badge badge-green">Tersedia</span></td></tr>
           <tr><td>Git</td><td>Version Control &mdash; Pemula sampai Profesional</td><td><span class="badge badge-green">Tersedia</span></td></tr>
+          <tr><td>REST API</td><td>Studi Kasus &mdash; Tax Processing System</td><td><span class="badge badge-green">Tersedia</span></td></tr>
+          <tr><td>PostgreSQL</td><td>Database &mdash; Dasar sampai Lanjutan</td><td><span class="badge badge-green">Tersedia</span></td></tr>
         </tbody>
       </table>
     </div>
@@ -435,8 +519,8 @@
         query dasar (N+1 &amp; indexing), keamanan dasar (CSRF, XSS, SQL Injection), REST API,
         dan autentikasi JWT.</p>
       <ul>
-        <li><a href="modul-rest-api-sanctum.html"><strong>Modul utama</strong> &mdash; Instalasi (XAMPP/WSL), CRUD, Eloquent &amp; Relasi, Query Optimization, REST API + Sanctum, Keamanan</a></li>
-        <li><a href="modul-rest-api-jwt.html"><strong>Lanjutan</strong> &mdash; Workshop autentikasi API dengan JWT</a></li>
+        <li><a href="laravel/modul-rest-api-sanctum.html"><strong>Modul utama</strong> &mdash; Instalasi (XAMPP/WSL), CRUD, Eloquent &amp; Relasi, Query Optimization, REST API + Sanctum, Keamanan</a></li>
+        <li><a href="laravel/modul-rest-api-jwt.html"><strong>Lanjutan</strong> &mdash; Workshop autentikasi API dengan JWT</a></li>
       </ul>
     </div>
 
@@ -445,7 +529,7 @@
       <h2>Minggu 2 &mdash; Arsitektur Kode &amp; Otorisasi <span class="badge badge-green">Tersedia</span></h2>
       <p>Repository/Service Pattern, Middleware &amp; Validation, Roles &amp; Permission (Spatie), Rate Limiting.</p>
       <ul>
-        <li><a href="modul-arsitektur-otorisasi.html"><strong>Modul</strong> &mdash; Repository/Service Pattern, Custom Middleware &amp; Form Request, Spatie Roles &amp; Permission, Rate Limiting</a></li>
+        <li><a href="laravel/modul-arsitektur-otorisasi.html"><strong>Modul</strong> &mdash; Repository/Service Pattern, Custom Middleware &amp; Form Request, Spatie Roles &amp; Permission, Rate Limiting</a></li>
       </ul>
     </div>
 
@@ -454,7 +538,7 @@
       <h2>Minggu 3 &mdash; Testing &amp; Optimasi <span class="badge badge-green">Tersedia</span></h2>
       <p>Pest/PHPUnit, Redis (cache &amp; session), Laravel Horizon (queue).</p>
       <ul>
-        <li><a href="modul-optimasi.html"><strong>Modul</strong> &mdash; Redis, Laravel Horizon, Pest/PHPUnit</a></li>
+        <li><a href="laravel/modul-optimasi.html"><strong>Modul</strong> &mdash; Redis, Laravel Horizon, Pest/PHPUnit</a></li>
       </ul>
     </div>
 
@@ -463,7 +547,7 @@
       <h2>Minggu 4 &mdash; Observability <span class="badge badge-green">Tersedia</span></h2>
       <p>Laravel Telescope, Logging (Monolog), Error Tracking (Sentry).</p>
       <ul>
-        <li><a href="modul-observability.html"><strong>Modul</strong> &mdash; Laravel Telescope, Logging &amp; Monolog Channel, Error Tracking dengan Sentry</a></li>
+        <li><a href="laravel/modul-observability.html"><strong>Modul</strong> &mdash; Laravel Telescope, Logging &amp; Monolog Channel, Error Tracking dengan Sentry</a></li>
       </ul>
     </div>
 
@@ -472,7 +556,7 @@
       <h2>Minggu 5 &mdash; API Design &amp; Real-time <span class="badge badge-green">Tersedia</span></h2>
       <p>OpenAPI/Swagger, API Versioning, WebSocket/Broadcasting (Laravel Reverb).</p>
       <ul>
-        <li><a href="modul-api-design-realtime.html"><strong>Modul</strong> &mdash; API Versioning, Dokumentasi OpenAPI/Swagger, Real-time dengan Laravel Reverb</a></li>
+        <li><a href="laravel/modul-api-design-realtime.html"><strong>Modul</strong> &mdash; API Versioning, Dokumentasi OpenAPI/Swagger, Real-time dengan Laravel Reverb</a></li>
       </ul>
     </div>
 
@@ -481,7 +565,7 @@
       <h2>Minggu 6 &mdash; Security Deep-dive <span class="badge badge-green">Tersedia</span></h2>
       <p>OWASP Top 10, Encryption &amp; Secrets Management, API Security Hardening.</p>
       <ul>
-        <li><a href="modul-security-deepdive.html"><strong>Modul</strong> &mdash; OWASP Top 10, Encryption &amp; Secrets Management, API Security Hardening</a></li>
+        <li><a href="laravel/modul-security-deepdive.html"><strong>Modul</strong> &mdash; OWASP Top 10, Encryption &amp; Secrets Management, API Security Hardening</a></li>
       </ul>
     </div>
 
@@ -490,7 +574,7 @@
       <h2>Minggu 7 &mdash; Capstone Project: E-commerce <span class="badge badge-green">Tersedia</span></h2>
       <p>Bangun API e-commerce lengkap (produk, cart, checkout, payment gateway, order management) menerapkan skill Minggu 1&ndash;6.</p>
       <ul>
-        <li><a href="modul-capstone-ecommerce.html"><strong>Modul</strong> &mdash; Shopping Cart, Checkout &amp; Order State Machine, Payment Gateway (Midtrans), menggabungkan skill Minggu 1&ndash;6</a></li>
+        <li><a href="laravel/modul-capstone-ecommerce.html"><strong>Modul</strong> &mdash; Shopping Cart, Checkout &amp; Order State Machine, Payment Gateway (Midtrans), menggabungkan skill Minggu 1&ndash;6</a></li>
       </ul>
     </div>
 
@@ -499,7 +583,7 @@
       <h2>Minggu 8 &mdash; Containerization &amp; Deployment <span class="badge badge-green">Tersedia</span></h2>
       <p>Docker, CI/CD (GitHub Actions), k6 (Load Testing) &mdash; diterapkan ke project e-commerce.</p>
       <ul>
-        <li><a href="modul-containerization-deployment.html"><strong>Modul</strong> &mdash; Install Docker Desktop, Dockerize Laravel, CI/CD dengan GitHub Actions, Install &amp; jalankan k6 Load Testing</a></li>
+        <li><a href="laravel/modul-containerization-deployment.html"><strong>Modul</strong> &mdash; Install Docker Desktop, Dockerize Laravel, CI/CD dengan GitHub Actions, Install &amp; jalankan k6 Load Testing</a></li>
       </ul>
     </div>
 
@@ -508,7 +592,7 @@
       <h2>Minggu 9 &mdash; Cloud &amp; Infrastructure <span class="badge badge-green">Tersedia</span></h2>
       <p>Nginx/Supervisor, Cloud (AWS/GCP), Infrastructure as Code (Terraform) &mdash; deploy project e-commerce.</p>
       <ul>
-        <li><a href="modul-cloud-infrastructure.html"><strong>Modul</strong> &mdash; Install &amp; konfigurasi Nginx/Supervisor, Install CLI AWS/GCP, Install Terraform, Deploy E-commerce ke Cloud</a></li>
+        <li><a href="laravel/modul-cloud-infrastructure.html"><strong>Modul</strong> &mdash; Install &amp; konfigurasi Nginx/Supervisor, Install CLI AWS/GCP, Install Terraform, Deploy E-commerce ke Cloud</a></li>
       </ul>
     </div>
 
@@ -517,7 +601,7 @@
       <h2>Minggu 10 &mdash; Skala Besar <span class="badge badge-green">Tersedia</span></h2>
       <p>Microservices Architecture, Message Brokers (Kafka/RabbitMQ), CQRS &amp; Event Sourcing, Kubernetes.</p>
       <ul>
-        <li><a href="modul-skala-besar.html"><strong>Modul</strong> &mdash; Microservices, Install RabbitMQ/Kafka, CQRS &amp; Event Sourcing, Install kubectl/Minikube</a></li>
+        <li><a href="laravel/modul-skala-besar.html"><strong>Modul</strong> &mdash; Microservices, Install RabbitMQ/Kafka, CQRS &amp; Event Sourcing, Install kubectl/Minikube</a></li>
       </ul>
     </div>
 
@@ -526,14 +610,14 @@
       <h2>Minggu 11 &mdash; System Design <span class="badge badge-green">Tersedia</span></h2>
       <p>Database Sharding &amp; Replication, Load Balancing, Distributed Systems (CAP Theorem).</p>
       <ul>
-        <li><a href="modul-system-design.html"><strong>Modul</strong> &mdash; Database Replication &amp; Sharding, Load Balancing (Nginx), Distributed Systems &amp; CAP Theorem</a></li>
+        <li><a href="laravel/modul-system-design.html"><strong>Modul</strong> &mdash; Database Replication &amp; Sharding, Load Balancing (Nginx), Distributed Systems &amp; CAP Theorem</a></li>
       </ul>
 
       <div class="callout success">
         <div class="callout-title">&#127881; Roadmap 11 Minggu Selesai!</div>
         Semua modul dari Minggu 1 sampai Minggu 11 sudah tersedia &mdash; dari instalasi
         Laravel pertama sampai memahami CAP Theorem. Mulai dari
-        <a href="modul-rest-api-sanctum.html"><strong>Minggu 1</strong></a> kalau baru mulai,
+        <a href="laravel/modul-rest-api-sanctum.html"><strong>Minggu 1</strong></a> kalau baru mulai,
         atau langsung ke modul mana pun lewat menu <strong>Laravel</strong> di atas.
       </div>
 
@@ -554,7 +638,33 @@
         lewat remote, strategi branching (Git Flow/GitHub Flow/Trunk-based), teknik lanjutan
         (rebase, cherry-pick, stash), sampai best practice tim profesional.</p>
       <ul>
-        <li><a href="modul-git.html"><strong>Modul</strong> &mdash; Instalasi &amp; Konfigurasi, Alur Kerja, Branching &amp; Merging, Remote &amp; Kolaborasi, Strategi Branching, Teknik Lanjutan, Best Practice</a></li>
+        <li><a href="git/modul-git.html"><strong>Modul</strong> &mdash; Instalasi &amp; Konfigurasi, Alur Kerja, Branching &amp; Merging, Remote &amp; Kolaborasi, Strategi Branching, Teknik Lanjutan, Best Practice</a></li>
+      </ul>
+    </div>
+
+    <!-- MODUL REST API -->
+    <div class="section" id="modul-rest-api-tps">
+      <h2>REST API &mdash; Studi Kasus Tax Processing System <span class="badge badge-green">Tersedia</span></h2>
+      <p>Langkah-langkah nyata membangun REST API pengelolaan pajak dengan Laravel 12: setup
+        project, autentikasi JWT &amp; RBAC, validasi data wajib pajak, perhitungan denda
+        otomatis, pembayaran cicilan, audit trail, dokumentasi Swagger, sampai testing &mdash;
+        lengkap dengan alasan di balik keputusan desain yang tidak trivial.</p>
+      <ul>
+        <li><a href="rest-api-tps/modul-rest-api-tps.html"><strong>Modul</strong> &mdash; Setup Laravel + JWT + Swagger, Database &amp; Migrasi, Autentikasi &amp; RBAC, Validasi Wajib Pajak, Denda Otomatis, Pembayaran Cicilan, Laporan, Audit Trail, Testing</a></li>
+      </ul>
+    </div>
+
+    <!-- MODUL POSTGRESQL -->
+    <div class="section" id="modul-postgresql">
+      <h2>PostgreSQL &mdash; Database Dasar sampai Lanjutan <span class="badge badge-green">Tersedia</span></h2>
+      <p>Panduan lengkap PostgreSQL dari nol sampai level yang dipakai production: instalasi,
+        SQL dasar &amp; tipe data khusus, relasi &amp; constraint, transaksi &amp; concurrency
+        (ACID, isolation level, deadlock), integrasi penuh dengan Laravel, query lanjutan
+        (join, CTE, window function), view/function/trigger, fitur khas Postgres (JSONB,
+        full-text search, array), roles &amp; row-level security, indexing &amp; performance
+        tuning, table partitioning, sampai backup/restore dan replikasi dasar.</p>
+      <ul>
+        <li><a href="postgresql/modul-postgresql.html"><strong>Modul</strong> &mdash; Instalasi, SQL Dasar &amp; Tipe Data, Relasi &amp; Index, Transaksi &amp; Concurrency, Integrasi Laravel, Query Lanjutan, Views/Function/Trigger, JSONB &amp; Full-text Search, Roles &amp; RLS, Performance Tuning, Partitioning, Backup &amp; Replikasi</a></li>
       </ul>
     </div>
 
@@ -576,6 +686,8 @@
     <a href="#minggu-10">Minggu 10 &mdash; Skala Besar</a>
     <a href="#minggu-11">Minggu 11 &mdash; System Design</a>
     <a href="#modul-git">Git &mdash; Version Control</a>
+    <a href="#modul-rest-api-tps">REST API &mdash; Tax Processing System</a>
+    <a href="#modul-postgresql">PostgreSQL &mdash; Dasar sampai Lanjutan</a>
   </aside>
 
 </div>
@@ -643,6 +755,85 @@
 
   window.addEventListener('scroll', onScroll, { passive: true });
   onScroll();
+</script>
+
+<script src="search-index.js"></script>
+<script>
+(function() {
+  var SEARCH_PREFIX = '';
+  var input = document.getElementById('searchInput');
+  var resultsBox = document.getElementById('searchResults');
+  if (!input || !resultsBox || typeof SEARCH_INDEX === 'undefined') return;
+
+  function escapeHtml(s) {
+    return s.replace(/[&<>"']/g, function (c) {
+      return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c];
+    });
+  }
+  function highlight(text, q) {
+    if (!q) return escapeHtml(text);
+    var idx = text.toLowerCase().indexOf(q.toLowerCase());
+    if (idx === -1) return escapeHtml(text);
+    return escapeHtml(text.slice(0, idx)) + '<mark>' + escapeHtml(text.slice(idx, idx + q.length)) + '</mark>' + escapeHtml(text.slice(idx + q.length));
+  }
+
+  function search(query) {
+    var q = query.trim().toLowerCase();
+    if (!q) return [];
+    return SEARCH_INDEX
+      .map(function (entry) {
+        var hay = (entry.title + ' ' + entry.category + ' ' + entry.keywords + ' ' + entry.snippet).toLowerCase();
+        if (hay.indexOf(q) === -1) return null;
+        var score = 3;
+        if (entry.title.toLowerCase().indexOf(q) !== -1) score = 0;
+        else if (entry.category.toLowerCase().indexOf(q) !== -1) score = 1;
+        else if (entry.keywords.toLowerCase().indexOf(q) !== -1) score = 2;
+        return { entry: entry, score: score };
+      })
+      .filter(function (x) { return x; })
+      .sort(function (a, b) { return a.score - b.score; })
+      .slice(0, 20)
+      .map(function (x) { return x.entry; });
+  }
+
+  function render(query) {
+    var results = search(query);
+    if (!query.trim()) {
+      resultsBox.classList.remove('show');
+      resultsBox.innerHTML = '';
+      return;
+    }
+    if (results.length === 0) {
+      resultsBox.innerHTML = '<div class="site-search-empty">Tidak ada hasil untuk &quot;' + escapeHtml(query) + '&quot;</div>';
+      resultsBox.classList.add('show');
+      return;
+    }
+    resultsBox.innerHTML = results.map(function (r) {
+      return '<a class="site-search-item" href="' + SEARCH_PREFIX + r.url + '">' +
+        '<div class="ssi-title">' + highlight(r.title, query) + '</div>' +
+        '<div class="ssi-meta">' + escapeHtml(r.category) + '</div>' +
+        (r.snippet ? '<div class="ssi-snippet">' + escapeHtml(r.snippet) + '</div>' : '') +
+        '</a>';
+    }).join('');
+    resultsBox.classList.add('show');
+  }
+
+  input.addEventListener('input', function () { render(input.value); });
+  input.addEventListener('focus', function () { if (input.value.trim()) render(input.value); });
+  document.addEventListener('click', function (e) {
+    if (!e.target.closest('.site-search')) resultsBox.classList.remove('show');
+  });
+  input.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') { resultsBox.classList.remove('show'); input.blur(); }
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === '/' && document.activeElement !== input &&
+        document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+      e.preventDefault();
+      input.focus();
+    }
+  });
+})();
 </script>
 
 </body>
