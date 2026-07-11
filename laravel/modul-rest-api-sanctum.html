@@ -521,7 +521,6 @@
       <div class="nav-group-title"><span class="arrow">&#9654;</span> Testing &amp; Debugging</div>
       <div class="nav-group-items">
         <a class="nav-link" href="#test-postman">Test dengan Postman</a>
-        <a class="nav-link" href="#test-curl">Test dengan cURL</a>
         <a class="nav-link" href="#error-umum">Error Umum &amp; Solusi</a>
       </div>
     </div>
@@ -2259,14 +2258,30 @@ php artisan migrate</code></pre>
         </tbody>
       </table>
 
+      <h3>Body Request Register</h3>
+      <p>Endpoint <code>POST /api/register</code> tidak perlu header <code>Authorization</code>. Field wajib mengikuti validasi di <code>AuthController::register()</code>:</p>
+      <div class="pre-label">Body (raw JSON)</div>
+      <pre><code>{
+  <span class="str">"name"</span>: <span class="str">"Test User"</span>,
+  <span class="str">"email"</span>: <span class="str">"test@example.com"</span>,
+  <span class="str">"password"</span>: <span class="str">"password123"</span>,
+  <span class="str">"password_confirmation"</span>: <span class="str">"password123"</span>
+}</code></pre>
+      <div class="callout warning">
+        <div class="callout-title">Jangan lupa <code>password_confirmation</code></div>
+        Rule <code>confirmed</code> pada field <code>password</code> mewajibkan field <code>password_confirmation</code> dengan nilai yang sama. Kalau tidak dikirim atau nilainya beda, response akan <code>422</code>.
+      </div>
+
       <h3>Body Request Login</h3>
+      <p>Endpoint <code>POST /api/login</code> juga tanpa header <code>Authorization</code>. Response sukses berisi <code>token</code> yang disalin ke variabel Postman <code>token</code>.</p>
       <div class="pre-label">Body (raw JSON)</div>
       <pre><code>{
   <span class="str">"email"</span>: <span class="str">"test@example.com"</span>,
   <span class="str">"password"</span>: <span class="str">"password123"</span>
 }</code></pre>
 
-      <h3>Body Request Store Produk</h3>
+      <h3>Body Request Store Produk (POST)</h3>
+      <p>Endpoint <code>POST /api/produk</code> perlu header <code>Authorization: Bearer {{token}}</code>. Field <code>nama_produk</code>, <code>harga</code>, dan <code>stok</code> wajib diisi, <code>deskripsi</code> boleh kosong.</p>
       <div class="pre-label">Body (raw JSON)</div>
       <pre><code>{
   <span class="str">"nama_produk"</span>: <span class="str">"Laptop Gaming"</span>,
@@ -2274,40 +2289,16 @@ php artisan migrate</code></pre>
   <span class="str">"stok"</span>: <span class="nb">5</span>,
   <span class="str">"deskripsi"</span>: <span class="str">"Laptop gaming RTX 4060"</span>
 }</code></pre>
-    </div>
 
-    <!-- TEST CURL -->
-    <div class="section" id="test-curl">
-      <h2>Test dengan cURL</h2>
-      <p>Alternatif testing via command line tanpa tool tambahan.</p>
-
-      <h3>Register</h3>
-      <div class="pre-label">Terminal</div>
-      <pre><code>curl -X POST http://localhost:8000/api/register \
-  -H "Accept: application/json" \
-  -H "Content-Type: application/json" \
-  -d '{"name":"Test User","email":"test@example.com","password":"password123","password_confirmation":"password123"}'</code></pre>
-
-      <h3>Login &amp; Simpan Token</h3>
-      <div class="pre-label">Terminal</div>
-      <pre><code>curl -X POST http://localhost:8000/api/login \
-  -H "Accept: application/json" \
-  -H "Content-Type: application/json" \
-  -d '{"email":"test@example.com","password":"password123"}'</code></pre>
-
-      <h3>Get Produk (dengan Token)</h3>
-      <div class="pre-label">Terminal</div>
-      <pre><code>curl http://localhost:8000/api/produk \
-  -H "Accept: application/json" \
-  -H "Authorization: Bearer YOUR_TOKEN_HERE"</code></pre>
-
-      <h3>Create Produk</h3>
-      <div class="pre-label">Terminal</div>
-      <pre><code>curl -X POST http://localhost:8000/api/produk \
-  -H "Accept: application/json" \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_TOKEN_HERE" \
-  -d '{"nama_produk":"Keyboard","harga":500000,"stok":20}'</code></pre>
+      <h3>Body Request Update Produk (PUT)</h3>
+      <p>Endpoint <code>PUT /api/produk/{id}</code> juga perlu header <code>Authorization: Bearer {{token}}</code>. Karena <code>update()</code> di controller memvalidasi field yang sama seperti <code>store()</code>, kirim <strong>semua field</strong> (bukan cuma yang berubah) agar tidak kena error <code>422</code> "field required".</p>
+      <div class="pre-label">Body (raw JSON)</div>
+      <pre><code>{
+  <span class="str">"nama_produk"</span>: <span class="str">"Laptop Gaming Pro"</span>,
+  <span class="str">"harga"</span>: <span class="nb">13500000</span>,
+  <span class="str">"stok"</span>: <span class="nb">3</span>,
+  <span class="str">"deskripsi"</span>: <span class="str">"Update: sekarang RTX 4070"</span>
+}</code></pre>
     </div>
 
     <!-- ERROR UMUM -->
@@ -2624,7 +2615,6 @@ Penyerang bisa login sebagai user manapun tanpa password!</code></pre>
     <a class="sub" href="#produk-api">Produk API</a>
     <a class="sub" href="#api-routes">API Routes</a>
     <a class="sub" href="#test-postman">Test Postman</a>
-    <a class="sub" href="#test-curl">Test cURL</a>
     <a class="sub" href="#error-umum">Error Umum</a>
 
     <a href="#csrf" style="margin-top:12px;display:block">Keamanan</a>
