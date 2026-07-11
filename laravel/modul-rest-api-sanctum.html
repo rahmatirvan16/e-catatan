@@ -468,6 +468,7 @@
         <a class="nav-link" href="#crud-views">Views</a>
         <a class="nav-link" href="#crud-styling">Styling (Bootstrap)</a>
         <a class="nav-link" href="#crud-routes">Routes</a>
+        <a class="nav-link" href="#crud-alur-lengkap">Alur Lengkap: Halaman &rarr; Database</a>
       </div>
     </div>
 
@@ -1225,6 +1226,130 @@ php artisan migrate:fresh     <span class="cm"># reset dan jalankan ulang semua<
       <div class="callout">
         <div class="callout-title">Cek Semua Route</div>
         <code>php artisan route:list</code> &mdash; tampilkan daftar lengkap semua route beserta middleware-nya.
+      </div>
+    </div>
+
+    <div class="section" id="crud-alur-lengkap">
+      <h2>Alur Lengkap: dari User Buka Halaman sampai Data Masuk Database</h2>
+      <p>
+        Migration, Model, Controller, Views, dan Routes di atas adalah potongan-potongan
+        terpisah. Bagian ini merangkainya jadi satu alur utuh &mdash; supaya kamu paham
+        persis apa yang terjadi, langkah demi langkah, mulai dari user membuka form sampai
+        datanya benar-benar tersimpan di database.
+      </p>
+
+      <h3>Langkah 1 &mdash; User Buka Form</h3>
+      <p>Browser meminta <code>GET /produk/create</code>.</p>
+
+      <h3>Langkah 2 &mdash; Routing</h3>
+      <div class="pre-label">routes/web.php</div>
+      <pre><code><span class="cl">Route</span>::<span class="fn">resource</span>(<span class="str">'produk'</span>, <span class="cl">ProdukController</span>::class);</code></pre>
+      <p>Baris ini otomatis membuat 7 route (<code>index</code>, <code>create</code>,
+        <code>store</code>, <code>edit</code>, <code>update</code>, <code>destroy</code>,
+        <code>show</code>). Laravel mencocokkan <code>GET /produk/create</code> &rarr; method
+        <code>create()</code> di <code>ProdukController</code>.</p>
+
+      <h3>Langkah 3 &mdash; Controller Menampilkan Form</h3>
+      <div class="pre-label">ProdukController.php</div>
+      <pre><code><span class="kw">public function</span> <span class="fn">create</span>()
+{
+    <span class="kw">return</span> <span class="fn">view</span>(<span class="str">'produk.create'</span>);
+}</code></pre>
+      <p>Cuma me-render file <code>create.blade.php</code>. Belum ada data yang disentuh.</p>
+
+      <h3>Langkah 4 &mdash; User Isi &amp; Submit Form</h3>
+      <p>Form di <code>create.blade.php</code> punya <code>action="{{ route('produk.store') }}"</code>
+        dengan <code>method="POST"</code>. Saat tombol "Simpan" diklik, browser mengirim
+        <code>POST /produk</code> membawa data: <code>nama_produk</code>, <code>harga</code>,
+        <code>stok</code>, <code>deskripsi</code>.</p>
+
+      <h3>Langkah 5 &mdash; Routing Lagi</h3>
+      <p><code>POST /produk</code> &mdash; dari <code>Route::resource</code> yang sama &mdash;
+        dipetakan ke method <code>store()</code>.</p>
+
+      <h3>Langkah 6 &mdash; Validasi di Controller</h3>
+      <div class="pre-label">ProdukController.php</div>
+      <pre><code>$request-&gt;<span class="fn">validate</span>([
+    <span class="str">'nama_produk'</span> =&gt; <span class="str">'required'</span>,
+    <span class="str">'harga'</span>       =&gt; <span class="str">'required|numeric|min:1'</span>,
+    <span class="str">'stok'</span>        =&gt; <span class="str">'required|numeric|min:0'</span>,
+    <span class="str">'deskripsi'</span>   =&gt; <span class="str">'nullable|max:500'</span>,
+]);</code></pre>
+      <p>Kalau gagal &rarr; Laravel otomatis redirect balik ke form + pesan error, baris di
+        bawahnya tidak ikut jalan. Kalau lolos &rarr; lanjut ke langkah berikutnya.</p>
+
+      <h3>Langkah 7 &mdash; Kirim Data ke Model</h3>
+      <pre><code><span class="cl">Produk</span>::<span class="fn">create</span>($request-&gt;<span class="fn">all</span>());</code></pre>
+      <p><code>$request->all()</code> = semua data mentah dari form (array asosiatif).</p>
+
+      <h3>Langkah 8 &mdash; Model Menyaring Data (<code>$fillable</code>)</h3>
+      <p>Di dalam Laravel (bukan kode kamu), <code>create()</code> memanggil <code>fill()</code>,
+        yang mencocokkan setiap key data dengan whitelist di <code>Produk.php</code>:</p>
+      <div class="pre-label">app/Models/Produk.php</div>
+      <pre><code><span class="kw">protected</span> $fillable = [<span class="str">'nama_produk'</span>, <span class="str">'harga'</span>, <span class="str">'stok'</span>, <span class="str">'deskripsi'</span>, <span class="str">'kategori_id'</span>];</code></pre>
+      <p>Hanya field yang ada di daftar ini yang diteruskan. Ini lapisan keamanan supaya
+        data yang tidak diizinkan tidak bisa ikut ter-<em>insert</em>.</p>
+
+      <h3>Langkah 9 &mdash; Model Mengirim Query ke Database</h3>
+      <p>Eloquent (ORM Laravel) menerjemahkan data yang sudah disaring itu jadi SQL:</p>
+      <div class="pre-label">SQL yang benar-benar dijalankan</div>
+      <pre><code><span class="kw">INSERT INTO</span> produks (nama_produk, harga, stok, deskripsi, kategori_id, created_at, updated_at)
+<span class="kw">VALUES</span> (?, ?, ?, ?, ?, NOW(), NOW());</code></pre>
+      <p>Query ini dijalankan ke database MySQL/MariaDB kamu (lihat <code>.env</code> &rarr;
+        <code>DB_DATABASE</code>). Di titik inilah data benar-benar tersimpan permanen.</p>
+
+      <h3>Langkah 10 &mdash; Redirect + Pesan Sukses</h3>
+      <div class="pre-label">ProdukController.php</div>
+      <pre><code><span class="kw">return</span> <span class="fn">redirect</span>()-&gt;<span class="fn">route</span>(<span class="str">'produk.index'</span>)
+    -&gt;<span class="fn">with</span>(<span class="str">'success'</span>, <span class="str">'Produk berhasil ditambahkan.'</span>);</code></pre>
+      <p>Browser diarahkan ke <code>GET /produk</code>.</p>
+
+      <h3>Langkah 11 &mdash; Tampilkan Data Terbaru</h3>
+      <p>Method <code>index()</code> jalan lagi:</p>
+      <pre><code>$produks = <span class="cl">Produk</span>::<span class="fn">all</span>();   <span class="cm">// SELECT * FROM produks</span>
+<span class="kw">return</span> <span class="fn">view</span>(<span class="str">'produk.index'</span>, <span class="fn">compact</span>(<span class="str">'produks'</span>));</code></pre>
+      <p>User melihat produk barunya sudah muncul di tabel/list.</p>
+
+      <div class="diagram-wrap">
+        <div class="mermaid">
+sequenceDiagram
+  participant U as User (Browser)
+  participant R as Route (web.php)
+  participant C as ProdukController
+  participant M as Model Produk
+  participant D as Database
+
+  U-&gt;&gt;R: GET /produk/create
+  R-&gt;&gt;C: create()
+  C--&gt;&gt;U: form tambah produk
+
+  U-&gt;&gt;R: POST /produk (data form)
+  R-&gt;&gt;C: store(request)
+  C-&gt;&gt;C: validate()
+  C-&gt;&gt;M: Produk::create(data)
+  M-&gt;&gt;M: fill() saring via $fillable
+  M-&gt;&gt;D: INSERT INTO produks ...
+  D--&gt;&gt;M: OK (row tersimpan)
+  M--&gt;&gt;C: instance Produk baru
+  C--&gt;&gt;U: redirect ke /produk + pesan sukses
+
+  U-&gt;&gt;R: GET /produk
+  R-&gt;&gt;C: index()
+  C-&gt;&gt;M: Produk::all()
+  M-&gt;&gt;D: SELECT * FROM produks
+  D--&gt;&gt;M: semua baris
+  M--&gt;&gt;C: koleksi Produk
+  C--&gt;&gt;U: tabel produk (termasuk yang baru)
+        </div>
+      </div>
+
+      <div class="callout success">
+        <div class="callout-title">Kenapa Alur Ini Penting Dipahami</div>
+        Pola <strong>Route &rarr; Controller &rarr; Validasi &rarr; Model &rarr; Database
+        &rarr; Redirect &rarr; View</strong> ini berulang di hampir semua fitur Laravel, bukan
+        cuma <code>store()</code>. Begitu paham alur ini untuk Produk, kamu bisa menerapkan
+        pola yang sama persis untuk resource apa pun &mdash; Pegawai, Pesanan, Kategori, dst
+        &mdash; cuma nama model &amp; field-nya yang beda.
       </div>
     </div>
 
@@ -2476,6 +2601,7 @@ Penyerang bisa login sebagai user manapun tanpa password!</code></pre>
     <a class="sub" href="#crud-views">Views</a>
     <a class="sub" href="#crud-styling">Styling Bootstrap</a>
     <a class="sub" href="#crud-routes">Routes</a>
+    <a class="sub" href="#crud-alur-lengkap">Alur Lengkap ke Database</a>
 
     <a href="#eloquent-dasar" style="margin-top:12px;display:block">Eloquent &amp; Relasi</a>
     <a class="sub" href="#eloquent-dasar">Query Dasar</a>
