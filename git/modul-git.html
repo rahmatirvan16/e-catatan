@@ -700,6 +700,18 @@ git commit -m "Tambah fitur login"</code></pre>
         Tulis dalam kalimat perintah singkat &amp; jelas, misal <code>"Tambah validasi email
         di form registrasi"</code> &mdash; bukan sekadar <code>"update"</code> atau <code>"fix"</code>.
       </div>
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil</div>
+        Jangan langsung lanjut ke branching sebelum yakin siklus dasar ini benar:
+        <ol>
+          <li>Setelah <code>git add</code>, jalankan <code>git status</code> &mdash; file yang
+            diubah harus pindah dari bagian "Changes not staged" ke "Changes to be committed".</li>
+          <li>Setelah <code>git commit</code>, <code>git status</code> harus menampilkan
+            "nothing to commit, working tree clean".</li>
+          <li><code>git log --oneline</code> harus menampilkan commit barumu paling atas,
+            dengan pesan persis seperti yang kamu tulis di <code>-m</code>.</li>
+        </ol>
+      </div>
     </div>
 
     <hr class="divider" />
@@ -722,6 +734,14 @@ git branch                    <span class="cm"># lihat daftar branch</span></cod
         <code>git switch</code> adalah perintah modern khusus berpindah branch (lebih jelas),
         sedangkan <code>git checkout</code> lebih lama dan serba-bisa (branch, file, maupun commit).
         Keduanya masih umum dipakai di tim manapun.
+      </div>
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil</div>
+        <code>git branch</code> harus menampilkan <code>feature/login</code> dengan tanda
+        <code>*</code> di depannya (menandakan branch aktif). Buat satu commit kecil di branch
+        ini, lalu <code>git log --oneline --all --graph</code> harus menampilkan cabang
+        terpisah dari <code>main</code> &mdash; bukti riwayat commit-nya benar-benar bercabang,
+        bukan cuma pindah nama.
       </div>
     </div>
 
@@ -774,6 +794,14 @@ git commit -m "Resolve conflict merge feature/login"</code></pre>
         Conflict adalah hal normal saat kolaborasi, bukan tanda kesalahan. Baca konteks kedua
         versi kode dengan tenang sebelum memutuskan versi mana yang dipakai.
       </div>
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil</div>
+        Setelah merge (dengan atau tanpa conflict), <code>git status</code> harus bersih lagi
+        ("nothing to commit"), dan <code>git log --oneline --graph</code> harus menampilkan
+        titik merge yang menyatukan kedua cabang. Buka file yang tadi konflik &mdash; pastikan
+        tidak ada lagi penanda <code>&lt;&lt;&lt;&lt;&lt;&lt;&lt;</code>/<code>=======</code>/
+        <code>&gt;&gt;&gt;&gt;&gt;&gt;&gt;</code> yang tertinggal (penyebab bug klasik kalau lupa dihapus).
+      </div>
     </div>
 
     <hr class="divider" />
@@ -820,6 +848,14 @@ sequenceDiagram
         <div class="callout-title">Kebiasaan Tim Profesional</div>
         Biasakan <code>git pull</code> sebelum mulai kerja dan sebelum <code>push</code>, supaya
         selalu bekerja di atas kode terbaru dan meminimalkan conflict besar.
+      </div>
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil</div>
+        Setelah <code>git push -u origin main</code>, buka halaman repo di GitHub/GitLab &mdash;
+        commit terbarumu harus muncul di sana dengan hash yang sama seperti
+        <code>git log --oneline</code> di lokal. Setelah <code>git pull</code>, jalankan
+        <code>git log --oneline -5</code> lagi untuk memastikan commit rekan tim sudah masuk ke
+        riwayat lokalmu.
       </div>
     </div>
 
@@ -893,6 +929,14 @@ git rebase main</code></pre>
       <p>Mengambil satu commit tertentu dari branch lain tanpa ikut merge seluruh branch.</p>
       <div class="pre-label">Terminal</div>
       <pre><code>git cherry-pick a1b2c3d</code></pre>
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil</div>
+        Setelah <code>rebase</code>, <code>git log --oneline --graph --all</code> harus
+        menampilkan riwayat <strong>lurus</strong> (tanpa titik merge) dengan commit branch
+        kamu sekarang berada tepat di atas commit terbaru <code>main</code>. Setelah
+        <code>cherry-pick</code>, cek <code>git log --oneline -1</code> &mdash; pesan
+        commit-nya harus sama dengan commit asal, tapi hash-nya berbeda (karena jadi commit baru).
+      </div>
     </div>
 
     <!-- STASH, RESET, TAG, REFLOG -->
@@ -930,6 +974,21 @@ git push origin v1.0.0</code></pre>
       <div class="pre-label">Terminal</div>
       <pre><code>git reflog
 git reset --hard HEAD@{2}</code></pre>
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil</div>
+        <ol>
+          <li>Setelah <code>git stash</code>, <code>git status</code> harus bersih lagi
+            (perubahan hilang sementara). Setelah <code>git stash pop</code>, perubahan yang
+            sama harus muncul kembali di <code>git status</code>.</li>
+          <li>Coba <code>git reset --hard HEAD~1</code> di branch percobaan &mdash; commit
+            terakhir hilang dari <code>git log</code>. Lalu <code>git reflog</code> harus tetap
+            menampilkan commit itu; <code>git reset --hard HEAD@{1}</code> (sesuaikan nomornya)
+            harus mengembalikannya.</li>
+          <li><code>git tag</code> tanpa argumen harus menampilkan <code>v1.0.0</code> di daftar,
+            dan setelah <code>git push origin v1.0.0</code>, tag itu harus muncul di halaman
+            "Tags" repo GitHub/GitLab.</li>
+        </ol>
+      </div>
     </div>
 
     <hr class="divider" />
