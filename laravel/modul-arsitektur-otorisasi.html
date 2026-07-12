@@ -624,6 +624,14 @@
         membungkus Redis cache), cukup ubah baris <code>bind()</code> ini &mdash; tidak perlu
         sentuh Controller atau Service sama sekali.
       </div>
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil</div>
+        Belum ada yang memanggil repository ini dari controller &mdash; buktikan dulu
+        binding-nya benar lewat <code>php artisan tinker</code>, sebelum lanjut membuat Service:
+        <pre><code>$repo = app(\App\Repositories\ProdukRepositoryInterface::class);
+get_class($repo); // harus "App\Repositories\EloquentProdukRepository"
+$repo->all();      // harus mengembalikan Collection, bukan error</code></pre>
+      </div>
     </div>
 
     <!-- SERVICE LAYER -->
@@ -682,6 +690,15 @@
         seperti validasi kapasitas gudang, hitung diskon, atau kirim notifikasi setelah produk
         dibuat, tempatnya di Service &mdash; supaya repository tetap bisa dipakai ulang di
         konteks lain tanpa terikat satu aturan bisnis tertentu.
+      </div>
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil</div>
+        Uji business rule-nya langsung lewat <code>tinker</code>, tanpa perlu controller:
+        <pre><code>$service = app(\App\Services\ProdukService::class);
+$service->store(['nama_produk'=>'Test','harga'=>1000,'stok'=>20000,'deskripsi'=>null]);
+// harus lempar ValidationException "Stok awal melebihi kapasitas gudang."
+$service->store(['nama_produk'=>'Test','harga'=>1000,'stok'=>50,'deskripsi'=>null]);
+// harus sukses, kembalikan instance Produk</code></pre>
       </div>
     </div>
 
@@ -743,6 +760,16 @@
         di constructor-nya, Laravel otomatis merangkai semuanya (Service &rarr; Repository &rarr;
         Controller) tanpa kode tambahan &mdash; ini disebut <strong>Dependency Injection</strong>.
       </div>
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil (Postman)</div>
+        Ini refactor, bukan fitur baru &mdash; buktikan perilakunya <strong>tidak berubah</strong>
+        dibanding sebelum di-refactor: <strong>GET</strong> <code>/api/produk</code>,
+        <strong>POST</strong> <code>/api/produk</code>, <strong>PUT</strong>
+        <code>/api/produk/{id}</code>, <strong>DELETE</strong> <code>/api/produk/{id}</code>
+        harus menghasilkan response yang sama persis seperti versi Minggu 1 sebelum ada
+        Repository/Service. Kalau ada yang beda, kemungkinan besar ada logic yang tercecer saat
+        dipindah dari controller ke service.
+      </div>
     </div>
 
     <hr class="divider" />
@@ -798,6 +825,18 @@
       <pre><code><span class="cl">Route</span>::<span class="fn">middleware</span>([<span class="str">'auth:sanctum'</span>, <span class="str">'active'</span>])-&gt;<span class="fn">group</span>(<span class="kw">function</span> () {
     <span class="cl">Route</span>::<span class="fn">apiResource</span>(<span class="str">'produk'</span>, ProdukApiController::class);
 });</code></pre>
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil (Postman)</div>
+        <ol>
+          <li>Login dengan akun normal, <strong>GET</strong> <code>/api/produk</code> &rarr;
+            harus <strong>200</strong> seperti biasa.</li>
+          <li>Nonaktifkan akun itu lewat <code>tinker</code>:
+            <code>User::find($id)->update(['status' =&gt; 'nonaktif']);</code></li>
+          <li>Ulangi <strong>GET</strong> <code>/api/produk</code> pakai token yang sama &rarr;
+            harus <strong>403</strong> "Akun kamu dinonaktifkan...".</li>
+          <li>Kembalikan <code>status</code> ke semula &rarr; endpoint bisa diakses lagi.</li>
+        </ol>
+      </div>
     </div>
 
     <!-- FORM REQUEST VALIDATION -->
@@ -867,6 +906,15 @@ php artisan make:request UpdateProdukRequest</code></pre>
           <tr><td>Cek otorisasi</td><td>Manual <code>if</code></td><td>Method <code>authorize()</code> bawaan</td></tr>
         </tbody>
       </table>
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil (Postman)</div>
+        <strong>POST</strong> <code>/api/produk</code> tanpa field <code>nama_produk</code>
+        &rarr; harus <strong>422</strong> dengan pesan persis "Nama produk wajib diisi."
+        (bukti <code>messages()</code> dipakai). Coba juga <code>harga: 0</code> &rarr;
+        <strong>422</strong> "Harga minimal Rp1.". Kalau pesannya masih generik bawaan Laravel,
+        berarti <code>StoreProdukRequest</code> belum ke-<em>type-hint</em> di method
+        controller.
+      </div>
     </div>
 
     <hr class="divider" />
@@ -903,6 +951,13 @@ php artisan migrate</code></pre>
 
     <span class="kw">protected</span> $fillable = [<span class="str">'name'</span>, <span class="str">'email'</span>, <span class="str">'password'</span>];
 }</code></pre>
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil</div>
+        <code>php artisan migrate:status</code> harus menampilkan <code>roles</code>,
+        <code>permissions</code>, <code>model_has_roles</code>,
+        <code>model_has_permissions</code>, dan <code>role_has_permissions</code> berstatus
+        <code>Ran</code>, sebelum lanjut membuat seeder di langkah berikutnya.
+      </div>
     </div>
 
     <!-- SETUP ROLES & PERMISSIONS -->
@@ -1000,6 +1055,18 @@ php artisan migrate</code></pre>
         Kalau user tidak punya role/permission yang sesuai, Spatie melempar
         <code>403 Forbidden</code> otomatis &mdash; tidak perlu cek manual di controller.
       </div>
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil (Postman)</div>
+        <ol>
+          <li>Login sebagai user dengan role <code>staff</code> (dari seeder), <strong>DELETE</strong>
+            <code>/api/produk/{id}</code> &rarr; harus <strong>403</strong> (staff tidak punya
+            role <code>admin</code>).</li>
+          <li>Login sebagai <code>admin</code>, ulangi <strong>DELETE</strong> yang sama &rarr;
+            harus <strong>200</strong>.</li>
+          <li><strong>PUT</strong> <code>/api/produk/{id}</code> pakai akun yang tidak punya
+            permission <code>produk.update</code> &rarr; <strong>403</strong>.</li>
+        </ol>
+      </div>
     </div>
 
     <!-- CEK PERMISSION DI KODE -->
@@ -1037,6 +1104,13 @@ php artisan migrate</code></pre>
           <tr><td><code>@can(...) / @endcan</code></td><td>Directive Blade untuk sembunyikan elemen UI</td></tr>
         </tbody>
       </table>
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil</div>
+        Lewat <code>tinker</code>, tanpa perlu HTTP: <code>$staff = User::role('staff')-&gt;first();
+        $staff-&gt;can('produk.delete');</code> harus mengembalikan <code>false</code>, sedangkan
+        <code>$admin-&gt;can('produk.delete')</code> harus <code>true</code> &mdash; sesuai
+        permission yang ditempel di seeder sebelumnya.
+      </div>
     </div>
 
     <hr class="divider" />
@@ -1071,6 +1145,14 @@ php artisan migrate</code></pre>
         Tanpa rate limit, penyerang bisa mencoba ribuan kombinasi password per detik
         (brute-force). Limit 5 percobaan/menit membuat serangan seperti ini jadi sangat lambat
         dan tidak praktis.
+      </div>
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil (Postman)</div>
+        Kirim <strong>POST</strong> <code>/api/login</code> 6 kali berturut-turut dalam 1
+        menit (pakai Postman Runner atau klik Send cepat) &mdash; percobaan ke-6 harus
+        <strong>429 Too Many Requests</strong>, lengkap dengan header
+        <code>Retry-After</code>. Tunggu sesuai <code>Retry-After</code>, coba lagi &rarr;
+        harus normal kembali.
       </div>
     </div>
 
@@ -1120,6 +1202,14 @@ php artisan migrate</code></pre>
         Rate limiter custom di atas menunjukkan bagaimana Middleware, Spatie Roles, dan Rate
         Limiting bisa saling melengkapi &mdash; satu function bisa mengecek role user untuk
         menentukan kuota rate limit yang berbeda.
+      </div>
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil</div>
+        Menunggu 31 request asli untuk sekadar tes agak lama &mdash; turunkan sementara
+        <code>Limit::perMinute(30)</code> jadi <code>Limit::perMinute(3)</code> di kode, lalu
+        kirim <strong>GET</strong> <code>/api/produk</code> 4 kali berturut-turut sebagai user
+        biasa &rarr; permintaan ke-4 harus <strong>429</strong>. Kembalikan angkanya ke 30/120
+        setelah terbukti jalan.
       </div>
     </div>
 
