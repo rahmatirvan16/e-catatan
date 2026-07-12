@@ -569,6 +569,16 @@
         <em>read</em> berikutnya di request itu juga diarahkan ke Primary &mdash; menghindari
         kasus "baru saja create data, langsung dibaca lagi tapi belum ter-replikasi".
       </div>
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil</div>
+        Cek <code>SHOW PROCESSLIST;</code> (atau <code>pg_stat_activity</code> untuk Postgres)
+        di masing-masing server saat aplikasi jalan &mdash; query <code>SELECT</code> harus
+        muncul di replica, sementara <code>INSERT</code>/<code>UPDATE</code> hanya muncul di
+        primary. Uji juga <code>sticky</code>: dalam satu request yang melakukan
+        <code>create()</code> lalu langsung <code>find()</code> data yang baru dibuat, hasilnya
+        harus ketemu (dibaca dari Primary) &mdash; bukan <code>null</code> karena kebetulan
+        dibaca dari replica yang belum sempat menerima salinan data.
+      </div>
     </div>
 
     <hr class="divider" />
@@ -626,6 +636,15 @@ $order = Order::<span class="fn">on</span>($connection)-&gt;<span class="fn">fin
         satu database MySQL (bahkan dengan replica) sudah tidak sanggup. Untuk skala sebagian
         besar bisnis, indexing (Minggu 1) + Redis cache (Minggu 3) + read replica di atas
         sudah lebih dari cukup.
+      </div>
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil</div>
+        Lewat <code>tinker</code>: <code>(new \App\Services\ShardRouter())-&gt;connectionFor(5)</code>
+        dan <code>connectionFor(9)</code> harus mengembalikan nama koneksi yang <strong>sama</strong>
+        (<code>5 % 4 == 9 % 4 == 1</code>), sementara <code>connectionFor(6)</code> harus beda.
+        Simpan satu order lewat <code>Order::on($connection)-&gt;create(...)</code>, lalu cek
+        langsung di server database yang sesuai shard-nya &mdash; barisnya harus ada
+        <strong>di situ saja</strong>, tidak di shard lain.
       </div>
     </div>
 
@@ -685,6 +704,17 @@ curl http://10.0.0.1:9000/up
         Kalau sudah pakai Kubernetes Service <code>type: LoadBalancer</code> (Minggu 10),
         load balancing antar Pod sudah otomatis ditangani. Konfigurasi Nginx manual di atas
         lebih relevan untuk setup tanpa Kubernetes (langsung di beberapa EC2/VM).
+      </div>
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil</div>
+        Tambahkan endpoint sementara yang mengembalikan hostname server (mis.
+        <code>return response()-&gt;json(['server' =&gt; gethostname()]);</code>), lalu
+        <strong>GET</strong> endpoint itu berkali-kali lewat load balancer &mdash; response
+        harus bergantian antar <code>10.0.0.1</code>/<code>.2</code>/<code>.3</code>, bukan
+        selalu server yang sama (kecuali memang pakai IP Hash). Matikan satu server
+        (<code>docker stop</code> atau hentikan PHP-FPM-nya), <code>curl</code> ke load
+        balancer lagi &mdash; trafik harus otomatis berhenti diarahkan ke server yang mati
+        itu begitu health check-nya gagal.
       </div>
     </div>
 
