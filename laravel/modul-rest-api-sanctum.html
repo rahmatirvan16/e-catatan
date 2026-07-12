@@ -514,6 +514,7 @@
         <a class="nav-link" href="#auth-controller">Auth Controller</a>
         <a class="nav-link" href="#produk-api">Produk API Controller</a>
         <a class="nav-link" href="#api-routes">API Routes</a>
+        <a class="nav-link" href="#alur-web-vs-api">Perbandingan Alur: Web vs API</a>
         <a class="nav-link" href="#karyawan-api">Contoh Lain: Karyawan API</a>
       </div>
     </div>
@@ -2207,6 +2208,63 @@ php artisan migrate</code></pre>
       </table>
     </div>
 
+    <!-- PERBANDINGAN ALUR WEB VS API -->
+    <div class="section" id="alur-web-vs-api">
+      <h2>Perbandingan Alur: Request Web vs Request API</h2>
+      <p>Sekarang setelah kedua jalur sudah dibangun &mdash; <code>ProdukController</code> (web,
+        lihat <a href="#crud-alur-lengkap">alur lengkap</a>) dan <code>ProdukApiController</code>
+        (API) &mdash; bandingkan langsung file mana saja yang dibaca Laravel untuk request yang
+        setara: <code>GET /produk</code> vs <code>GET /api/produk</code>.</p>
+
+      <h3>A. Alur Web &mdash; <code>GET /produk</code></h3>
+      <table>
+        <thead><tr><th>#</th><th>File yang dibaca</th><th>Yang terjadi</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td><code>public/index.php</code></td><td>Entry point, load Composer autoloader, capture request</td></tr>
+          <tr><td>2</td><td><code>bootstrap/app.php</code></td><td>Bootstrap aplikasi, daftarkan <code>routes/web.php</code></td></tr>
+          <tr><td>3</td><td><code>routes/web.php</code></td><td>Cocokkan URL <code>/produk</code> &rarr; <code>ProdukController@index</code></td></tr>
+          <tr><td>4</td><td><code>app/Http/Controllers/ProdukController.php</code></td><td>Method <code>index()</code> dipanggil</td></tr>
+          <tr><td>5</td><td><code>app/Models/Produk.php</code></td><td><code>Produk::all()</code> &rarr; query <code>SELECT * FROM produks</code></td></tr>
+          <tr><td>6</td><td><code>return view('produk.index', compact('produks'))</code></td><td>Laravel cari file view</td></tr>
+          <tr><td>7</td><td><code>resources/views/produk/index.blade.php</code></td><td>File Blade ini dibaca &amp; di-compile jadi HTML, data <code>$produks</code> disuntikkan ke dalamnya</td></tr>
+          <tr><td>8</td><td><code>resources/views/layouts/app.blade.php</code></td><td>Kalau <code>index.blade.php</code> pakai <code>@extends('layouts.app')</code>, file layout ini juga ikut dibaca untuk membungkus halaman (header, nav, dll)</td></tr>
+          <tr><td>9</td><td>Hasil akhir</td><td>HTML lengkap dikirim ke browser, siap ditampilkan (bukan data mentah)</td></tr>
+        </tbody>
+      </table>
+      <div class="callout">
+        <div class="callout-title">Ciri Khas</div>
+        Ada tahap view/Blade &mdash; output-nya adalah HTML siap-render untuk manusia.
+      </div>
+
+      <h3>B. Alur API &mdash; <code>GET /api/produk</code></h3>
+      <table>
+        <thead><tr><th>#</th><th>File yang dibaca</th><th>Yang terjadi</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td><code>public/index.php</code></td><td>Sama seperti web &mdash; entry point</td></tr>
+          <tr><td>2</td><td><code>bootstrap/app.php</code></td><td>Bootstrap aplikasi, daftarkan <code>routes/api.php</code>, aktifkan <code>statefulApi()</code></td></tr>
+          <tr><td>3</td><td><code>routes/api.php</code></td><td>Cocokkan URL <code>/api/produk</code> &rarr; masuk grup <code>auth:sanctum</code> &rarr; <code>ProdukApiController@index</code></td></tr>
+          <tr><td>4</td><td>Middleware Sanctum (<code>vendor/laravel/sanctum/...</code>) + <code>config/auth.php</code></td><td>Cek header <code>Authorization: Bearer &lt;token&gt;</code> ke tabel <code>personal_access_tokens</code> &mdash; kalau gagal, request berhenti di sini dengan <code>401</code></td></tr>
+          <tr><td>5</td><td><code>app/Http/Controllers/Api/ProdukApiController.php</code></td><td>Method <code>index()</code> dipanggil</td></tr>
+          <tr><td>6</td><td><code>app/Models/Produk.php</code></td><td><code>Produk::all()</code> &rarr; query sama seperti web</td></tr>
+          <tr><td>7</td><td><code>return response()->json([...])</code></td><td>Tidak ada file view yang dibaca &mdash; array PHP langsung di-encode jadi string JSON</td></tr>
+          <tr><td>8</td><td>Hasil akhir</td><td>JSON mentah dikirim ke client, dibaca oleh program lain (Postman, JS frontend, mobile app)</td></tr>
+        </tbody>
+      </table>
+      <div class="callout">
+        <div class="callout-title">Ciri Khas</div>
+        Tidak ada tahap view/Blade &mdash; controller langsung jadi "ujung akhir" yang membentuk response.
+      </div>
+
+      <div class="callout success">
+        <div class="callout-title">Route, Controller, Model Sama &mdash; yang Beda Cuma Ujungnya</div>
+        Kedua alur memakai <code>Model Produk</code> dan query Eloquent yang identik. Perbedaan
+        satu-satunya ada di titik akhir: web merender <strong>Blade &rarr; HTML</strong> untuk
+        manusia, API mengembalikan <strong>array &rarr; JSON</strong> untuk program lain. Middleware
+        <code>auth:sanctum</code> juga cuma ada di jalur API karena web memakai session/cookie
+        bawaan Laravel, bukan Bearer token.
+      </div>
+    </div>
+
     <!-- KARYAWAN API (CONTOH LAIN) -->
     <div class="section" id="karyawan-api">
       <h2>Contoh Lain: Karyawan API Controller</h2>
@@ -2783,6 +2841,7 @@ Penyerang bisa login sebagai user manapun tanpa password!</code></pre>
     <a class="sub" href="#auth-controller">Auth Controller</a>
     <a class="sub" href="#produk-api">Produk API</a>
     <a class="sub" href="#api-routes">API Routes</a>
+    <a class="sub" href="#alur-web-vs-api">Alur Web vs API</a>
     <a class="sub" href="#karyawan-api">Contoh Lain: Karyawan API</a>
     <a class="sub" href="#test-postman">Test Postman</a>
     <a class="sub" href="#error-umum">Error Umum</a>
