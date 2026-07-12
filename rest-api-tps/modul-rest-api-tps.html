@@ -767,6 +767,24 @@ JWT_ALGO=HS256</code></pre>
         yang lebih pas untuk aplikasi web monolitik. Sanctum boleh tetap ada di
         <code>composer.json</code>, cukup tidak dipakai sebagai guard <code>api</code>.
       </div>
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil</div>
+        Belum ada endpoint atau Swagger yang bisa dites di tahap ini &mdash; buktikan lewat
+        konfigurasi &amp; boot server saja:
+        <ol>
+          <li>Jalankan <code>php artisan serve</code> &mdash; tidak boleh ada error, dan
+            <code>http://localhost:8000</code> masih menampilkan halaman welcome bawaan
+            Laravel (routing API baru dipasang di R4).</li>
+          <li>Buka <code>.env</code>, pastikan baris <code>JWT_SECRET=...</code> sudah terisi
+            otomatis (bukti <code>php artisan jwt:secret</code> berhasil) dan
+            <code>DB_DATABASE=tps_db</code> sesuai database yang dibuat.</li>
+          <li>Buka <code>config/auth.php</code>, pastikan guard <code>api</code> sudah
+            <code>'driver' => 'jwt'</code>.</li>
+          <li>Cek file <code>config/l5-swagger.php</code> sudah ada, dan ada file migrasi baru
+            di <code>database/migrations</code> dengan nama mengandung <code>activity_log</code>
+            &mdash; keduanya bukti publish config/migrasi package berhasil.</li>
+        </ol>
+      </div>
     </div>
 
     <hr class="divider" />
@@ -999,6 +1017,25 @@ return new class extends Migration
         penghapusan manual berlapis di controller. Khusus <code>dicatat_oleh</code> memakai
         <code>nullOnDelete()</code> karena riwayat pembayaran harus tetap ada meski akun
         petugas yang mencatatnya sudah dihapus.
+      </div>
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil</div>
+        Belum ada endpoint untuk dites lewat Postman di tahap ini &mdash; buktikan lewat migrasi
+        &amp; <code>tinker</code>:
+        <ol>
+          <li><code>php artisan migrate</code> harus selesai tanpa error, lalu
+            <code>php artisan migrate:status</code> menampilkan semua migrasi berstatus
+            <code>Ran</code>.</li>
+          <li>Cek tabel benar-benar terbentuk: <code>SHOW TABLES;</code> di client MySQL harus
+            memuat <code>wajib_pajak</code>, <code>kewajiban_pajak</code>, <code>pembayaran</code>,
+            <code>denda</code>, dan <code>activity_log</code>.</li>
+          <li>Uji relasi &amp; <code>cascadeOnDelete()</code> lewat <code>php artisan tinker</code>:
+            <pre><code>$wp = \App\Models\WajibPajak::create(['jenis'=>'INDIVIDU','nama'=>'Test','nik'=>'1111111111111111','npwp'=>'091111111111111','status_aktif'=>true]);
+$k = \App\Models\KewajibanPajak::create(['wajib_pajak_id'=>$wp->id,'jenis_pajak'=>'PBB','pokok_pajak'=>100000,'jatuh_tempo'=>'2026-12-31']);
+$wp->delete();
+\App\Models\KewajibanPajak::find($k->id); // harus null -> bukti cascade jalan</code></pre>
+          </li>
+        </ol>
       </div>
     </div>
 
@@ -1328,11 +1365,32 @@ Route::middleware('auth:api')->group(function () {
         (<code>-&gt;middleware('role:ADMIN,PETUGAS')</code>) menghindari boilerplate policy
         yang berlebihan untuk kasus sesederhana ini.
       </div>
-      <div class="callout warning">
-        <div class="callout-title">Coba Sekarang</div>
-        Jalankan <code>php artisan serve</code>, lalu test login dengan Postman/curl ke
-        <code>POST /auth/login</code>. Karena tabel <code>users</code> masih kosong, buat dulu
-        satu akun lewat <code>php artisan tinker</code> atau tunggu sampai seeder dibuat di R7.
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil (Postman)</div>
+        Swagger belum dibuat &mdash; baru ada di R10 &mdash; jadi tahap ini dibuktikan manual
+        lewat Postman/curl:
+        <ol>
+          <li>Jalankan <code>php artisan serve</code>.</li>
+          <li>Tabel <code>users</code> masih kosong (seeder baru dibuat di R7), jadi buat satu
+            akun ADMIN dulu lewat <code>php artisan tinker</code>:
+            <pre><code>\App\Models\User::create(['name'=>'Admin Test','username'=>'admintest','email'=>'admintest@test.com','password'=>'Rahasia123','role'=>'ADMIN']);</code></pre>
+          </li>
+          <li><strong>POST</strong> <code>http://localhost:8000/auth/login</code>, body JSON
+            <code>{"username":"admintest","password":"Rahasia123"}</code> &rarr; harus
+            <strong>200</strong> dengan field <code>token</code> di response. Simpan token ini.</li>
+          <li><strong>GET</strong> <code>http://localhost:8000/auth/me</code> <em>tanpa</em>
+            header <code>Authorization</code> &rarr; harus <strong>401</strong> (bukti
+            <code>ForceJsonResponse</code> + exception handler di <code>bootstrap/app.php</code>
+            bekerja, bukan malah 500).</li>
+          <li>Panggil <strong>GET</strong> <code>/auth/me</code> lagi, kali ini dengan header
+            <code>Authorization: Bearer &lt;token&gt;</code> &rarr; harus <strong>200</strong>
+            berisi data user yang login.</li>
+          <li><strong>POST</strong> <code>/auth/logout</code> dengan token yang sama &rarr;
+            <strong>200</strong>, lalu panggil <code>/auth/me</code> sekali lagi memakai token
+            itu juga &rarr; harus ditolak (token sudah masuk blacklist JWT).</li>
+        </ol>
+        Middleware <code>role:...</code> baru bisa diuji setelah endpoint ber-role muncul mulai
+        R5 &mdash; lihat langkah verifikasi di section berikutnya.
       </div>
     </div>
 
@@ -1640,6 +1698,37 @@ Route::delete('/wajib-pajak/{wajibPajak}', [WajibPajakController::class, 'destro
         kedua <code>create()</code> di atas dengan <code>DB::transaction(function () { ... })</code>
         supaya operasinya atomik &mdash; ini perbaikan yang belum diterapkan di kode aslinya.
       </div>
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil (Postman)</div>
+        <ol>
+          <li>Login sebagai <code>admintest</code> (akun dari R4) untuk dapat token ADMIN.</li>
+          <li><strong>POST</strong> <code>/wajib-pajak</code> dengan header
+            <code>Authorization: Bearer &lt;token ADMIN&gt;</code>, body:
+            <pre><code>{
+  "jenis": "INDIVIDU",
+  "nama": "Budi Test",
+  "nik": "1171010101900099",
+  "npwp": "091234567890111",
+  "username": "buditest",
+  "password": "Rahasia123"
+}</code></pre>
+            harus <strong>201</strong>, berisi <code>data</code> wajib pajak &amp;
+            <code>akun</code> (username, role <code>WAJIB_PAJAK</code>).</li>
+          <li>Ulangi request persis sama &rarr; harus <strong>422</strong> dengan
+            <code>errors.nik</code>/<code>errors.npwp</code> (bukti <code>Rule::unique</code>
+            jalan).</li>
+          <li>Login sebagai <code>buditest</code>/<code>Rahasia123</code>, lalu coba
+            <strong>POST</strong> <code>/wajib-pajak</code> pakai token WAJIB_PAJAK ini &rarr;
+            harus <strong>403</strong> (bukti <code>role:ADMIN,PETUGAS</code> menolak role
+            lain).</li>
+          <li><strong>GET</strong> <code>/wajib-pajak/me</code> pakai token <code>buditest</code>
+            &rarr; <strong>200</strong>, data hanya miliknya sendiri.</li>
+          <li>Buat satu wajib pajak <code>BADAN</code> lain (pakai token ADMIN), lalu coba
+            <strong>GET</strong> <code>/wajib-pajak/{id milik BADAN itu}</code> pakai token
+            <code>buditest</code> &rarr; harus <strong>403</strong> (bukti
+            <code>pastikanBolehAkses()</code> jalan).</li>
+        </ol>
+      </div>
     </div>
 
     <hr class="divider" />
@@ -1894,6 +1983,25 @@ Route::post('/kewajiban-pajak', [KewajibanPajakController::class, 'store'])->mid
         diuji langsung tanpa database (lihat R11), dan dipakai ulang dari dua tempat berbeda:
         <code>PembayaranController</code> saat runtime, dan <code>DatabaseSeeder</code> saat
         membuat data contoh (lihat R7) &mdash; tanpa duplikasi logika perhitungan.
+      </div>
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil</div>
+        <ol>
+          <li>Uji <code>DendaService</code> dulu secara terisolasi lewat
+            <code>php artisan tinker</code> (tanpa lewat endpoint), pakai angka yang gampang
+            dihitung manual:
+            <pre><code>$k = new \App\Models\KewajibanPajak(['pokok_pajak'=>5000000,'jatuh_tempo'=>'2026-03-31']);
+(new \App\Services\DendaService())->hitung($k, 4000000, '2026-04-10');
+// harapkan: denda_telat=100000, denda_kurang=10000, total_denda=110000</code></pre>
+            Kalau angkanya cocok dengan hitungan manual (2%&times;5jt + 1%&times;1jt sisa),
+            baru lanjut ke endpoint.</li>
+          <li>Login sebagai ADMIN/PETUGAS, <strong>POST</strong> <code>/kewajiban-pajak</code>
+            dengan <code>wajib_pajak_id</code> (dari R5), <code>jenis_pajak</code>,
+            <code>pokok_pajak</code>, <code>jatuh_tempo</code> &rarr; <strong>201</strong>.</li>
+          <li><strong>GET</strong> <code>/kewajiban-pajak/{id}</code> &rarr; <strong>200</strong>,
+            <code>ringkasan.sisa_kewajiban</code> harus sama dengan <code>pokok_pajak</code>
+            (karena belum ada pembayaran).</li>
+        </ol>
       </div>
     </div>
 
@@ -2258,6 +2366,28 @@ class DatabaseSeeder extends Seeder
         menjumlahkan semua transaksi terdahulu &mdash; status baru berubah <code>LUNAS</code>
         setelah akumulasinya &ge; <code>pokok_pajak</code>.
       </p>
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil (Postman)</div>
+        <ol>
+          <li><code>php artisan db:seed</code> harus selesai tanpa error, dan bisa dijalankan
+            berkali-kali tanpa membuat akun duplikat (bukti <code>updateOrCreate</code>).</li>
+          <li>Login pakai akun seeder, mis. <code>petugas</code>/<code>Petugas@2025</code>.</li>
+          <li><strong>POST</strong> <code>/pembayaran</code> untuk kewajiban pajak yang baru
+            dibuat di R6 (bukan yang sudah lunas dari seeder), bayar sebagian dulu (kurang dari
+            <code>pokok_pajak</code>) &rarr; <strong>201</strong>, cek <code>data.denda</code>
+            dan pastikan <code>data.pembayaran.status</code> = <code>KURANG_BAYAR</code>.</li>
+          <li>Kirim <strong>POST</strong> <code>/pembayaran</code> kedua ke kewajiban yang sama
+            (nominal sisanya, sebagai cicilan) &rarr; statusnya berubah jadi <code>LUNAS</code>,
+            bukti <code>totalDibayar()</code> mengakumulasi pembayaran sebelumnya.</li>
+          <li>Coba <code>tanggal_bayar</code> di masa depan &rarr; <strong>422</strong>
+            (<code>before_or_equal:today</code>). Coba <code>nominal</code> 0 atau minus &rarr;
+            <strong>422</strong> juga.</li>
+          <li>Nonaktifkan salah satu wajib pajak lewat <code>tinker</code>
+            (<code>WajibPajak::find($id)->update(['status_aktif'=>false])</code>), lalu coba
+            bayar kewajiban miliknya &rarr; harus <strong>409</strong> "Wajib pajak tidak
+            aktif".</li>
+        </ol>
+      </div>
     </div>
 
     <hr class="divider" />
@@ -2354,6 +2484,21 @@ Route::get('/laporan', [LaporanController::class, 'index'])->middleware('role:AD
         walau kolom <code>wajib_pajak_id</code> ada di tabel lain, bukan di <code>pembayaran</code>
         langsung.
       </div>
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil (Postman)</div>
+        <ol>
+          <li>Login ADMIN/PETUGAS, <strong>GET</strong> <code>/laporan</code> tanpa filter
+            &rarr; <strong>200</strong>, cek <code>ringkasan.jumlah_transaksi</code> sesuai
+            jumlah pembayaran yang sudah dibuat sejauh ini (dari R7).</li>
+          <li><strong>GET</strong> <code>/laporan?status=LUNAS</code> &rarr; <code>detail</code>
+            hanya berisi transaksi berstatus LUNAS.</li>
+          <li><strong>GET</strong> <code>/laporan?wajib_pajak_id=&lt;id&gt;</code> &rarr; hanya
+            transaksi wajib pajak itu yang muncul.</li>
+          <li>Coba akses <code>/laporan</code> pakai token WAJIB_PAJAK &rarr; harus
+            <strong>403</strong> (bukti <code>role:ADMIN,PETUGAS</code> jalan di endpoint ini
+            juga).</li>
+        </ol>
+      </div>
     </div>
 
     <hr class="divider" />
@@ -2440,6 +2585,24 @@ class WajibPajak extends Model
         memastikan hanya kolom yang nilainya benar-benar berbeda yang masuk ke
         <code>properties</code>, jadi tabel <code>activity_log</code> tidak membengkak dengan
         entri kosong/redundan.
+      </div>
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil (Postman)</div>
+        <ol>
+          <li>Lakukan satu perubahan dulu, mis. <strong>PUT</strong>
+            <code>/wajib-pajak/{id}</code> ubah <code>nama</code>-nya.</li>
+          <li>Login sebagai <code>admin</code>, <strong>GET</strong> <code>/audit-log</code>
+            &rarr; <strong>200</strong>, entri terbaru harus <code>event: updated</code>,
+            <code>log_name: wajib_pajak</code>, dan <code>causer</code> berisi user yang tadi
+            login.</li>
+          <li>Ulangi <strong>PUT</strong> yang sama dengan nilai identik (tidak ada perubahan)
+            &rarr; jumlah baris di <code>/audit-log</code> tidak bertambah (bukti
+            <code>logOnlyDirty()</code> + <code>dontSubmitEmptyLogs()</code> jalan).</li>
+          <li><strong>GET</strong> <code>/audit-log?log_name=pembayaran</code> &rarr; hanya
+            menampilkan log dari model <code>Pembayaran</code>.</li>
+          <li>Coba akses <code>/audit-log</code> pakai token PETUGAS/WAJIB_PAJAK &rarr; harus
+            <strong>403</strong> (endpoint ini <code>role:ADMIN</code> saja).</li>
+        </ol>
       </div>
     </div>
 
@@ -2544,6 +2707,22 @@ php artisan serve</code></pre>
         <code>php artisan l5-swagger:generate</code> &mdash; file JSON hasil generate di-cache,
         tidak otomatis mengikuti perubahan kode.
       </div>
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil</div>
+        <ol>
+          <li><code>php artisan l5-swagger:generate</code> harus selesai tanpa error.</li>
+          <li>Jalankan <code>php artisan serve</code>, buka
+            <code>http://localhost:8000/api/documentation</code> di browser &rarr; harus muncul
+            Swagger UI dengan tag <em>Auth</em>, <em>Wajib Pajak</em>, dst. sesuai yang
+            didaftarkan di <code>Controller.php</code>.</li>
+          <li>Klik tombol <strong>Authorize</strong>, tempel token JWT hasil login, lalu klik
+            <strong>Try it out</strong> pada salah satu endpoint (mis. <code>GET
+            /wajib-pajak</code>) langsung dari browser, tanpa Postman.</li>
+          <li>Mulai titik ini, Swagger UI bisa dipakai menggantikan Postman untuk mengeksplorasi
+            endpoint &mdash; tapi Postman/curl tetap berguna untuk skenario yang ingin disimpan
+            sebagai koleksi tes berulang.</li>
+        </ol>
+      </div>
     </div>
 
     <hr class="divider" />
@@ -2551,6 +2730,13 @@ php artisan serve</code></pre>
     <!-- ========== TESTING ========== -->
     <div class="section" id="tps-testing">
       <h2>Testing &mdash; Unit &amp; Feature</h2>
+      <p>
+        Sampai R10, tiap tahap dibuktikan manual lewat <code>tinker</code>, Postman, atau
+        Swagger UI. Tahap ini mengubah pembuktian manual itu jadi otomatis &mdash; supaya
+        regresi ke depan ketahuan lewat satu perintah (<code>php artisan test</code>), tanpa
+        harus mengulang semua langkah manual di atas satu per satu setiap kali ada perubahan
+        kode.
+      </p>
 
       <ol class="step-list">
         <li>
