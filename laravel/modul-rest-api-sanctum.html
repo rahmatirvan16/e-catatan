@@ -1955,6 +1955,14 @@ php artisan migrate</code></pre>
         Di Laravel 12, Sanctum sudah di-include by default. Cukup jalankan
         <code>php artisan migrate</code> jika belum.
       </div>
+      <div class="callout success">
+        <div class="callout-title">Coba Sekarang</div>
+        Sebelum lanjut ke langkah berikutnya, pastikan migrasinya benar-benar jalan:
+        <code>php artisan migrate:status</code> harus menampilkan
+        <code>personal_access_tokens</code> berstatus <code>Ran</code>. Kalau belum muncul,
+        jangan lanjut dulu &mdash; controller di langkah berikutnya butuh tabel ini untuk
+        menyimpan token.
+      </div>
     </div>
 
     <!-- SETUP USER -->
@@ -1980,6 +1988,16 @@ php artisan migrate</code></pre>
         <span class="str">'password'</span>, <span class="str">'remember_token'</span>,
     ];
 }</code></pre>
+      <div class="callout success">
+        <div class="callout-title">Coba Sekarang</div>
+        Ini bisa dites tanpa endpoint HTTP sama sekali &mdash; langsung lewat
+        <code>php artisan tinker</code>:
+        <pre><code>$user = \App\Models\User::first() ?? \App\Models\User::factory()->create();
+$user->createToken('test')->plainTextToken; // harus mengembalikan string token</code></pre>
+        Kalau method <code>createToken()</code> ini error atau tidak ada, artinya trait
+        <code>HasApiTokens</code> belum terpasang benar &mdash; perbaiki dulu di sini sebelum
+        lanjut, karena semua endpoint auth di langkah berikutnya bergantung pada method ini.
+      </div>
     </div>
 
     <!-- SETUP BOOTSTRAP -->
@@ -2003,6 +2021,13 @@ php artisan migrate</code></pre>
     })
     -&gt;<span class="fn">withExceptions</span>(<span class="kw">function</span> (<span class="cl">Exceptions</span> $exceptions) {})
     -&gt;<span class="fn">create</span>();</code></pre>
+      <div class="callout success">
+        <div class="callout-title">Coba Sekarang</div>
+        Jalankan <code>php artisan serve</code> &mdash; kalau ada salah ketik atau konfigurasi
+        yang keliru di <code>bootstrap/app.php</code>, error langsung terlihat di sini, bukan
+        nanti setelah <code>AuthController</code> &amp; <code>ProdukApiController</code> juga
+        selesai ditulis.
+      </div>
     </div>
 
     <!-- AUTH CONTROLLER -->
@@ -2084,6 +2109,21 @@ php artisan migrate</code></pre>
         <span class="kw">return</span> <span class="fn">response</span>()-&gt;<span class="fn">json</span>($request-&gt;<span class="fn">user</span>());
     }
 }</code></pre>
+      <div class="callout success">
+        <div class="callout-title">Coba Sekarang, Jangan Tunggu <code>ProdukApiController</code> Selesai</div>
+        Godaannya adalah lanjut dulu bikin <code>ProdukApiController</code>, baru buka Postman
+        di paling akhir. Lebih baik daftarkan dulu 3 route auth ini saja di
+        <code>routes/api.php</code> (lihat pola lengkapnya di section <a
+        href="#api-routes">API Routes</a>) lalu tes sekarang juga:
+        <pre><code>Route::post('/register', [App\Http\Controllers\Api\AuthController::class, 'register']);
+Route::post('/login', [App\Http\Controllers\Api\AuthController::class, 'login']);
+Route::middleware('auth:sanctum')->get('/me', [App\Http\Controllers\Api\AuthController::class, 'me']);</code></pre>
+        <strong>POST</strong> <code>/api/register</code> &rarr; <strong>201</strong> dengan
+        <code>token</code>. <strong>POST</strong> <code>/api/login</code> &rarr;
+        <strong>200</strong>. <strong>GET</strong> <code>/api/me</code> pakai
+        <code>Authorization: Bearer &lt;token&gt;</code> &rarr; <strong>200</strong>. Kalau
+        ketiganya sudah beres, baru lanjut ke <code>ProdukApiController</code>.
+      </div>
     </div>
 
     <!-- PRODUK API -->
@@ -2161,6 +2201,17 @@ php artisan migrate</code></pre>
         ]);
     }
 }</code></pre>
+      <div class="callout success">
+        <div class="callout-title">Coba Sekarang</div>
+        Tambahkan <code>Route::middleware('auth:sanctum')-&gt;apiResource('produk',
+        ProdukApiController::class);</code> ke <code>routes/api.php</code>, pakai
+        <code>token</code> dari langkah login sebelumnya, lalu tes satu-satu:
+        <strong>GET</strong> <code>/api/produk</code> (list), <strong>POST</strong>
+        <code>/api/produk</code> (buat baru &rarr; <strong>201</strong>), <strong>PUT</strong>
+        <code>/api/produk/{id}</code> (update), <strong>DELETE</strong>
+        <code>/api/produk/{id}</code>. Kalau salah satu gagal, penyebabnya pasti di
+        controller ini &mdash; belum tercampur dengan endpoint lain.
+      </div>
     </div>
 
     <!-- API ROUTES -->
@@ -2436,6 +2487,13 @@ php artisan migrate</code></pre>
     <!-- TEST POSTMAN -->
     <div class="section" id="test-postman">
       <h2>Test dengan Postman</h2>
+      <p>
+        Kalau tiap section sebelumnya sudah dicoba satu per satu (lihat kotak "Coba
+        Sekarang"), endpoint-endpoint di bawah ini seharusnya sudah pernah dites individual.
+        Bagian ini merangkumnya jadi satu alur regresi end-to-end &mdash; memastikan semua
+        potongan yang dibangun terpisah tetap bekerja sama dengan benar saat dipanggil
+        berurutan.
+      </p>
 
       <h3>Setup Postman</h3>
       <ol class="step-list">
