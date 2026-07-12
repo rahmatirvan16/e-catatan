@@ -706,6 +706,14 @@ Copying file [.../config/config.php] to [.../config/jwt.php]  DONE</span></code>
             <code>jwt</code> — digunakan saat kamu menulis middleware <code>auth:api</code> di routes.
           </div>
 
+          <div class="action">
+            <div class="action-label check"><span class="icon">&#10003;</span> Verifikasi berhasil</div>
+            <div class="action-check-body">
+              Cek lewat <code>php artisan tinker</code> tanpa perlu bikin controller dulu:
+              <pre style="margin:8px 0 0"><code>config('auth.guards.api.driver'); // harus balikin string "jwt"</code></pre>
+            </div>
+          </div>
+
         </div>
       </div>
     </div>
@@ -783,6 +791,21 @@ Copying file [.../config/config.php] to [.../config/jwt.php]  DONE</span></code>
             <div class="callout-title">Mau simpan role di token? Bisa!</div>
             Ubah <code>getJWTCustomClaims()</code> menjadi:
             <pre style="margin:8px 0 0"><code><span class="kw">return</span> [<span class="str">'role'</span> =&gt; $this-&gt;role];  <span class="cm">// role bisa dicek tanpa query DB</span></code></pre>
+          </div>
+
+          <div class="action">
+            <div class="action-label check"><span class="icon">&#10003;</span> Verifikasi berhasil</div>
+            <div class="action-check-body">
+              Ini bagian paling penting dan bisa dites <strong>sebelum</strong> controller/routes
+              dibuat sama sekali &mdash; langsung lewat <code>php artisan tinker</code>:
+              <pre style="margin:8px 0 0"><code>$user = \App\Models\User::first() ?? \App\Models\User::factory()->create();
+Auth::guard('api')->login($user); // harus balikin string token JWT, bukan error</code></pre>
+              Kalau baris kedua sudah mengembalikan string panjang (bukan exception), berarti
+              guard <code>api</code> (Langkah 4) dan <code>JWTSubject</code> di Model
+              <code>User</code> ini sudah nyambung dengan benar. <code>JwtAuthController</code>
+              di langkah berikutnya cuma membungkus pemanggilan yang sama ini di balik endpoint
+              HTTP.
+            </div>
           </div>
 
         </div>
@@ -926,6 +949,23 @@ Copying file [.../config/config.php] to [.../config/jwt.php]  DONE</span></code>
             </table>
           </div>
 
+          <div class="action">
+            <div class="action-label check"><span class="icon">&#10003;</span> Coba Sekarang, Sebelum Lanjut ke ProdukApiController</div>
+            <div class="action-check-body">
+              Daftarkan dulu 2 baris route ini saja di <code>routes/api.php</code> (bagian
+              lengkapnya menyusul di Langkah 8), lalu tes lewat Postman/curl:
+              <pre style="margin:8px 0 0"><code>Route::prefix('v2')->group(function () {
+    Route::post('/register', [App\Http\Controllers\Api\JwtAuthController::class, 'register']);
+    Route::post('/login', [App\Http\Controllers\Api\JwtAuthController::class, 'login']);
+});</code></pre>
+              <strong>POST</strong> <code>/api/v2/register</code> &rarr; <strong>201</strong>
+              dengan <code>token</code>. <strong>POST</strong> <code>/api/v2/login</code> &rarr;
+              <strong>200</strong>. Kalau keduanya beres, baru lanjut bikin
+              <code>ProdukApiController</code> — jangan tunggu sampai semua endpoint jadi baru
+              buka Postman di Langkah 9.
+            </div>
+          </div>
+
         </div>
       </div>
     </div>
@@ -1024,6 +1064,18 @@ Copying file [.../config/config.php] to [.../config/jwt.php]  DONE</span></code>
         ]);
     }
 }</code></pre>
+          </div>
+
+          <div class="action">
+            <div class="action-label check"><span class="icon">&#10003;</span> Verifikasi berhasil</div>
+            <div class="action-check-body">
+              Controller ini belum bisa dites lewat HTTP sampai route-nya didaftarkan di
+              Langkah 8 &mdash; tapi kamu bisa cek dulu data yang dipakainya sudah benar lewat
+              <code>tinker</code>: <code>\App\Models\Produk::count()</code> harus mengembalikan
+              angka (bukan error), tanda tabel &amp; model <code>Produk</code> dari modul
+              sebelumnya masih bisa diakses. Pengujian HTTP lengkap untuk kelima endpoint ini
+              ada di <a href="#langkah-9">Langkah 9</a>.
+            </div>
           </div>
 
         </div>
