@@ -703,6 +703,15 @@ LIMIT 10;</code></pre>
       <div class="pre-label">SQL</div>
       <pre><code>UPDATE produk SET stok = stok - 1 WHERE id = 1;
 DELETE FROM produk WHERE stok = 0 AND dibuat_pada &lt; now() - INTERVAL '1 year';</code></pre>
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil</div>
+        Jangan lanjut ke tipe data/relasi sebelum yakin sintaks dasarnya benar:
+        <code>\d produk</code> di <code>psql</code> harus menampilkan struktur tabel sesuai
+        <code>CREATE TABLE</code> di atas. Setelah <code>INSERT</code>, jalankan
+        <code>SELECT COUNT(*) FROM produk;</code> &mdash; harus bertambah satu. Setelah
+        <code>UPDATE</code>, <code>SELECT stok FROM produk WHERE id = 1;</code> harus
+        menunjukkan angka yang sudah berkurang.
+      </div>
     </div>
 
     <div class="section" id="pg-tipe-data">
@@ -762,6 +771,15 @@ CREATE TABLE produk (
           <tr><td><code>ON DELETE CASCADE/RESTRICT/SET NULL</code></td><td>Aturan saat baris induk dihapus</td></tr>
         </tbody>
       </table>
+      </div>
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil</div>
+        Constraint baru benar-benar berguna kalau terbukti <strong>menolak</strong> data yang
+        salah. Coba sengaja langgar masing-masing: insert <code>kategori_id</code> yang tidak
+        ada di tabel <code>kategori</code> &rarr; harus gagal dengan error
+        <code>violates foreign key constraint</code>. Insert <code>harga</code> negatif &rarr;
+        harus gagal dengan <code>violates check constraint</code>. Kalau semua percobaan
+        "salah" ini malah berhasil tersimpan, constraint-nya belum terpasang dengan benar.
       </div>
     </div>
 
@@ -823,6 +841,15 @@ COMMIT;</code></pre>
     DB::table('produk')-&gt;where('id', 1)-&gt;decrement('stok');
     DB::table('transaksi')-&gt;insert(['produk_id' =&gt; 1, 'jumlah' =&gt; 1]);
 });</code></pre>
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil</div>
+        Buktikan <code>ROLLBACK</code> benar-benar membatalkan: <code>BEGIN</code>, lakukan
+        <code>UPDATE</code>, cek datanya sudah berubah lewat <code>SELECT</code> di sesi/tab
+        yang sama, lalu <code>ROLLBACK</code> &mdash; <code>SELECT</code> ulang harus
+        menunjukkan data <strong>kembali seperti semula</strong>. Ulangi dengan
+        <code>COMMIT</code> di akhir &mdash; kali ini perubahan harus permanen bahkan setelah
+        membuka sesi <code>psql</code> baru.
+      </div>
     </div>
 
     <div class="section" id="pg-isolasi">
@@ -865,6 +892,15 @@ COMMIT;</code></pre>
         <code>deadlock detected</code> &mdash; aplikasi harus siap menangkap error ini dan
         retry. Hindari dengan selalu mengunci baris dalam urutan yang konsisten (misal selalu
         urut berdasarkan ID terkecil dulu).
+      </div>
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil</div>
+        Butuh dua sesi <code>psql</code> terbuka bersamaan untuk melihat locking sungguhan:
+        di sesi A, <code>BEGIN; SELECT * FROM produk WHERE id = 1 FOR UPDATE;</code> (jangan
+        <code>COMMIT</code> dulu). Di sesi B, coba <code>UPDATE produk SET stok = stok - 1
+        WHERE id = 1;</code> &mdash; sesi B harus <strong>menggantung</strong> (menunggu),
+        bukan langsung sukses. Setelah sesi A <code>COMMIT</code>, sesi B baru lanjut. Kalau
+        sesi B langsung sukses tanpa menunggu, berarti <code>FOR UPDATE</code> belum efektif.
       </div>
     </div>
 
@@ -925,6 +961,15 @@ DB_PASSWORD=app_password</code></pre>
       <p><code>jsonb()</code> dan <code>timestampsTz()</code> hanya masuk akal dipakai kalau
         koneksi default kamu memang PostgreSQL &mdash; keduanya memetakan langsung ke tipe
         <code>JSONB</code> dan <code>TIMESTAMPTZ</code>.</p>
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil</div>
+        Setelah <code>php artisan migrate</code>, jalankan <code>\d produk</code> di
+        <code>psql</code> &mdash; kolom <code>atribut</code> harus bertipe <code>jsonb</code>
+        (bukan <code>json</code> biasa) dan <code>created_at</code>/<code>updated_at</code>
+        harus bertipe <code>timestamp with time zone</code>. Kalau tipenya salah, kemungkinan
+        method Schema Builder yang dipakai keliru (mis. <code>json()</code> alih-alih
+        <code>jsonb()</code>).
+      </div>
     </div>
 
     <div class="section" id="pg-laravel-eloquent">
@@ -1061,6 +1106,13 @@ SELECT hitung_diskon(100000, 15); -- 85000</code></pre>
         Simpan di database hanya untuk logika yang benar-benar stabil dan erat kaitannya
         dengan integritas data.
       </div>
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil</div>
+        <code>SELECT hitung_diskon(100000, 15);</code> harus mengembalikan persis
+        <code>85000</code>. Uji juga jalur errornya:
+        <code>SELECT hitung_diskon(100000, 150);</code> harus gagal dengan pesan
+        "Persen diskon tidak valid: 150" &mdash; bukan diam-diam mengembalikan angka negatif.
+      </div>
     </div>
 
     <div class="section" id="pg-trigger">
@@ -1088,6 +1140,14 @@ EXECUTE FUNCTION set_updated_at();</code></pre>
         lain yang mengakses database yang sama. Trigger paling berguna sebagai jaring
         pengaman di level database untuk aturan yang tidak boleh dilanggar siapa pun,
         termasuk query manual.
+      </div>
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil</div>
+        Lewat <code>psql</code>: catat dulu nilai <code>updated_at</code> sebuah baris, lalu
+        <code>UPDATE produk SET stok = stok WHERE id = 1;</code> (tanpa menyentuh
+        <code>updated_at</code> secara eksplisit) &mdash; <code>SELECT updated_at FROM produk
+        WHERE id = 1;</code> harus menunjukkan waktu yang baru saja berubah, bukti trigger
+        jalan otomatis meski update dilakukan lewat SQL mentah, bukan Eloquent.
       </div>
     </div>
 
@@ -1220,6 +1280,14 @@ $pesanan = DB::table('pesanan')-&gt;get(); // otomatis hanya baris milik tenant 
         Laravel), dan gunakan RLS sebagai jaring pengaman terakhir kalau ada bug atau akses
         langsung ke database yang terlewat dari lapisan aplikasi.
       </div>
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil</div>
+        <code>SET app.current_tenant = 1;</code> lalu <code>SELECT * FROM pesanan;</code> harus
+        <strong>hanya</strong> menampilkan baris milik tenant 1, meski tabelnya berisi data
+        banyak tenant. Ganti <code>SET app.current_tenant = 2;</code> di sesi yang sama &rarr;
+        hasil <code>SELECT</code> yang sama harus berubah total ke data tenant 2. Kalau baris
+        tenant lain masih ikut muncul, policy RLS belum aktif atau kondisinya salah.
+      </div>
     </div>
 
     <!-- ========== INDEXING & PERFORMANCE ========== -->
@@ -1248,6 +1316,16 @@ SELECT * FROM produk WHERE kategori_id = 3 ORDER BY harga DESC;</code></pre>
         Jangan jalankan <code>EXPLAIN ANALYZE</code> untuk query <code>UPDATE</code>/<code>DELETE</code>
         di production tanpa hati-hati &mdash; perintah ini benar-benar mengeksekusi query,
         bukan sekadar simulasi.
+      </div>
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil</div>
+        Jalankan <code>EXPLAIN ANALYZE</code> pada query yang sama <strong>sebelum</strong> dan
+        <strong>sesudah</strong> membuat index di kolom <code>kategori_id</code> (lihat
+        <a href="#pg-index-dasar">Index Dasar</a>). Sebelum ada index, plan-nya harus
+        menunjukkan <code>Seq Scan</code>; sesudahnya harus berubah jadi
+        <code>Index Scan</code>, dan angka <code>actual time</code> harus lebih kecil. Kalau
+        plan tidak berubah, kemungkinan tabelnya masih terlalu kecil untuk Postgres memilih
+        pakai index (planner sengaja pilih Seq Scan kalau lebih murah untuk tabel kecil).
       </div>
     </div>
 
@@ -1355,6 +1433,14 @@ pg_dumpall -U postgres -f semua_db.sql</code></pre>
         Jadwalkan <code>pg_dump</code> otomatis (cron/Task Scheduler) dan simpan hasilnya di
         lokasi terpisah dari server database &mdash; backup yang hanya ada di server yang sama
         tidak melindungi dari kegagalan disk/server itu sendiri.
+      </div>
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil</div>
+        Backup yang belum pernah dicoba di-restore bukanlah backup yang bisa diandalkan.
+        Setelah <code>pg_restore</code> ke <code>app_db_baru</code>, jalankan
+        <code>SELECT COUNT(*) FROM produk;</code> di database baru itu dan bandingkan dengan
+        jumlah baris di database asal &mdash; angkanya harus sama persis. Lakukan ini secara
+        rutin, bukan cuma sekali saat setup awal.
       </div>
     </div>
 
