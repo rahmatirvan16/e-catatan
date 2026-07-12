@@ -613,6 +613,15 @@
         <em>transformasi data</em> (misal pakai <strong>API Resource</strong>), bukan seluruh
         business logic. Service &amp; Repository dari Minggu 2 tetap dipakai bersama.
       </div>
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil (Postman)</div>
+        <strong>GET</strong> <code>/api/v1/produk/1</code> dan <strong>GET</strong>
+        <code>/api/v2/produk/1</code> untuk produk yang <strong>sama</strong> &mdash; keduanya
+        harus <strong>200</strong>, tapi bentuk field-nya harus berbeda persis seperti contoh
+        di atas (<code>nama_produk</code> vs <code>name</code>). Cek juga header response V1
+        harus memuat <code>Deprecation: true</code> dan <code>Sunset: 2026-12-31</code>,
+        sedangkan response V2 tidak.
+      </div>
     </div>
 
     <hr class="divider" />
@@ -798,6 +807,14 @@ REVERB_SCHEME=http</code></pre>
         <code>php artisan serve</code> (HTTP biasa) dan <code>php artisan reverb:start</code>
         (WebSocket) adalah dua proses terpisah yang perlu berjalan bersamaan saat development.
       </div>
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil</div>
+        Setelah <code>php artisan reverb:start</code> jalan, terminalnya harus menampilkan log
+        <code>Starting server...</code> dan <code>Server running...</code> tanpa error koneksi
+        port. Belum ada event untuk didengarkan di tahap ini &mdash; verifikasi lengkap
+        (event benar-benar sampai ke client) baru bisa dilakukan setelah section
+        <a href="#reverb-echo">Listen di Frontend</a> selesai.
+      </div>
     </div>
 
     <!-- BROADCAST EVENT -->
@@ -870,6 +887,16 @@ REVERB_SCHEME=http</code></pre>
         interface <code>ShouldBroadcast</code> membuat event yang sama juga dikirim lewat
         WebSocket ke client yang sedang mendengarkan channel terkait.
       </div>
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil</div>
+        Sebelum ada frontend yang dengar, cek dulu dari sisi server:
+        <code>StokProdukMenipis::dispatch($produk);</code> di <code>tinker</code> tidak boleh
+        melempar error. Buka tab <strong>Debug Console</strong> di dashboard Reverb (kalau
+        dijalankan dengan <code>--debug</code>) atau cek Telescope tab <strong>Events</strong>
+        &mdash; event <code>StokProdukMenipis</code> harus tercatat terkirim ke channel
+        <code>admin-dashboard</code> setiap <code>update()</code> dipanggil dengan
+        <code>stok &lt;= 5</code>.
+      </div>
     </div>
 
     <!-- CHANNEL & OTORISASI -->
@@ -899,6 +926,14 @@ Broadcast::<span class="fn">channel</span>(<span class="str">'order.{orderId}'</
         <span class="kw">new</span> PrivateChannel(<span class="str">"order.{$this-&gt;order-&gt;id}"</span>),
     ];
 }</code></pre>
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil</div>
+        Callback otorisasi di <code>routes/channels.php</code> bisa dites langsung tanpa
+        WebSocket: panggil sebagai function biasa di <code>tinker</code> dengan user pemilik
+        order &rarr; harus <code>true</code>; dengan user lain &rarr; harus <code>false</code>.
+        Verifikasi penuh lewat WebSocket (permintaan otorisasi ditolak untuk user yang salah)
+        baru terlihat setelah frontend terhubung di section berikutnya.
+      </div>
     </div>
 
     <!-- LISTEN DI FRONTEND -->
@@ -940,6 +975,21 @@ Broadcast::<span class="fn">channel</span>(<span class="str">'order.{orderId}'</
         <code>.listen('.stok.menipis', ...)</code> &mdash; titik di depan berarti nama event
         dipakai persis seperti yang dikembalikan <code>broadcastAs()</code>, tanpa
         prefix namespace class event PHP-nya.
+      </div>
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil (End-to-End)</div>
+        <ol>
+          <li>Buka halaman di browser, buka DevTools tab <strong>Network &rarr; WS</strong>
+            &mdash; harus ada koneksi WebSocket ke <code>REVERB_HOST:REVERB_PORT</code>
+            berstatus <em>101 Switching Protocols</em> (bukan gagal connect).</li>
+          <li>Dari <code>tinker</code> di terminal lain, update produk sampai
+            <code>stok &lt;= 5</code> &mdash; <code>console.log</code> di browser harus
+            langsung menampilkan pesan stok menipis <strong>tanpa</strong> refresh halaman.</li>
+          <li>Untuk private channel: login sebagai bukan pemilik order, coba
+            <code>Echo.private(`order.${idOrangLain}`)</code> &mdash; harus muncul error 403
+            di console, bukti otorisasi channel benar-benar dicek, bukan cuma didekorasi
+            "private" tanpa efek.</li>
+        </ol>
       </div>
     </div>
 
