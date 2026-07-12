@@ -627,6 +627,13 @@ tests</code></pre>
         Package development (Pest, PHPUnit, Telescope dari Minggu 3&ndash;4) tidak perlu ikut
         di image production &mdash; membuat image lebih kecil dan lebih cepat di-<em>build</em>.
       </div>
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil</div>
+        Sebelum menulis <code>docker-compose.yml</code>, pastikan Dockerfile ini saja sudah
+        bisa di-<em>build</em>: <code>docker build -t laravel-crud-app-test .</code> harus
+        selesai tanpa error. Kalau gagal di sini, jangan lanjut &mdash; error yang sama akan
+        muncul lagi (lebih membingungkan) saat sudah tercampur dengan service lain di Compose.
+      </div>
     </div>
 
     <!-- DOCKER COMPOSE -->
@@ -717,6 +724,21 @@ docker compose down</code></pre>
         saat container di-restart. Tanpa ini, setiap <code>docker compose down</code> akan
         menghapus semua data.
       </div>
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil</div>
+        <ol>
+          <li><code>docker compose ps</code> harus menampilkan <strong>semua</strong> service
+            (<code>app</code>, <code>nginx</code>, <code>mysql</code>, <code>redis</code>,
+            <code>horizon</code>) berstatus <code>Up</code>, bukan <code>Restarting</code> atau
+            <code>Exited</code>.</li>
+          <li><strong>GET</strong> <code>http://localhost:8000/api/produk</code> lewat Postman
+            harus <strong>200</strong>, sama seperti waktu jalan di XAMPP.</li>
+          <li><code>docker compose down</code> lalu <code>docker compose up -d</code> lagi
+            &mdash; data produk yang tadi ada harus tetap ada (bukti volume
+            <code>mysql_data</code> bekerja). Kalau datanya hilang, volume belum terpasang
+            benar.</li>
+        </ol>
+      </div>
     </div>
 
     <hr class="divider" />
@@ -800,6 +822,15 @@ docker compose down</code></pre>
         secara otomatis di setiap push &mdash; tidak lagi mengandalkan developer ingat
         menjalankannya manual.
       </div>
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil</div>
+        <code>git push</code> commit apa saja ke branch <code>main</code>/<code>develop</code>,
+        lalu buka tab <strong>Actions</strong> di GitHub &mdash; workflow "CI" harus muncul dan
+        berjalan (ikon kuning berputar), lalu berubah jadi centang hijau kalau semua step
+        lolos. Coba sengaja rusak satu test lokal, push, dan pastikan workflow-nya
+        <strong>gagal</strong> (silang merah) &mdash; kalau tidak, berarti step Pest belum
+        benar-benar menjalankan test yang ada.
+      </div>
     </div>
 
     <!-- WORKFLOW DEPLOY -->
@@ -854,6 +885,15 @@ docker compose down</code></pre>
         <li>Klik <strong>New repository secret</strong>, isi nama (mis. <code>DOCKERHUB_TOKEN</code>) dan nilainya</li>
         <li>Secret otomatis tersedia sebagai <code>${{ secrets.NAMA_SECRET }}</code> di workflow</li>
       </ol>
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil</div>
+        Setelah workflow "Deploy" selesai jalan (centang hijau di tab Actions): cek Docker Hub
+        &mdash; image <code>myusername/laravel-crud-app:latest</code> harus punya timestamp
+        "pushed" yang baru. Buka URL aplikasi di server production &mdash; lakukan satu
+        perubahan kecil yang terlihat (mis. ubah teks di satu halaman) sebelum push, dan
+        pastikan perubahan itu benar-benar muncul di server setelah deploy selesai, bukan
+        cuma percaya workflow-nya "sukses" secara status.
+      </div>
     </div>
 
     <hr class="divider" />
