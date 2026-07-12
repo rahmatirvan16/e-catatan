@@ -579,6 +579,16 @@
         <a href="modul-security-deepdive.html#encrypt-secrets">Minggu 6</a>) bisa diakses
         langsung lewat browser kalau tidak sengaja ter-expose.
       </div>
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil</div>
+        <strong>GET</strong> <code>http://laravel-crud-app.com/api/produk</code> (atau IP
+        server) harus mengembalikan response JSON yang sama seperti waktu diakses lewat
+        <code>php artisan serve</code> di lokal. Lalu <strong>coba juga</strong>
+        <code>http://laravel-crud-app.com/.env</code> di browser &mdash; harus
+        <strong>403 Forbidden</strong>, bukan menampilkan isi file. Kalau isi <code>.env</code>
+        malah muncul, blok <code>location ~ /\.</code> belum aktif &mdash; perbaiki sebelum
+        server ini dipakai untuk apa pun yang sungguhan.
+      </div>
     </div>
 
     <!-- SUPERVISOR -->
@@ -706,6 +716,15 @@ gcloud auth login</code></pre>
         human error dan tidak tercatat sebagai "dokumentasi hidup". Itulah masalah yang
         dipecahkan Terraform di bagian berikutnya.
       </div>
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil</div>
+        <code>aws ec2 describe-instances --filters "Name=tag:Name,Values=laravel-crud-app*"</code>
+        harus menampilkan instance dengan <code>"State": {"Name": "running"}</code>. Untuk RDS,
+        <code>aws rds describe-db-instances --db-instance-identifier laravel-crud-app-db</code>
+        harus menunjukkan <code>"DBInstanceStatus": "available"</code> sebelum lanjut mencoba
+        konek dari Laravel &mdash; database RDS butuh beberapa menit untuk siap, jangan buru-buru
+        mengira gagal kalau statusnya masih <code>creating</code>.
+      </div>
     </div>
 
     <hr class="divider" />
@@ -818,6 +837,16 @@ terraform apply -var=<span class="str">"db_password=GantiPasswordIni!"</span>  <
         Terraform, termasuk database berisi data production. Selalu jalankan
         <code>terraform plan</code> dulu untuk memastikan tidak ada yang terhapus tidak
         sengaja.
+      </div>
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil</div>
+        Baca output <code>terraform plan</code> <strong>sebelum</strong> <code>apply</code>
+        &mdash; harus menunjukkan <code>Plan: 2 to add, 0 to change, 0 to destroy</code> (bukan
+        angka lain yang tidak terduga). Setelah <code>apply</code> selesai,
+        <code>terraform show</code> harus menampilkan detail instance &amp; RDS yang baru
+        dibuat, dan resource yang sama harus terlihat di AWS Console. Ini juga cara membuktikan
+        Terraform benar-benar menggantikan langkah manual di section sebelumnya, bukan
+        menduplikasinya jadi resource baru yang terpisah.
       </div>
     </div>
 
