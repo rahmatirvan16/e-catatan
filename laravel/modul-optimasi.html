@@ -631,6 +631,20 @@ SESSION_DRIVER=redis</code></pre>
         Selalu hapus cache ketika data di database berubah (<code>store</code>, <code>update</code>,
         <code>destroy</code>). Cache yang stale lebih berbahaya dari tidak ada cache sama sekali.
       </div>
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil</div>
+        <ol>
+          <li><strong>GET</strong> <code>/api/produk</code> dua kali berturut-turut, lalu cek
+            Telescope tab <strong>Cache</strong> (Minggu 4) &mdash; panggilan pertama harus
+            tercatat sebagai <em>cache miss</em>, panggilan kedua sebagai <em>cache hit</em>
+            (query ke DB tidak terulang di tab Queries).</li>
+          <li>Cek langsung isi Redis: <code>redis-cli GET produk.all</code> harus mengembalikan
+            data JSON, bukan kosong.</li>
+          <li><strong>POST</strong> produk baru, lalu <strong>GET</strong> <code>/api/produk</code>
+            lagi &rarr; produk baru harus langsung muncul (bukti <code>Cache::forget()</code>
+            benar-benar menghapus cache lama, bukan menampilkan data basi).</li>
+        </ol>
+      </div>
     </div>
 
     <!-- REDIS SESSION -->
@@ -653,6 +667,14 @@ SESSION_LIFETIME=120   <span class="cm"># menit</span></code></pre>
         Wajib jika kamu deploy ke lebih dari satu server (load balancing).
         File session hanya ada di satu server &mdash; user yang hit server lain akan logout.
         Redis session tersentralisasi dan bisa diakses semua server.
+      </div>
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil</div>
+        Login lewat browser/Postman, lalu jalankan <code>redis-cli KEYS "*session*"</code>
+        &mdash; harus muncul minimal satu key session. Bandingkan dengan
+        <code>storage/framework/sessions/</code> &mdash; folder itu harus <strong>tidak</strong>
+        bertambah file baru lagi setelah <code>SESSION_DRIVER=redis</code> diaktifkan, bukti
+        session benar-benar pindah ke Redis, bukan tetap dobel ke file.
       </div>
     </div>
 
@@ -761,6 +783,17 @@ php artisan queue:work redis --tries=3 --timeout=60</code></pre>
         <code>SendWelcomeEmail::dispatchSync($user);</code>
         &mdash; jalankan langsung (synchronous, tanpa queue &mdash; berguna saat testing).
       </div>
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil</div>
+        <strong>Sebelum</strong> menjalankan <code>queue:work</code>, panggil endpoint register
+        &mdash; response harus tetap cepat, tapi <code>redis-cli LLEN queues:default</code>
+        harus bertambah 1 (job masuk antrian, belum diproses). Baru setelah
+        <code>php artisan queue:work</code> dijalankan, job tereksekusi dan
+        <code>redis-cli LLEN queues:default</code> kembali ke 0. Cek email benar-benar terkirim
+        lewat Mailtrap atau <code>MAIL_MAILER=log</code> (lihat isi <code>storage/logs</code>).
+        Kalau job tidak pernah berkurang dari antrian, cek lagi apakah worker benar-benar
+        berjalan atau ada error di <code>failed_jobs</code>.
+      </div>
     </div>
 
     <!-- HORIZON INSTALL -->
@@ -851,6 +884,14 @@ php artisan queue:retry all
 
 <span class="cm"># Hapus semua failed jobs</span>
 php artisan queue:flush</code></pre>
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil</div>
+        Dispatch beberapa job, buka <code>http://localhost:8000/horizon</code> &mdash; tab
+        <strong>Dashboard</strong> harus menunjukkan angka <em>jobs processed</em> naik secara
+        live tanpa perlu refresh manual. Sengaja buat satu job gagal (mis. lempar exception di
+        <code>handle()</code>), pastikan muncul di tab <strong>Failed Jobs</strong>, lalu klik
+        <strong>Retry</strong> &mdash; job itu harus pindah lagi ke antrian dan diproses ulang.
+      </div>
     </div>
 
     <hr class="divider" />
