@@ -573,6 +573,16 @@
         Policy memastikan "user ini <em>pemilik</em> resource spesifik ini" &mdash; keduanya
         dibutuhkan untuk kasus berbeda.
       </div>
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil (Coba Exploit-nya Sendiri)</div>
+        Login sebagai User A, buat satu order, catat ID-nya. Login sebagai User B (akun
+        berbeda), lalu <strong>GET</strong> <code>/api/orders/{id milik User A}</code> &mdash;
+        <strong>sebelum</strong> policy dipasang, ini harus berhasil (bukti IDOR nyata).
+        Pasang <code>OrderPolicy</code>, ulangi request yang sama sebagai User B &rarr;
+        sekarang harus <strong>403</strong>. Membuktikan celahnya ada dulu (bukan cuma percaya
+        teori) baru menutupnya adalah cara paling meyakinkan untuk tahu perbaikannya benar
+        bekerja.
+      </div>
     </div>
 
     <!-- CRYPTOGRAPHIC FAILURES -->
@@ -589,6 +599,14 @@
           <tr><td><code>APP_KEY</code> default/bocor</td><td>Generate unik per environment, jangan commit ke Git</td></tr>
         </tbody>
       </table>
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil</div>
+        <code>SELECT password FROM users LIMIT 1;</code> lewat <code>psql</code>/<code>mysql</code>
+        &mdash; nilainya harus berupa hash panjang yang diawali <code>$2y$</code> (bcrypt),
+        bukan teks password asli. Coba juga <code>Hash::check('password-asli',
+        $user-&gt;password)</code> di <code>tinker</code> &mdash; harus <code>true</code> untuk
+        password yang benar dan <code>false</code> untuk yang salah.
+      </div>
     </div>
 
     <!-- SECURITY MISCONFIGURATION -->
@@ -621,6 +639,15 @@ SESSION_HTTP_ONLY=true       <span class="cm"># cookie tidak bisa diakses JavaSc
           <tr><td>Directory listing web server</td><td>Nonaktifkan di konfigurasi Apache/Nginx</td></tr>
         </tbody>
       </table>
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil</div>
+        Sengaja picu error (mis. akses route yang tidak ada, atau method yang melempar
+        exception), lalu bandingkan responsnya dengan <code>APP_DEBUG=true</code> vs
+        <code>false</code>: dengan <code>true</code>, response harus menampilkan stack trace
+        &amp; nama file lengkap; dengan <code>false</code>, response harus generik (mis.
+        <code>{"message": "Server Error"}</code>) tanpa detail internal apa pun. Pastikan
+        production kamu benar-benar dalam kondisi kedua.
+      </div>
     </div>
 
     <!-- VULNERABLE COMPONENTS -->
@@ -697,6 +724,14 @@ $pelanggan-&gt;<span class="fn">save</span>();
         terpisah (misal SHA-256) di kolom tambahan untuk pencarian, sementara data asli tetap
         di kolom terenkripsi.
       </div>
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil</div>
+        Setelah <code>$pelanggan-&gt;save()</code>, cek langsung lewat client database (bukan
+        lewat Eloquent): <code>SELECT nomor_ktp FROM pelanggan WHERE id = ...;</code> harus
+        menampilkan teks acak terenkripsi, <strong>bukan</strong> <code>3201xxxxxxxxxxxx</code>
+        aslinya. Baru lewat <code>$pelanggan-&gt;fresh()-&gt;nomor_ktp</code> di Eloquent nilai
+        aslinya muncul lagi (bukti dekripsi otomatis jalan).
+      </div>
     </div>
 
     <!-- HASHING VS ENCRYPTION -->
@@ -762,6 +797,14 @@ $user-&gt;password = Crypt::<span class="fn">encryptString</span>($request-&gt;p
         sudah cukup. Secrets manager terpisah baru krusial saat tim besar atau butuh compliance
         (misal ISO 27001, SOC 2).
       </div>
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil</div>
+        <code>git status</code> setelah mengedit <code>.env</code> tidak boleh menampilkan
+        file itu sebagai "Changes not staged". Cek juga riwayatnya:
+        <code>git log --all --full-history -- .env</code> harus <strong>kosong</strong> &mdash;
+        kalau ada hasil, berarti <code>.env</code> pernah ter-commit di masa lalu (dan
+        secret-nya harus dianggap bocor, perlu dirotasi, meski sekarang sudah di-<code>.gitignore</code>).
+      </div>
     </div>
 
     <hr class="divider" />
@@ -809,6 +852,14 @@ $user-&gt;password = Crypt::<span class="fn">encryptString</span>($request-&gt;p
           <tr><td><code>Content-Security-Policy</code></td><td>Batasi sumber script/style yang boleh dimuat halaman</td></tr>
         </tbody>
       </table>
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil</div>
+        <code>curl -I http://localhost:8000/api/produk</code> &mdash; response header harus
+        memuat <code>X-Frame-Options: DENY</code>, <code>X-Content-Type-Options: nosniff</code>,
+        dan <code>Strict-Transport-Security</code> persis seperti yang di-set middleware. Kalau
+        salah satu tidak muncul, cek lagi apakah <code>SecurityHeaders</code> sudah didaftarkan
+        ke grup middleware yang benar di <code>bootstrap/app.php</code>.
+      </div>
     </div>
 
     <!-- CORS -->
@@ -838,6 +889,14 @@ $user-&gt;password = Crypt::<span class="fn">encryptString</span>($request-&gt;p
         kamu langsung dari browser user. Kombinasikan dengan
         <code>supports_credentials: true</code> bahkan bisa membocorkan data user yang sedang
         login ke situs manapun.
+      </div>
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil</div>
+        Dari console browser di halaman <strong>domain lain</strong> (bukan
+        <code>laravel-crud-app.com</code>), jalankan
+        <code>fetch('https://laravel-crud-app.com/api/produk')</code> &mdash; harus gagal
+        dengan error CORS di console. Dari <code>https://admin.laravel-crud-app.com</code>
+        (domain yang di-whitelist), <code>fetch</code> yang sama harus berhasil.
       </div>
     </div>
 
@@ -879,6 +938,15 @@ composer audit --format=json</code></pre>
         (<code>127.0.0.1</code>, <code>169.254.169.254</code>, <code>10.0.0.0/8</code>,
         <code>192.168.0.0/16</code>) supaya fitur seperti "import dari URL" tidak disalahgunakan
         untuk memindai jaringan internal server.
+      </div>
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil</div>
+        <strong>Sebelum</strong> whitelist dipasang, coba <strong>POST</strong>
+        <code>/api/import-gambar</code> dengan <code>url</code> mengarah ke domain sembarang
+        &mdash; kalau berhasil diproses, itu bukti SSRF nyata. Pasang validasi whitelist di
+        atas, ulangi dengan domain di luar <code>$allowedHosts</code> &rarr; harus
+        <strong>422</strong> "Domain sumber gambar tidak diizinkan.". Dengan domain yang memang
+        di-whitelist, request harus tetap berhasil seperti biasa.
       </div>
     </div>
 
