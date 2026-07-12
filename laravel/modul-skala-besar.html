@@ -626,6 +626,13 @@ RABBITMQ_HOST=127.0.0.1
 RABBITMQ_PORT=5672
 RABBITMQ_USER=guest
 RABBITMQ_PASSWORD=guest</code></pre>
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil</div>
+        <code>docker ps</code> harus menampilkan container <code>rabbitmq</code> berstatus
+        <code>Up</code>. Buka <code>http://localhost:15672</code>, login
+        <code>guest</code>/<code>guest</code> &mdash; dashboard harus bisa diakses (bukan
+        connection refused) sebelum lanjut ke section publish/consume berikutnya.
+      </div>
     </div>
 
     <!-- INSTALL KAFKA -->
@@ -693,6 +700,15 @@ RABBITMQ_PASSWORD=guest</code></pre>
         Stok baru berkurang <em>beberapa saat setelah</em> order dibayar, bukan seketika dalam
         satu transaction seperti Minggu 7. Ini disebut <strong>eventual consistency</strong>
         &mdash; trade-off yang harus diterima saat data tersebar di banyak service.
+      </div>
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil</div>
+        Buka tab <strong>Queues</strong> di dashboard RabbitMQ (<code>localhost:15672</code>)
+        sebelum consumer jalan &mdash; publish satu <code>OrderPaid</code>, angka
+        <em>Ready</em> di queue <code>stock-updates</code> harus bertambah 1. Jalankan
+        <code>php artisan queue:work rabbitmq</code>, catat <code>stok</code> produk sebelum
+        &amp; sesudah &mdash; harus berkurang sesuai <code>qty</code>, dan angka
+        <em>Ready</em> di dashboard kembali ke 0.
       </div>
     </div>
 
@@ -798,6 +814,17 @@ Event Sourcing:
         Tidak perlu framework event sourcing penuh untuk mulai belajar konsepnya &mdash;
         tabel <code>order_events</code> sederhana seperti di atas sudah cukup untuk memahami
         prinsip "simpan riwayat, bukan cuma status akhir".
+      </div>
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil</div>
+        Lewat <code>tinker</code>: <code>$store = new
+        \App\Services\OrderEventStore(); $store-&gt;record(1, 'OrderCreated', []);
+        $store-&gt;currentStatus(1);</code> harus <code>"pending"</code>. Tambahkan
+        <code>$store-&gt;record(1, 'OrderPaid', []);</code> lalu panggil
+        <code>currentStatus(1)</code> lagi &rarr; harus berubah jadi <code>"paid"</code>. Cek
+        juga <code>SELECT * FROM order_events WHERE order_id = 1 ORDER BY occurred_at;</code>
+        &mdash; kedua event harus tersimpan sebagai baris terpisah, bukti riwayatnya benar-benar
+        tercatat, bukan cuma status akhir yang di-overwrite.
       </div>
     </div>
 
