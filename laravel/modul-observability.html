@@ -559,6 +559,14 @@ php artisan migrate</code></pre>
       <pre><code>php artisan serve</code></pre>
       <p>Buka <code>http://127.0.0.1:8000/telescope</code> &mdash; dashboard langsung
         menampilkan aktivitas aplikasi begitu ada request masuk.</p>
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil</div>
+        Buka tab lain, panggil <strong>GET</strong> <code>/api/produk</code> lewat Postman,
+        lalu refresh <code>/telescope</code> &mdash; entri baru harus muncul di tab
+        <strong>Requests</strong> dalam beberapa detik, lengkap dengan status code dan durasi.
+        Kalau tidak muncul apa-apa, cek lagi apakah provider Telescope benar-benar teregister
+        (Langkah 3) dan environment aplikasi memang <code>local</code>.
+      </div>
     </div>
 
     <!-- WATCHERS -->
@@ -682,6 +690,13 @@ Log::<span class="fn">error</span>(<span class="str">'Gagal memproses pembayaran
           <tr><td><code>stack</code></td><td>Gabungkan beberapa channel sekaligus, misal <code>daily</code> + <code>slack</code></td></tr>
         </tbody>
       </table>
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil</div>
+        Panggil <code>Log::info('Test log', ['x' =&gt; 1]);</code> lewat <code>tinker</code>,
+        lalu buka <code>storage/logs/laravel-YYYY-MM-DD.log</code> (nama file mengikuti
+        tanggal hari ini karena driver <code>daily</code>) &mdash; baris log barusan harus ada
+        di paling bawah file, lengkap dengan level <code>[INFO]</code> dan array context-nya.
+      </div>
     </div>
 
     <!-- CUSTOM CHANNEL -->
@@ -709,6 +724,14 @@ Log::<span class="fn">error</span>(<span class="str">'Gagal memproses pembayaran
         <div class="callout-title">Kapan Bikin Channel Terpisah?</div>
         Kalau sebuah domain (pembayaran, keamanan, integrasi API eksternal) butuh retensi log
         berbeda atau perlu diaudit terpisah dari log umum aplikasi.
+      </div>
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil</div>
+        Setelah memanggil <code>Log::channel('payment')-&gt;info(...)</code>, harus muncul file
+        <strong>terpisah</strong> <code>storage/logs/payment-YYYY-MM-DD.log</code> &mdash; dan
+        baris itu <strong>tidak</strong> ikut tercatat di <code>laravel-YYYY-MM-DD.log</code>
+        (channel default). Kalau malah masuk ke file yang sama, channel <code>payment</code>
+        belum benar konfigurasinya.
       </div>
     </div>
 
@@ -747,6 +770,14 @@ Log::<span class="fn">error</span>(<span class="str">'Gagal memproses pembayaran
       <p>Setelah ini, setiap <code>Log::info(...)</code> di request yang sama otomatis
         menyertakan <code>request_id</code> dan <code>user_id</code> &mdash; sangat membantu
         melacak satu alur request penuh di log yang ramai.</p>
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil</div>
+        Panggil satu endpoint yang menulis beberapa baris log berbeda dalam satu request, lalu
+        buka log-nya &mdash; semua baris dari request itu harus punya <code>request_id</code>
+        yang <strong>sama persis</strong>, dan berbeda dari <code>request_id</code> di request
+        lain. Ini bukti context benar-benar per-request, bukan tertinggal dari request
+        sebelumnya (bug umum kalau context disimpan di properti static/singleton biasa).
+      </div>
     </div>
 
     <hr class="divider" />
