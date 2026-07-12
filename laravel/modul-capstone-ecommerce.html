@@ -595,6 +595,23 @@ php artisan make:model Payment -m</code></pre>
         harga <em>pada saat transaksi terjadi</em> &mdash; supaya riwayat order tetap akurat
         meski harga produk di master data berubah di kemudian hari.
       </div>
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil</div>
+        Belum ada endpoint untuk dites &mdash; buktikan lewat migrasi dulu, sebelum lanjut buat
+        Service/Controller di atasnya:
+        <ol>
+          <li><code>php artisan migrate</code> harus selesai tanpa error, lalu
+            <code>php artisan migrate:status</code> menampilkan 5 migrasi baru berstatus
+            <code>Ran</code>.</li>
+          <li><code>SHOW TABLES;</code> di client MySQL harus memuat <code>carts</code>,
+            <code>cart_items</code>, <code>orders</code>, <code>order_items</code>,
+            <code>payments</code>, selain tabel <code>produks</code> yang sudah ada.</li>
+          <li>Cek constraint <code>unique(['cart_id', 'produk_id'])</code> lewat
+            <code>php artisan tinker</code>: buat 2 baris <code>cart_items</code> dengan
+            <code>cart_id</code> &amp; <code>produk_id</code> yang sama &rarr; baris kedua harus
+            gagal dengan <em>duplicate entry</em>.</li>
+        </ol>
+      </div>
     </div>
 
     <hr class="divider" />
@@ -636,6 +653,16 @@ php artisan make:model Payment -m</code></pre>
         <span class="kw">return</span> $this-&gt;<span class="fn">items</span>-&gt;<span class="fn">sum</span>(<span class="fn">fn</span>($item) =&gt; $item-&gt;produk-&gt;harga * $item-&gt;qty);
     }
 }</code></pre>
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil</div>
+        Uji Model langsung lewat <code>php artisan tinker</code>, sebelum ditutupi lapisan
+        Service &amp; Controller:
+        <pre><code>$cart = \App\Models\Cart::create(['user_id' => 1]);
+$cart->items()->create(['produk_id' => 1, 'qty' => 2]);
+$cart->fresh('items.produk')->total(); // harus sama dengan harga produk 1 x 2</code></pre>
+        Kalau angkanya benar, relasi &amp; method <code>total()</code> sudah siap dipakai
+        Service di langkah berikutnya.
+      </div>
     </div>
 
     <!-- CART SERVICE -->
@@ -726,6 +753,23 @@ php artisan make:model Payment -m</code></pre>
     <span class="cl">Route</span>::<span class="fn">post</span>(<span class="str">'/cart'</span>, [CartController::class, <span class="str">'store'</span>]);
     <span class="cl">Route</span>::<span class="fn">delete</span>(<span class="str">'/cart/{produkId}'</span>, [CartController::class, <span class="str">'destroy'</span>]);
 });</code></pre>
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil (Postman)</div>
+        <ol>
+          <li>Login pakai akun mana pun (token Sanctum dari setup Minggu 1&ndash;2), lalu
+            <strong>POST</strong> <code>/cart</code> dengan header <code>Authorization:
+            Bearer &lt;token&gt;</code>, body <code>{"produk_id": 1, "qty": 2}</code> &rarr;
+            harus <strong>200</strong>.</li>
+          <li><strong>POST</strong> <code>/cart</code> lagi dengan <code>produk_id</code> yang
+            sama, <code>qty: 3</code> &rarr; <code>GET /cart</code> harus menunjukkan
+            <code>qty</code> jadi <strong>5</strong> (bukti <code>updateOrCreate</code> +
+            <code>qty + {$qty}</code> menggabungkan, bukan menimpa).</li>
+          <li>Coba <code>qty</code> melebihi stok produk &rarr; harus <strong>422</strong>
+            dengan pesan "Stok ... hanya tersisa ...".</li>
+          <li><strong>DELETE</strong> <code>/cart/{produk_id}</code> &rarr; <strong>200</strong>,
+            item hilang dari <code>GET /cart</code> berikutnya.</li>
+        </ol>
+      </div>
     </div>
 
     <hr class="divider" />
@@ -797,6 +841,21 @@ php artisan make:model Payment -m</code></pre>
         tidak ada order-nya. Transaction menjamin semua langkah sukses bersama atau
         di-<em>rollback</em> semuanya.
       </div>
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil (Postman)</div>
+        <ol>
+          <li>Pastikan cart tidak kosong (dari tahap sebelumnya), lalu <strong>POST</strong>
+            <code>/orders</code> &rarr; <strong>201</strong>, catat stok produk sebelum &amp;
+            sesudah &mdash; harus berkurang sesuai <code>qty</code> di cart.</li>
+          <li><strong>GET</strong> <code>/cart</code> setelah checkout &rarr; harus kosong
+            (bukti <code>$cart-&gt;items()-&gt;delete()</code> jalan).</li>
+          <li><strong>POST</strong> <code>/orders</code> dengan cart kosong &rarr; harus
+            <strong>422</strong> "Keranjang masih kosong."</li>
+          <li>Uji rollback transaksi: tambahkan 2 item ke cart dengan salah satunya
+            <code>qty</code> melebihi stok, lalu checkout &rarr; harus gagal total (tidak ada
+            <code>Order</code> baru, stok produk lain yang cukup pun tidak ikut berkurang).</li>
+        </ol>
+      </div>
     </div>
 
     <!-- ORDER STATUS -->
@@ -842,6 +901,14 @@ php artisan make:model Payment -m</code></pre>
         bug klasik seperti "order completed tiba-tiba balik pending" akibat request yang salah
         urutan.
       </div>
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil</div>
+        Uji lewat <code>php artisan tinker</code>, tanpa lewat endpoint dulu &mdash; ini murni
+        logika di Model, jadi paling cepat dites langsung:
+        <pre><code>$order = \App\Models\Order::find(1); // status 'pending'
+$order->transitionTo('paid');       // harus sukses
+$order->transitionTo('pending');    // harus lempar DomainException, tidak boleh mundur</code></pre>
+      </div>
     </div>
 
     <!-- ORDER API ENDPOINTS -->
@@ -876,6 +943,25 @@ php artisan make:model Payment -m</code></pre>
 <span class="cl">Route</span>::<span class="fn">middleware</span>([<span class="str">'auth:sanctum'</span>, <span class="str">'role:admin'</span>])-&gt;<span class="fn">group</span>(<span class="kw">function</span> () {
     <span class="cl">Route</span>::<span class="fn">patch</span>(<span class="str">'/orders/{order}/status'</span>, [OrderController::class, <span class="str">'updateStatus'</span>]);
 });</code></pre>
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil (Postman)</div>
+        <ol>
+          <li><strong>GET</strong> <code>/orders/{id}</code> dengan token pemilik order &rarr;
+            <strong>200</strong>, berisi <code>items</code> &amp; <code>total</code>.</li>
+          <li><strong>PATCH</strong> <code>/orders/{id}/status</code> pakai token bukan admin
+            &rarr; harus <strong>403</strong> (bukti <code>$this-&gt;authorize()</code> /
+            <code>role:admin</code> jalan).</li>
+          <li>Pakai token admin, <strong>PATCH</strong> status ke transisi yang valid (mis.
+            <code>paid</code> &rarr; <code>processing</code>) &rarr; <strong>200</strong>.</li>
+          <li>Coba <strong>PATCH</strong> ke transisi yang tidak valid (mis. <code>completed</code>
+            &rarr; <code>pending</code>) &rarr; catat responsnya. <code>transitionTo()</code>
+            melempar <code>\DomainException</code> biasa, bukan <code>ValidationException</code>,
+            jadi kemungkinan besar responsnya <strong>500</strong> generik, bukan
+            <strong>422</strong> yang rapi &mdash; ini celah nyata yang baru ketahuan lewat
+            pengujian, layak diperbaiki dengan menangkap <code>DomainException</code> di
+            controller sebelum lanjut ke fitur berikutnya.</li>
+        </ol>
+      </div>
     </div>
 
     <hr class="divider" />
@@ -947,6 +1033,26 @@ MIDTRANS_IS_PRODUCTION=false</code></pre>
     $token = $this-&gt;paymentService-&gt;<span class="fn">createSnapToken</span>($order);
     <span class="kw">return</span> <span class="fn">response</span>()-&gt;<span class="fn">json</span>([<span class="str">'success'</span> =&gt; <span class="kw">true</span>, <span class="str">'snap_token'</span> =&gt; $token]);
 }</code></pre>
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil</div>
+        Pakai kredensial <strong>Sandbox</strong> Midtrans (bukan production) untuk tahap ini:
+        <ol>
+          <li>Daftar akun sandbox di dashboard Midtrans, salin <code>Server Key</code>/
+            <code>Client Key</code> ke <code>.env</code>.</li>
+          <li>Daftarkan route untuk <code>createSnapToken</code> mengikuti pola
+            <code>routes/api.php</code> di R sebelumnya (mis.
+            <code>Route::get('/orders/{order}/snap-token', [PaymentController::class,
+            'createSnapToken'])</code>), lalu login dan panggil endpoint itu &rarr; harus
+            <strong>200</strong> dengan <code>snap_token</code> berupa string, bukan
+            kosong/error.</li>
+          <li>Cek tabel <code>payments</code> lewat <code>tinker</code> atau client MySQL &mdash;
+            harus ada baris baru dengan <code>midtrans_order_id</code> sama dengan
+            <code>kode_order</code> dan <code>status</code> = <code>pending</code>.</li>
+          <li>Tempel <code>snap_token</code> itu ke halaman simulator Snap Midtrans (dari
+            dashboard sandbox) untuk memastikan token benar-benar valid &amp; bisa dipakai
+            bayar &mdash; sebelum lanjut ke pengujian webhook di langkah berikutnya.</li>
+        </ol>
+      </div>
     </div>
 
     <!-- WEBHOOK -->
@@ -1002,6 +1108,29 @@ MIDTRANS_IS_PRODUCTION=false</code></pre>
         Webhook harus bisa diakses tanpa token Sanctum (server Midtrans tidak punya token
         user), tapi tetap wajib diverifikasi lewat <strong>signature</strong>. Tanpa ini,
         siapapun bisa memalsukan callback "pembayaran berhasil" tanpa benar-benar membayar.
+      </div>
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil</div>
+        Jangan tunggu pembayaran sungguhan di sandbox &mdash; simulasikan panggilan Midtrans
+        sendiri lewat <code>tinker</code> &amp; curl:
+        <ol>
+          <li>Hitung signature yang benar lewat <code>tinker</code>:
+            <pre><code>$orderId = 'ORD-XXXXX'; $statusCode = '200'; $gross = '150000';
+$sig = hash('sha512', $orderId.$statusCode.$gross.config('services.midtrans.server_key'));</code></pre>
+          </li>
+          <li>Kirim <strong>POST</strong> <code>/payment/webhook</code> (tanpa header
+            Authorization &mdash; ini publik) dengan body berisi <code>order_id</code>,
+            <code>status_code</code>, <code>gross_amount</code>, <code>transaction_status:
+            "settlement"</code>, dan <code>signature_key</code> hasil hitungan di atas &rarr;
+            harus <strong>200</strong>, dan status <code>Payment</code>/<code>Order</code>
+            terkait berubah jadi <code>paid</code>.</li>
+          <li>Ulangi dengan <code>signature_key</code> asal-asalan (bukan hasil hitungan yang
+            benar) &rarr; harus <strong>403</strong> "Invalid signature", dan status
+            <code>Order</code> tidak boleh berubah (bukti verifikasi signature benar-benar
+            menolak pemalsuan callback).</li>
+          <li>Cek <code>storage/logs</code> channel <code>payment</code> &mdash; percobaan
+            signature palsu di atas harus tercatat sebagai <code>warning</code>.</li>
+        </ol>
       </div>
     </div>
 
