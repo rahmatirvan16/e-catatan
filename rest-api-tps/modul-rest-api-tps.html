@@ -1029,11 +1029,13 @@ return new class extends Migration
           <li>Cek tabel benar-benar terbentuk: <code>SHOW TABLES;</code> di client MySQL harus
             memuat <code>wajib_pajak</code>, <code>kewajiban_pajak</code>, <code>pembayaran</code>,
             <code>denda</code>, dan <code>activity_log</code>.</li>
-          <li>Uji relasi &amp; <code>cascadeOnDelete()</code> lewat <code>php artisan tinker</code>:
-            <pre><code>$wp = \App\Models\WajibPajak::create(['jenis'=>'INDIVIDU','nama'=>'Test','nik'=>'1111111111111111','npwp'=>'091111111111111','status_aktif'=>true]);
-$k = \App\Models\KewajibanPajak::create(['wajib_pajak_id'=>$wp->id,'jenis_pajak'=>'PBB','pokok_pajak'=>100000,'jatuh_tempo'=>'2026-12-31']);
-$wp->delete();
-\App\Models\KewajibanPajak::find($k->id); // harus null -> bukti cascade jalan</code></pre>
+          <li>Uji relasi &amp; <code>cascadeOnDelete()</code> lewat <code>php artisan tinker</code>.
+            Model <code>WajibPajak</code>/<code>KewajibanPajak</code> baru dibuat di R5/R6, jadi
+            di tahap ini pakai <code>DB::table()</code> langsung, bukan Eloquent:
+            <pre><code>$wpId = DB::table('wajib_pajak')->insertGetId(['jenis'=>'INDIVIDU','nama'=>'Test','nik'=>'1111111111111111','npwp'=>'091111111111111','status_aktif'=>true,'created_at'=>now(),'updated_at'=>now()]);
+$kId = DB::table('kewajiban_pajak')->insertGetId(['wajib_pajak_id'=>$wpId,'jenis_pajak'=>'PBB','pokok_pajak'=>100000,'jatuh_tempo'=>'2026-12-31','created_at'=>now(),'updated_at'=>now()]);
+DB::table('wajib_pajak')->where('id', $wpId)->delete();
+DB::table('kewajiban_pajak')->where('id', $kId)->first(); // harus null -> bukti cascade jalan</code></pre>
           </li>
         </ol>
       </div>

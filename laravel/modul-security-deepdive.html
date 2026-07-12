@@ -726,11 +726,15 @@ $pelanggan-&gt;<span class="fn">save</span>();
       </div>
       <div class="callout success">
         <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil</div>
-        Setelah <code>$pelanggan-&gt;save()</code>, cek langsung lewat client database (bukan
-        lewat Eloquent): <code>SELECT nomor_ktp FROM pelanggan WHERE id = ...;</code> harus
-        menampilkan teks acak terenkripsi, <strong>bukan</strong> <code>3201xxxxxxxxxxxx</code>
-        aslinya. Baru lewat <code>$pelanggan-&gt;fresh()-&gt;nomor_ktp</code> di Eloquent nilai
-        aslinya muncul lagi (bukti dekripsi otomatis jalan).
+        <code>Pelanggan</code> di atas cuma contoh ilustratif &mdash; belum tentu ada di
+        project kamu. Untuk membuktikan konsepnya, tambahkan dulu cast <code>encrypted</code>
+        ke kolom apa pun yang sudah ada (mis. <code>deskripsi</code> di Model <code>Produk</code>
+        yang sudah dipakai sejak Minggu 1), lalu: simpan satu nilai lewat Eloquent, cek langsung
+        lewat client database (bukan lewat Eloquent) &mdash; <code>SELECT deskripsi FROM produks
+        WHERE id = ...;</code> harus menampilkan teks acak terenkripsi, <strong>bukan</strong>
+        nilai aslinya. Baru lewat <code>$produk-&gt;fresh()-&gt;deskripsi</code> di Eloquent nilai
+        aslinya muncul lagi (bukti dekripsi otomatis jalan). Kembalikan cast-nya setelah selesai
+        mencoba, supaya tidak mengubah perilaku data produk yang sesungguhnya.
       </div>
     </div>
 
