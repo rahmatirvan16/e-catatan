@@ -514,6 +514,7 @@
         <a class="nav-link" href="#auth-controller">Auth Controller</a>
         <a class="nav-link" href="#produk-api">Produk API Controller</a>
         <a class="nav-link" href="#api-routes">API Routes</a>
+        <a class="nav-link" href="#karyawan-api">Contoh Lain: Karyawan API</a>
       </div>
     </div>
 
@@ -2206,6 +2207,174 @@ php artisan migrate</code></pre>
       </table>
     </div>
 
+    <!-- KARYAWAN API (CONTOH LAIN) -->
+    <div class="section" id="karyawan-api">
+      <h2>Contoh Lain: Karyawan API Controller</h2>
+      <p>Pola yang sama persis dipakai di <code>ProdukApiController</code> di atas &mdash; migration,
+        model, controller, routes &mdash; bisa langsung diterapkan ke resource lain. Berikut contoh
+        REST API CRUD untuk data karyawan (dipakai HRD), masih pakai Eloquent ORM dan diproteksi token
+        Sanctum yang sama.</p>
+
+      <h3>1. Migration &mdash; Tabel <code>karyawans</code></h3>
+      <div class="pre-label">Terminal</div>
+      <pre><code>php artisan make:migration create_karyawans_table</code></pre>
+      <div class="pre-label">database/migrations/..._create_karyawans_table.php</div>
+      <pre><code><span class="kw">public function</span> <span class="fn">up</span>(): <span class="kw">void</span>
+{
+    <span class="cl">Schema</span>::<span class="fn">create</span>(<span class="str">'karyawans'</span>, <span class="kw">function</span> (<span class="cl">Blueprint</span> $table) {
+        $table-&gt;<span class="fn">id</span>();
+        $table-&gt;<span class="fn">string</span>(<span class="str">'nip'</span>)-&gt;<span class="fn">unique</span>();   <span class="cm">// Nomor Induk Pegawai</span>
+        $table-&gt;<span class="fn">string</span>(<span class="str">'nama'</span>);
+        $table-&gt;<span class="fn">string</span>(<span class="str">'jabatan'</span>);
+        $table-&gt;<span class="fn">integer</span>(<span class="str">'gaji'</span>);
+        $table-&gt;<span class="fn">enum</span>(<span class="str">'status_kerja'</span>, [<span class="str">'aktif'</span>, <span class="str">'resign'</span>])-&gt;<span class="fn">default</span>(<span class="str">'aktif'</span>);
+        $table-&gt;<span class="fn">timestamps</span>();
+    });
+}
+<span class="kw">public function</span> <span class="fn">down</span>(): <span class="kw">void</span>
+{
+    <span class="cl">Schema</span>::<span class="fn">dropIfExists</span>(<span class="str">'karyawans'</span>);
+}</code></pre>
+      <div class="callout warning">
+        <div class="callout-title">Perhatikan Operator <code>-&gt;</code>, Bukan <code>.</code></div>
+        Method chaining di PHP pakai <code>-&gt;</code> (arrow), bukan titik seperti JavaScript. Jadi
+        <code>-&gt;default('aktif')</code>, bukan <code>.default('aktif')</code> &mdash; kesalahan
+        ini akan langsung memicu <code>ParseError</code> saat migration dijalankan.
+      </div>
+
+      <h3>2. Model &mdash; <code>app/Models/Karyawan.php</code></h3>
+      <div class="pre-label">Terminal</div>
+      <pre><code>php artisan make:model Karyawan</code></pre>
+      <div class="pre-label">app/Models/Karyawan.php</div>
+      <pre><code><span class="op">&lt;?php</span>
+<span class="kw">namespace</span> App\Models;
+
+<span class="kw">use</span> Illuminate\Database\Eloquent\Model;
+
+<span class="kw">class</span> <span class="cl">Karyawan</span> <span class="kw">extends</span> <span class="cl">Model</span>
+{
+    <span class="cm">// Mendaftarkan kolom agar bisa dimanipulasi oleh Eloquent</span>
+    <span class="kw">protected</span> $fillable = [<span class="str">'nip'</span>, <span class="str">'nama'</span>, <span class="str">'jabatan'</span>, <span class="str">'gaji'</span>, <span class="str">'status_kerja'</span>];
+}</code></pre>
+
+      <h3>3. API Controller &mdash; <code>app/Http/Controllers/KaryawanApiController.php</code></h3>
+      <div class="pre-label">Terminal</div>
+      <pre><code>php artisan make:controller KaryawanApiController</code></pre>
+      <div class="pre-label">app/Http/Controllers/KaryawanApiController.php</div>
+      <pre><code><span class="op">&lt;?php</span>
+<span class="kw">namespace</span> App\Http\Controllers;
+
+<span class="kw">use</span> App\Models\Karyawan;
+<span class="kw">use</span> Illuminate\Http\Request;
+
+<span class="kw">class</span> <span class="cl">KaryawanApiController</span> <span class="kw">extends</span> <span class="cl">Controller</span>
+{
+    <span class="cm">// READ: Mengambil semua data karyawan</span>
+    <span class="kw">public function</span> <span class="fn">index</span>()
+    {
+        $karyawan = <span class="cl">Karyawan</span>::<span class="fn">all</span>();   <span class="cm">// SELECT * FROM karyawans</span>
+        <span class="kw">return</span> <span class="fn">response</span>()-&gt;<span class="fn">json</span>($karyawan);
+    }
+
+    <span class="cm">// CREATE: Menambah karyawan baru</span>
+    <span class="kw">public function</span> <span class="fn">store</span>(<span class="cl">Request</span> $request)
+    {
+        $request-&gt;<span class="fn">validate</span>([
+            <span class="str">'nip'</span>     =&gt; <span class="str">'required|unique:karyawans,nip'</span>,
+            <span class="str">'nama'</span>    =&gt; <span class="str">'required|string'</span>,
+            <span class="str">'jabatan'</span> =&gt; <span class="str">'required|string'</span>,
+            <span class="str">'gaji'</span>    =&gt; <span class="str">'required|numeric'</span>,
+        ]);
+
+        $karyawan = <span class="cl">Karyawan</span>::<span class="fn">create</span>($request-&gt;<span class="fn">all</span>());
+
+        <span class="kw">return</span> <span class="fn">response</span>()-&gt;<span class="fn">json</span>([
+            <span class="str">'message'</span> =&gt; <span class="str">'Data karyawan berhasil ditambahkan!'</span>,
+            <span class="str">'data'</span>    =&gt; $karyawan,
+        ], <span class="nb">201</span>);
+    }
+
+    <span class="cm">// READ DETAIL: Melihat data satu karyawan berdasarkan ID</span>
+    <span class="kw">public function</span> <span class="fn">show</span>($id)
+    {
+        $karyawan = <span class="cl">Karyawan</span>::<span class="fn">find</span>($id);
+
+        <span class="kw">if</span> (!$karyawan) {
+            <span class="kw">return</span> <span class="fn">response</span>()-&gt;<span class="fn">json</span>([<span class="str">'message'</span> =&gt; <span class="str">'Karyawan tidak ditemukan'</span>], <span class="nb">404</span>);
+        }
+
+        <span class="kw">return</span> <span class="fn">response</span>()-&gt;<span class="fn">json</span>($karyawan);
+    }
+
+    <span class="cm">// UPDATE: Mengubah data karyawan</span>
+    <span class="kw">public function</span> <span class="fn">update</span>(<span class="cl">Request</span> $request, $id)
+    {
+        $karyawan = <span class="cl">Karyawan</span>::<span class="fn">find</span>($id);
+
+        <span class="kw">if</span> (!$karyawan) {
+            <span class="kw">return</span> <span class="fn">response</span>()-&gt;<span class="fn">json</span>([<span class="str">'message'</span> =&gt; <span class="str">'Karyawan tidak ditemukan'</span>], <span class="nb">404</span>);
+        }
+
+        $karyawan-&gt;<span class="fn">update</span>($request-&gt;<span class="fn">all</span>());
+
+        <span class="kw">return</span> <span class="fn">response</span>()-&gt;<span class="fn">json</span>([
+            <span class="str">'message'</span> =&gt; <span class="str">'Data karyawan berhasil diperbarui'</span>,
+            <span class="str">'data'</span>    =&gt; $karyawan,
+        ]);
+    }
+
+    <span class="cm">// DELETE: Menghapus data karyawan dari database</span>
+    <span class="kw">public function</span> <span class="fn">destroy</span>($id)
+    {
+        $karyawan = <span class="cl">Karyawan</span>::<span class="fn">find</span>($id);
+
+        <span class="kw">if</span> (!$karyawan) {
+            <span class="kw">return</span> <span class="fn">response</span>()-&gt;<span class="fn">json</span>([<span class="str">'message'</span> =&gt; <span class="str">'Karyawan tidak ditemukan'</span>], <span class="nb">404</span>);
+        }
+
+        $karyawan-&gt;<span class="fn">delete</span>();   <span class="cm">// Menghapus record menggunakan method Eloquent -&gt;delete()</span>
+
+        <span class="kw">return</span> <span class="fn">response</span>()-&gt;<span class="fn">json</span>([<span class="str">'message'</span> =&gt; <span class="str">'Data karyawan berhasil dihapus'</span>]);
+    }
+}</code></pre>
+      <div class="callout">
+        <div class="callout-title">Kenapa Pakai <code>find($id)</code>, Bukan Route Model Binding?</div>
+        <code>ProdukApiController</code> di atas pakai route model binding (<code>Produk $produk</code>
+        langsung di parameter) sehingga 404 otomatis dilempar Laravel. Versi <code>Karyawan</code> ini
+        sengaja pakai <code>Karyawan::find($id)</code> manual supaya pesan 404-nya bisa dikustomisasi
+        (<code>'Karyawan tidak ditemukan'</code>) &mdash; dua pendekatan sama-sama valid, pilih sesuai
+        kebutuhan pesan error.
+      </div>
+
+      <h3>4. API Routes &mdash; <code>routes/api.php</code></h3>
+      <p>Route CRUD karyawan dibungkus middleware <code>auth:sanctum</code> yang sama seperti
+        <code>produk</code>, jadi hanya HRD yang memegang token valid yang bisa mengelola data ini.</p>
+      <div class="pre-label">routes/api.php</div>
+      <pre><code><span class="kw">use</span> App\Http\Controllers\KaryawanApiController;
+<span class="kw">use</span> Illuminate\Support\Facades\Route;
+
+<span class="cm">// Karyawan CRUD Route (Terproteksi Token Sanctum)</span>
+<span class="cl">Route</span>::<span class="fn">middleware</span>(<span class="str">'auth:sanctum'</span>)-&gt;<span class="fn">group</span>(<span class="kw">function</span> () {
+    <span class="cl">Route</span>::<span class="fn">get</span>(<span class="str">'/karyawan'</span>, [<span class="cl">KaryawanApiController</span>::class, <span class="str">'index'</span>]);       <span class="cm">// Tampilkan semua karyawan</span>
+    <span class="cl">Route</span>::<span class="fn">post</span>(<span class="str">'/karyawan'</span>, [<span class="cl">KaryawanApiController</span>::class, <span class="str">'store'</span>]);     <span class="cm">// Tambah karyawan baru</span>
+    <span class="cl">Route</span>::<span class="fn">get</span>(<span class="str">'/karyawan/{id}'</span>, [<span class="cl">KaryawanApiController</span>::class, <span class="str">'show'</span>]);   <span class="cm">// Lihat detail 1 karyawan</span>
+    <span class="cl">Route</span>::<span class="fn">put</span>(<span class="str">'/karyawan/{id}'</span>, [<span class="cl">KaryawanApiController</span>::class, <span class="str">'update'</span>]); <span class="cm">// Edit data karyawan</span>
+    <span class="cl">Route</span>::<span class="fn">delete</span>(<span class="str">'/karyawan/{id}'</span>, [<span class="cl">KaryawanApiController</span>::class, <span class="str">'destroy'</span>]); <span class="cm">// Hapus data karyawan</span>
+});</code></pre>
+
+      <h3>Daftar Endpoint Karyawan API</h3>
+      <table>
+        <thead><tr><th>Method</th><th>Endpoint</th><th>Auth</th><th>Fungsi</th></tr></thead>
+        <tbody>
+          <tr><td><span class="badge badge-blue">GET</span></td><td><code>/api/karyawan</code></td><td>Ya</td><td>Daftar semua karyawan</td></tr>
+          <tr><td><span class="badge badge-blue">GET</span></td><td><code>/api/karyawan/{id}</code></td><td>Ya</td><td>Detail satu karyawan</td></tr>
+          <tr><td><span class="badge badge-green">POST</span></td><td><code>/api/karyawan</code></td><td>Ya</td><td>Tambah karyawan baru</td></tr>
+          <tr><td><span class="badge badge-yellow">PUT</span></td><td><code>/api/karyawan/{id}</code></td><td>Ya</td><td>Update data karyawan</td></tr>
+          <tr><td><span class="badge badge-red">DELETE</span></td><td><code>/api/karyawan/{id}</code></td><td>Ya</td><td>Hapus data karyawan</td></tr>
+        </tbody>
+      </table>
+    </div>
+
     <!-- TEST POSTMAN -->
     <div class="section" id="test-postman">
       <h2>Test dengan Postman</h2>
@@ -2614,6 +2783,7 @@ Penyerang bisa login sebagai user manapun tanpa password!</code></pre>
     <a class="sub" href="#auth-controller">Auth Controller</a>
     <a class="sub" href="#produk-api">Produk API</a>
     <a class="sub" href="#api-routes">API Routes</a>
+    <a class="sub" href="#karyawan-api">Contoh Lain: Karyawan API</a>
     <a class="sub" href="#test-postman">Test Postman</a>
     <a class="sub" href="#error-umum">Error Umum</a>
 
