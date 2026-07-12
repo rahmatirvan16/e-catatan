@@ -611,6 +611,7 @@
       <h3>Alur Request</h3>
       <div class="diagram-wrap">
         <div class="mermaid">
+%%{init: {"flowchart": {"nodeSpacing": 55, "rankSpacing": 85}, "themeVariables": {"fontSize": "20px"}}}%%
 flowchart LR
     A[Klien HTTP] -- "Bearer Token" --> B[ForceJsonResponse]
     B --> C[JWT Auth Middleware]
@@ -628,6 +629,43 @@ flowchart LR
         langkah sebelumnya (migrasi sebelum model, model sebelum controller, dst). Semua blok
         kode punya label nama file di atasnya &mdash; itu path tempat kode itu harus disimpan,
         relatif dari root project Laravel kamu.
+      </div>
+
+      <h3>Kebiasaan Penting: Uji Bertahap, Jangan Tunggu Semua Kode Selesai</h3>
+      <p>
+        Godaan paling umum saat mengikuti tutorial: menulis migrasi, model, service, dan lima
+        endpoint dulu tanpa dicoba sama sekali, baru menjalankan <code>php artisan serve</code>
+        di akhir. Kebiasaan koding yang jauh lebih baik adalah <strong>iterative
+        development</strong> &mdash; tulis satu potongan kecil, langsung uji, baru lanjut ke
+        potongan berikutnya kalau yang barusan sudah benar. Modul ini disusun supaya bisa
+        diikuti dengan cara ini: tiap langkah bernomor di tiap section idealnya dicoba begitu
+        selesai diketik, bukan ditumpuk dulu.
+      </p>
+      <table>
+        <thead><tr><th>Baru selesai menulis&hellip;</th><th>Cara uji cepat sebelum lanjut</th></tr></thead>
+        <tbody>
+          <tr><td>Satu migrasi</td><td><code>php artisan migrate</code>, lalu cek strukturnya di client MySQL &mdash; jangan tunggu migrasi tabel lain selesai dulu.</td></tr>
+          <tr><td>Model &amp; relasi Eloquent</td><td><code>php artisan tinker</code> &mdash; panggil relasinya langsung, pastikan hasilnya sesuai ekspektasi.</td></tr>
+          <tr><td>Satu method service (mis. <code>DendaService::hitung()</code>)</td><td>Panggil manual di <code>tinker</code> dengan angka contoh, bandingkan hasilnya dengan hitungan manual di kertas.</td></tr>
+          <tr><td>Satu endpoint controller</td><td>Tembak lewat Postman/curl saat itu juga, cek status code &amp; isi response &mdash; sebelum menulis endpoint berikutnya.</td></tr>
+          <tr><td>Middleware/validasi baru di endpoint lama</td><td>Ulangi tes endpoint yang sama (regresi), termasuk skenario gagal (401/422/403), untuk pastikan tidak ada yang rusak.</td></tr>
+        </tbody>
+      </table>
+      <div class="callout">
+        <div class="callout-title">Kenapa Bukan Nunggu Sampai Akhir?</div>
+        Kalau baru menambah 10&ndash;20 baris kode lalu muncul error, penyebabnya hampir pasti
+        ada di 10&ndash;20 baris itu &mdash; gampang dilacak. Kalau menulis ratusan baris dulu
+        baru dites sekaligus, kesalahan asumsi di awal (nama kolom keliru, format response salah,
+        dst) baru ketahuan setelah beberapa fitur lain terlanjur dibangun di atasnya, dan proses
+        debug jadi jauh lebih lama daripada waktu yang "dihemat" dengan menunda testing.
+      </div>
+      <div class="callout warning">
+        <div class="callout-title">Manual Dulu, Automated Kemudian</div>
+        Tes manual pakai <code>tinker</code>/Postman itu wajar di tahap eksplorasi awal. Begitu
+        satu alur (login, hitung denda, dst) sudah stabil dan dipakai berulang, pindahkan ke
+        automated test (lihat <a href="#tps-testing">R11 &mdash; Testing</a>) supaya regresi ke
+        depan ketahuan otomatis lewat <code>php artisan test</code>, tanpa harus mengulang tes
+        manual satu-satu setiap kali ada perubahan.
       </div>
     </div>
 
