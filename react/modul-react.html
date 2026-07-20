@@ -1,0 +1,1701 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Modul React &mdash; Programming</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --sidebar-w: 260px;
+      --toc-w: 220px;
+      --accent: #0d6efd;
+      --accent-light: #e7f1ff;
+      --text: #212529;
+      --muted: #6c757d;
+      --border: #dee2e6;
+      --code-bg: #f8f9fa;
+      --code-border: #e9ecef;
+      --sidebar-bg: #f8f9fa;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 15px;
+      line-height: 1.7;
+      color: var(--text);
+      background: #fff;
+    }
+
+    /* TOP BAR */
+    .topbar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      height: 56px;
+      background: #fff;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; padding: 0 24px;
+      gap: 16px;
+    }
+    .topbar-brand {
+      font-weight: 700; font-size: 17px; color: var(--accent);
+      text-decoration: none;
+    }
+    .topbar-version {
+      background: var(--accent-light); color: var(--accent);
+      font-size: 11px; font-weight: 600; padding: 2px 8px;
+      border-radius: 20px;
+    }
+    .topbar-subtitle {
+      color: var(--muted); font-size: 13px; margin-left: auto;
+    }
+
+    .site-search { position: relative; flex: 1 1 260px; max-width: 340px; margin-left: 12px; }
+    .site-search-input {
+      width: 100%; padding: 7px 12px; font-size: 13px;
+      border: 1px solid var(--border); border-radius: 6px;
+      font-family: inherit; outline: none; color: var(--text); background: #fff;
+    }
+    .site-search-input:focus { border-color: var(--accent); }
+    .site-search-results {
+      display: none;
+      position: absolute; top: calc(100% + 8px); left: 0; right: 0;
+      max-height: 70vh; overflow-y: auto;
+      background: #fff; border: 1px solid var(--border); border-radius: 10px;
+      box-shadow: 0 12px 32px rgba(0,0,0,.14);
+      padding: 6px; z-index: 250;
+    }
+    .site-search-results.show { display: block; }
+    .site-search-item {
+      display: block; padding: 8px 10px; border-radius: 8px;
+      text-decoration: none; color: var(--text);
+    }
+    .site-search-item:hover, .site-search-item.active { background: var(--accent-light); }
+    .site-search-item .ssi-title { font-size: 13px; font-weight: 600; }
+    .site-search-item .ssi-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .site-search-item .ssi-snippet { font-size: 12px; color: var(--muted); margin-top: 4px; }
+    .site-search-empty { padding: 14px; font-size: 13px; color: var(--muted); text-align: center; }
+    .site-search mark { background: #fff3cd; color: inherit; border-radius: 2px; padding: 0 1px; }
+    @media (max-width: 900px) { .site-search { flex-basis: 140px; } }
+
+    /* NAV BAR + SUB NAVBAR (dropdown by kategori) */
+    .laravel-nav { position: relative; margin-left: 24px; }
+    .laravel-nav-trigger {
+      display: flex; align-items: center; gap: 6px;
+      background: none; border: 1px solid var(--border); border-radius: 6px;
+      padding: 6px 14px; font-size: 13px; font-weight: 600;
+      color: var(--text); cursor: pointer; font-family: inherit;
+    }
+    .laravel-nav-trigger:hover { background: var(--accent-light); color: var(--accent); border-color: var(--accent); }
+    .laravel-nav.open .laravel-nav-trigger { background: var(--accent-light); color: var(--accent); border-color: var(--accent); }
+    .laravel-nav-trigger .caret { font-size: 10px; transition: transform .15s; }
+    .laravel-nav.open .laravel-nav-trigger .caret { transform: rotate(180deg); }
+    .laravel-nav-menu {
+      display: none;
+      position: absolute; top: calc(100% + 8px); left: 0;
+      width: 360px; max-height: 75vh; overflow-y: auto;
+      background: #fff; border: 1px solid var(--border); border-radius: 10px;
+      box-shadow: 0 12px 32px rgba(0,0,0,.14);
+      padding: 8px; z-index: 200;
+    }
+    .laravel-nav.open .laravel-nav-menu { display: block; }
+    .laravel-nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 12px; border-radius: 8px;
+      text-decoration: none; color: var(--text); font-size: 13px;
+    }
+    .laravel-nav-item:hover { background: var(--accent-light); }
+    .laravel-nav-item.active { background: var(--accent-light); color: var(--accent); font-weight: 600; }
+    .laravel-nav-item .lni-week {
+      flex-shrink: 0; width: 34px; font-size: 11px; font-weight: 700; color: var(--muted);
+    }
+    .laravel-nav-item.active .lni-week { color: var(--accent); }
+    .laravel-nav-item .lni-title { flex: 1; }
+    .lnm-subject {
+      padding: 8px 12px 6px;
+      font-size: 11px; font-weight: 800; text-transform: uppercase;
+      letter-spacing: .06em; color: var(--muted);
+    }
+    .lnm-subject:not(:first-child) { margin-top: 6px; border-top: 1px solid var(--border); padding-top: 12px; }
+
+    /* LAYOUT */
+    .layout {
+      display: flex;
+      padding-top: 56px;
+      min-height: 100vh;
+    }
+
+    /* LEFT SIDEBAR */
+    .sidebar {
+      width: var(--sidebar-w);
+      flex-shrink: 0;
+      position: fixed;
+      top: 56px; bottom: 0; left: 0;
+      overflow-y: auto;
+      background: var(--sidebar-bg);
+      border-right: 1px solid var(--border);
+      padding: 20px 0 40px;
+    }
+    .sidebar::-webkit-scrollbar { width: 4px; }
+    .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    .nav-group { margin-bottom: 4px; }
+    .nav-group-title {
+      display: flex; align-items: center; gap: 8px;
+      padding: 6px 20px;
+      font-size: 12px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .06em;
+      color: var(--text);
+      cursor: pointer;
+      user-select: none;
+    }
+    .nav-group-title .arrow {
+      display: inline-block; transition: transform .2s;
+      font-size: 10px; color: var(--muted);
+    }
+    .nav-group.open .arrow { transform: rotate(90deg); }
+    .nav-group-items { display: none; }
+    .nav-group.open .nav-group-items { display: block; }
+
+    .nav-link {
+      display: block;
+      padding: 5px 20px 5px 36px;
+      font-size: 14px; color: var(--muted);
+      text-decoration: none;
+      border-left: 3px solid transparent;
+      transition: color .15s, border-color .15s, background .15s;
+    }
+    .nav-link:hover { color: var(--accent); background: var(--accent-light); }
+    .nav-link.active {
+      color: var(--accent); font-weight: 600;
+      border-left-color: var(--accent);
+      background: var(--accent-light);
+    }
+
+    /* MAIN CONTENT */
+    .main {
+      margin-left: var(--sidebar-w);
+      margin-right: var(--toc-w);
+      flex: 1;
+      min-width: 0;
+    }
+    .main-inner {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 48px 56px;
+    }
+
+    /* MOBILE MENU TOGGLE */
+    .menu-toggle {
+      display: none;
+      align-items: center; justify-content: center;
+      width: 32px; height: 32px; flex-shrink: 0;
+      border: 1px solid var(--border); border-radius: 6px;
+      background: none; cursor: pointer; font-size: 16px;
+      color: var(--text);
+    }
+    .menu-toggle:hover { background: var(--accent-light); color: var(--accent); border-color: var(--accent); }
+    .sidebar-overlay {
+      display: none;
+      position: fixed; inset: 56px 0 0 0;
+      background: rgba(0,0,0,.35);
+      z-index: 95;
+    }
+    .sidebar-overlay.show { display: block; }
+
+    /* TABLES THAT OVERFLOW SCROLL INSTEAD OF BREAKING LAYOUT */
+    .table-scroll { overflow-x: auto; margin: 16px 0; -webkit-overflow-scrolling: touch; }
+    .table-scroll table { margin: 0; }
+
+    /* RESPONSIVE */
+    @media (max-width: 1300px) {
+      .toc { display: none; }
+      .main { margin-right: 0; }
+    }
+    @media (max-width: 900px) {
+      .menu-toggle { display: inline-flex; }
+      .topbar-subtitle { display: none; }
+      .sidebar {
+        transform: translateX(-100%);
+        transition: transform .2s ease;
+        z-index: 96;
+        box-shadow: 4px 0 24px rgba(0,0,0,.15);
+      }
+      .sidebar.open { transform: translateX(0); }
+      .main { margin-left: 0; }
+      .main-inner { padding: 32px 24px; }
+      .laravel-nav-menu { width: min(360px, 88vw); }
+    }
+    @media (max-width: 560px) {
+      .topbar { padding: 0 14px; gap: 10px; }
+      .topbar-brand { font-size: 15px; }
+      .topbar-version { display: none; }
+      .page-title { font-size: 28px; }
+      .page-lead { font-size: 15px; padding-bottom: 24px; margin-bottom: 28px; }
+      .main-inner { padding: 24px 16px; }
+      h2 { font-size: 21px; }
+    }
+
+    /* RIGHT TOC */
+    .toc {
+      width: var(--toc-w);
+      flex-shrink: 0;
+      position: fixed;
+      top: 56px; bottom: 0; right: 0;
+      overflow-y: auto;
+      padding: 24px 16px;
+      border-left: 1px solid var(--border);
+    }
+    .toc-title {
+      font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .06em;
+      color: var(--muted); margin-bottom: 12px;
+    }
+    .toc a {
+      display: block; font-size: 13px; color: var(--muted);
+      text-decoration: none; padding: 3px 0 3px 8px;
+      border-left: 2px solid transparent;
+      transition: color .15s, border-color .15s;
+    }
+    .toc a:hover, .toc a.active {
+      color: var(--accent); border-left-color: var(--accent);
+    }
+    .toc a.sub { padding-left: 20px; font-size: 12px; }
+
+    /* CONTENT TYPOGRAPHY */
+    .page-title {
+      font-size: 40px; font-weight: 700;
+      margin-bottom: 12px; line-height: 1.2;
+    }
+    .page-lead {
+      font-size: 18px; color: var(--muted);
+      margin-bottom: 40px; border-bottom: 1px solid var(--border);
+      padding-bottom: 32px;
+    }
+    .section { margin-bottom: 56px; }
+    h2 {
+      font-size: 26px; font-weight: 700;
+      margin-bottom: 16px; padding-top: 8px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 8px;
+    }
+    h3 {
+      font-size: 18px; font-weight: 600;
+      margin: 24px 0 10px;
+    }
+    h4 {
+      font-size: 15px; font-weight: 600;
+      margin: 18px 0 8px; color: var(--text);
+    }
+    p { margin-bottom: 14px; }
+    ul, ol { padding-left: 24px; margin-bottom: 14px; }
+    li { margin-bottom: 6px; }
+    strong { font-weight: 600; }
+
+    /* CODE */
+    code {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      font-size: 13px;
+      background: var(--code-bg);
+      border: 1px solid var(--code-border);
+      padding: 1px 5px; border-radius: 4px;
+      color: #d63384;
+    }
+    pre {
+      background: #1e1e2e;
+      border-radius: 8px;
+      padding: 20px 24px;
+      overflow-x: auto;
+      margin: 16px 0 20px;
+      position: relative;
+    }
+    pre code {
+      background: none; border: none; padding: 0;
+      color: #cdd6f4; font-size: 13px; line-height: 1.65;
+    }
+    .pre-label {
+      font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .06em;
+      color: #6c757d; margin-bottom: 6px;
+    }
+
+    /* COPY BUTTON */
+    .copy-btn {
+      position: absolute; top: 10px; right: 10px;
+      display: flex; align-items: center; gap: 5px;
+      background: rgba(255,255,255,.08);
+      color: #cdd6f4;
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 6px;
+      font-family: inherit; font-size: 11px; font-weight: 600;
+      padding: 4px 9px;
+      cursor: pointer;
+      opacity: .55;
+      transition: opacity .15s, background .15s;
+    }
+    pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
+    .copy-btn:hover { background: rgba(255,255,255,.2); }
+    .copy-btn.copied {
+      opacity: 1; background: #198754; border-color: #198754; color: #fff;
+    }
+    @media (max-width: 900px) { .copy-btn { opacity: .8; } }
+    @media print { .copy-btn { display: none; } }
+
+    /* BADGES / CALLOUTS */
+    .badge {
+      display: inline-block; font-size: 11px; font-weight: 700;
+      padding: 2px 8px; border-radius: 4px;
+      text-transform: uppercase; letter-spacing: .04em;
+    }
+    .badge-blue  { background: #cfe2ff; color: #084298; }
+    .badge-green { background: #d1e7dd; color: #0a3622; }
+    .badge-red   { background: #f8d7da; color: #842029; }
+    .badge-yellow{ background: #fff3cd; color: #664d03; }
+    .badge-purple{ background: #e8d5fb; color: #5e2d91; }
+    .badge-orange{ background: #ffe5d0; color: #8a3800; }
+
+    .callout {
+      border-left: 4px solid var(--accent);
+      background: var(--accent-light);
+      padding: 14px 18px; border-radius: 0 6px 6px 0;
+      margin: 16px 0;
+    }
+    .callout.warning { border-left-color: #ffc107; background: #fff3cd; }
+    .callout.danger  { border-left-color: #dc3545; background: #f8d7da; }
+    .callout.success { border-left-color: #198754; background: #d1e7dd; }
+    .callout-title { font-weight: 700; margin-bottom: 4px; font-size: 13px; }
+
+    /* TABLE */
+    table {
+      width: 100%; border-collapse: collapse;
+      margin: 16px 0; font-size: 14px;
+    }
+    th {
+      background: var(--code-bg); font-weight: 600;
+      padding: 10px 14px; border: 1px solid var(--border);
+      text-align: left;
+    }
+    td { padding: 9px 14px; border: 1px solid var(--border); }
+    tr:nth-child(even) td { background: #fafafa; }
+
+    /* DIVIDER */
+    .divider { border: none; border-top: 2px solid var(--border); margin: 56px 0; }
+
+    /* PRINT */
+    @media print {
+      .topbar, .sidebar, .toc { display: none; }
+      .main { margin: 0; }
+      .main-inner { padding: 24px 32px; max-width: 100%; }
+      pre { background: #f8f9fa !important; }
+      pre code { color: #212529 !important; }
+      h2 { page-break-before: always; }
+      .section:first-of-type h2 { page-break-before: avoid; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<header class="topbar">
+  <button class="menu-toggle" id="menuToggle" aria-label="Buka menu">&#9776;</button>
+  <a class="topbar-brand" href="../index.html">Laravel Docs</a>
+  <span class="topbar-version">React 18</span>
+
+  <div class="laravel-nav" id="programmingNav">
+    <button class="laravel-nav-trigger" type="button">Programming <span class="caret">&#9662;</span></button>
+    <div class="laravel-nav-menu">
+      <div class="lnm-subject">Laravel</div>
+      <a class="laravel-nav-item" href="../index.html#minggu-1"><span class="lni-week">M1</span><span class="lni-title">Core Laravel &amp; Database</span></a>
+      <a class="laravel-nav-item" href="../laravel/modul-arsitektur-otorisasi.html"><span class="lni-week">M2</span><span class="lni-title">Arsitektur Kode &amp; Otorisasi</span></a>
+      <a class="laravel-nav-item" href="../index.html#minggu-3"><span class="lni-week">M3</span><span class="lni-title">Testing &amp; Optimasi</span></a>
+      <a class="laravel-nav-item" href="../laravel/modul-observability.html"><span class="lni-week">M4</span><span class="lni-title">Observability</span></a>
+      <a class="laravel-nav-item" href="../laravel/modul-api-design-realtime.html"><span class="lni-week">M5</span><span class="lni-title">API Design &amp; Real-time</span></a>
+      <a class="laravel-nav-item" href="../laravel/modul-security-deepdive.html"><span class="lni-week">M6</span><span class="lni-title">Security Deep-dive</span></a>
+      <a class="laravel-nav-item" href="../laravel/modul-capstone-ecommerce.html"><span class="lni-week">M7</span><span class="lni-title">Capstone Project: E-commerce</span></a>
+      <a class="laravel-nav-item" href="../laravel/modul-containerization-deployment.html"><span class="lni-week">M8</span><span class="lni-title">Containerization &amp; Deployment</span></a>
+      <a class="laravel-nav-item" href="../laravel/modul-cloud-infrastructure.html"><span class="lni-week">M9</span><span class="lni-title">Cloud &amp; Infrastructure</span></a>
+      <a class="laravel-nav-item" href="../laravel/modul-skala-besar.html"><span class="lni-week">M10</span><span class="lni-title">Skala Besar</span></a>
+      <a class="laravel-nav-item" href="../laravel/modul-system-design.html"><span class="lni-week">M11</span><span class="lni-title">System Design</span></a>
+      <div class="lnm-subject">React</div>
+      <a class="laravel-nav-item active" href="modul-react.html"><span class="lni-week">RJ</span><span class="lni-title">React &mdash; Instalasi sampai Profesional</span></a>
+    </div>
+  </div>
+  <div class="laravel-nav" id="databaseNav">
+    <button class="laravel-nav-trigger" type="button">Database <span class="caret">&#9662;</span></button>
+    <div class="laravel-nav-menu">
+      <div class="lnm-subject">PostgreSQL</div>
+      <a class="laravel-nav-item" href="../postgresql/modul-postgresql.html#pg-intro"><span class="lni-week">P1</span><span class="lni-title">Pengenalan &amp; Instalasi</span></a>
+      <a class="laravel-nav-item" href="../postgresql/modul-postgresql.html#pg-crud"><span class="lni-week">P2</span><span class="lni-title">SQL Dasar &amp; Tipe Data</span></a>
+      <a class="laravel-nav-item" href="../postgresql/modul-postgresql.html#pg-relasi"><span class="lni-week">P3</span><span class="lni-title">Relasi, Constraint &amp; Index</span></a>
+      <a class="laravel-nav-item" href="../postgresql/modul-postgresql.html#pg-transaksi"><span class="lni-week">P4</span><span class="lni-title">Transaksi &amp; Concurrency</span></a>
+      <a class="laravel-nav-item" href="../postgresql/modul-postgresql.html#pg-query-lanjutan"><span class="lni-week">P6</span><span class="lni-title">Query Lanjutan</span></a>
+      <a class="laravel-nav-item" href="../postgresql/modul-postgresql.html#pg-explain"><span class="lni-week">P10</span><span class="lni-title">Indexing &amp; Performance</span></a>
+      <a class="laravel-nav-item" href="../postgresql/modul-postgresql.html#pg-ringkasan"><span class="lni-week">P13</span><span class="lni-title">Best Practice &amp; Ringkasan</span></a>
+    </div>
+  </div>
+  <div class="laravel-nav" id="toolsNav">
+    <button class="laravel-nav-trigger" type="button">Tools <span class="caret">&#9662;</span></button>
+    <div class="laravel-nav-menu">
+      <div class="lnm-subject">Git</div>
+      <a class="laravel-nav-item" href="../git/modul-git.html#git-intro"><span class="lni-week">G1</span><span class="lni-title">Pengenalan Git</span></a>
+      <a class="laravel-nav-item" href="../git/modul-git.html#git-dasar"><span class="lni-week">G3</span><span class="lni-title">Perintah Dasar</span></a>
+      <a class="laravel-nav-item" href="../git/modul-git.html#git-branch"><span class="lni-week">G4</span><span class="lni-title">Branching &amp; Merging</span></a>
+      <a class="laravel-nav-item" href="../git/modul-git.html#git-remote"><span class="lni-week">G5</span><span class="lni-title">Remote &amp; Kolaborasi</span></a>
+      <a class="laravel-nav-item" href="../git/modul-git.html#git-best-practice"><span class="lni-week">G8</span><span class="lni-title">Best Practice</span></a>
+    </div>
+  </div>
+  <div class="laravel-nav" id="projectNav">
+    <button class="laravel-nav-trigger" type="button">Project <span class="caret">&#9662;</span></button>
+    <div class="laravel-nav-menu">
+      <div class="lnm-subject">REST API &mdash; Studi Kasus TPS</div>
+      <a class="laravel-nav-item" href="../rest-api-tps/modul-rest-api-tps.html#tps-intro"><span class="lni-week">R1</span><span class="lni-title">Ringkasan &amp; Arsitektur</span></a>
+      <a class="laravel-nav-item" href="../rest-api-tps/modul-rest-api-tps.html#tps-setup"><span class="lni-week">R2</span><span class="lni-title">Setup Project</span></a>
+      <a class="laravel-nav-item" href="../rest-api-tps/modul-rest-api-tps.html#tps-auth"><span class="lni-week">R4</span><span class="lni-title">Autentikasi JWT &amp; RBAC</span></a>
+      <a class="laravel-nav-item" href="../rest-api-tps/modul-rest-api-tps.html#tps-testing"><span class="lni-week">R11</span><span class="lni-title">Testing</span></a>
+    </div>
+  </div>
+
+  <div class="site-search" id="siteSearch">
+    <input type="text" id="searchInput" class="site-search-input" placeholder="Cari modul... ( tekan / )" autocomplete="off" />
+    <div class="site-search-results" id="searchResults"></div>
+  </div>
+  <span class="topbar-subtitle">React &mdash; Instalasi sampai Profesional</span>
+</header>
+
+<div class="layout">
+
+  <!-- LEFT SIDEBAR -->
+  <nav class="sidebar">
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> 1 &middot; Pengenalan &amp; Persiapan</div>
+      <div class="nav-group-items">
+        <a class="nav-link active" href="#intro">Apa Itu React &amp; Cara Kerjanya</a>
+        <a class="nav-link" href="#persiapan">Persiapan Tools di Windows</a>
+        <a class="nav-link" href="#project-pertama">Project Pertama dengan Vite</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> 2 &middot; Fondasi React</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#jsx">JSX</a>
+        <a class="nav-link" href="#component-props">Component &amp; Props</a>
+        <a class="nav-link" href="#list-conditional">Rendering List &amp; Conditional</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> 3 &middot; State &amp; Event</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#state-event">State (useState) &amp; Event</a>
+        <a class="nav-link" href="#form">Form &amp; Lifting State Up</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> 4 &middot; Efek &amp; Data API</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#useeffect">useEffect</a>
+        <a class="nav-link" href="#fetch-api">Ambil Data dari API</a>
+        <a class="nav-link" href="#tanstack">TanStack Query (Sekilas)</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> 5 &middot; Navigasi</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#router">React Router</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> 6 &middot; State Global</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#context">Context API</a>
+        <a class="nav-link" href="#custom-hooks">Custom Hooks &amp; Zustand</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> 7 &middot; Styling</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#styling">CSS Module &amp; Tailwind</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> 8 &middot; Level Profesional</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#struktur-pro">Struktur Folder &amp; Best Practice</a>
+        <a class="nav-link" href="#performa">Performa</a>
+        <a class="nav-link" href="#env-ts">Env &amp; Pengenalan TypeScript</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> 9 &middot; Build &amp; Deploy</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#build-deploy">Build &amp; Deploy</a>
+      </div>
+    </div>
+
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> 10 &middot; Penutup</div>
+      <div class="nav-group-items">
+        <a class="nav-link" href="#checklist">Checklist &amp; Roadmap Lanjutan</a>
+      </div>
+    </div>
+
+  </nav>
+
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- MAIN CONTENT -->
+  <main class="main">
+   <div class="main-inner">
+
+    <!-- ============ BAGIAN 1 ============ -->
+    <div class="section" id="intro">
+      <h1 class="page-title">React &mdash; dari Instalasi sampai Profesional</h1>
+      <p class="page-lead">
+        Modul frontend untuk kategori <strong>Programming</strong>. Disusun untuk kamu yang
+        sudah pernah belajar JavaScript dan ingin naik ke React &mdash; mulai dari memasang tools,
+        memahami component &amp; state, mengambil data dari API Laravel, sampai pola-pola yang
+        dipakai di dunia kerja. Semua contoh kode memakai <strong>JavaScript</strong> (.jsx).
+      </p>
+
+      <h2>Apa Itu React &amp; Cara Kerjanya</h2>
+      <p>
+        <strong>React</strong> adalah <em>library</em> JavaScript untuk membangun antarmuka
+        (UI) berbasis <strong>component</strong> &mdash; potongan UI yang bisa dipakai ulang,
+        seperti "kartu produk", "tombol", atau "navbar". Kamu menyusun aplikasi dari
+        component-component kecil, bukan menulis satu file HTML raksasa.
+      </p>
+
+      <h3>Kenapa React Dipakai</h3>
+      <ul>
+        <li><strong>Component reusable</strong> &mdash; tulis sekali, pakai di banyak tempat.</li>
+        <li><strong>Deklaratif</strong> &mdash; kamu cukup mendeskripsikan "UI seperti apa untuk
+          data ini", React yang mengurus cara memperbarui tampilan.</li>
+        <li><strong>Ekosistem terbesar</strong> &mdash; paling banyak library, tutorial, dan lowongan kerja.</li>
+      </ul>
+
+      <h3>Deklaratif vs Imperatif</h3>
+      <p>
+        Dengan JavaScript biasa (imperatif), kamu memberi perintah langkah demi langkah:
+        "cari elemen, ubah teksnya, tambah kelas". Dengan React (deklaratif), kamu bilang
+        "tampilan harus begini kalau datanya begitu" &mdash; saat data berubah, React
+        otomatis memperbarui bagian yang perlu saja lewat mekanisme <strong>Virtual DOM</strong>
+        (salinan ringan struktur halaman yang dipakai React untuk menghitung perubahan seminimal mungkin).
+      </p>
+
+      <div class="callout">
+        <div class="callout-title">React itu "Library", Bukan "Framework"</div>
+        Berbeda dengan Laravel yang serba lengkap, React hanya mengurus <em>tampilan</em>. Untuk
+        routing, pemanggilan API, dan state global, kamu memasang library tambahan sesuai kebutuhan
+        &mdash; itulah yang akan kita pelajari bertahap di modul ini.
+      </div>
+    </div>
+
+    <div class="section" id="persiapan">
+      <h2>Persiapan Tools di Windows</h2>
+      <p>
+        Kabar baik untuk pengguna Windows: React <strong>tidak butuh aplikasi berat</strong>
+        seperti XAMPP. Yang benar-benar wajib dipasang cuma satu: <strong>Node.js</strong>.
+      </p>
+
+      <table>
+        <thead><tr><th>Tool</th><th>Fungsi</th><th>Wajib?</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Node.js</strong> (+ npm)</td><td>Menjalankan tooling React &amp; memasang library</td><td>Wajib</td></tr>
+          <tr><td><strong>VS Code</strong></td><td>Editor kode</td><td>Sangat disarankan</td></tr>
+          <tr><td><strong>Chrome / Edge</strong></td><td>Menjalankan &amp; men-debug aplikasi</td><td>Sudah ada di Windows</td></tr>
+          <tr><td><strong>Git</strong></td><td>Version control</td><td>Sudah kamu punya</td></tr>
+        </tbody>
+      </table>
+
+      <h3>1. Pasang Node.js</h3>
+      <p>
+        Unduh installer <strong>LTS</strong> dari <code>nodejs.org</code>, jalankan, lalu klik
+        Next sampai selesai (biarkan opsi default). npm ikut terpasang otomatis. Verifikasi lewat
+        terminal (PowerShell atau Git Bash):
+      </p>
+      <div class="pre-label">Terminal</div>
+      <pre><code>node -v
+npm -v</code></pre>
+      <p>Kalau keduanya menampilkan nomor versi (mis. <code>v20.x</code> dan <code>10.x</code>), Node.js siap.</p>
+
+      <h3>2. Extension VS Code yang Membantu (opsional)</h3>
+      <ul>
+        <li><strong>ES7+ React/Redux snippets</strong> &mdash; pintasan menulis component cepat.</li>
+        <li><strong>Prettier</strong> &mdash; merapikan format kode otomatis saat menyimpan.</li>
+      </ul>
+
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil</div>
+        Buka terminal dan jalankan <code>node -v</code>. Jika muncul versi (bukan pesan
+        <em>"'node' is not recognized"</em>), berarti Node.js &amp; npm sudah terpasang dengan benar
+        dan kamu siap membuat project React pertama.
+      </div>
+    </div>
+
+    <div class="section" id="project-pertama">
+      <h2>Project Pertama dengan Vite</h2>
+      <p>
+        <strong>Vite</strong> adalah tool modern untuk membuat &amp; menjalankan project React
+        dengan cepat (menggantikan <em>Create React App</em> yang kini sudah tidak dianjurkan).
+        Buat project baru lewat terminal:
+      </p>
+      <div class="pre-label">Terminal</div>
+      <pre><code>npm create vite@latest toko-react -- --template react
+cd toko-react
+npm install
+npm run dev</code></pre>
+      <p>
+        Perintah terakhir menjalankan <em>development server</em>. Buka alamat yang muncul
+        (biasanya <code>http://localhost:5173</code>) di browser &mdash; kamu akan lihat halaman
+        awal React. Setiap kali kamu menyimpan perubahan file, halaman ikut ter-update otomatis
+        (<em>hot reload</em>).
+      </p>
+
+      <h3>Struktur Folder Penting</h3>
+      <pre><code>toko-react/
+  node_modules/      library (jangan diutak-atik, jangan di-commit)
+  public/            aset statis (gambar, favicon)
+  src/               &lt;-- di sinilah kamu bekerja
+    main.jsx         titik masuk aplikasi
+    App.jsx          component utama
+    App.css
+  index.html         satu-satunya file HTML
+  package.json       daftar dependency &amp; script</code></pre>
+
+      <p>Isi <code>src/App.jsx</code> kira-kira seperti ini &mdash; ganti seluruh isinya untuk mencoba:</p>
+      <div class="pre-label">src/App.jsx</div>
+      <pre><code>function App() {
+  return (
+    &lt;div&gt;
+      &lt;h1&gt;Toko React&lt;/h1&gt;
+      &lt;p&gt;Halaman pertamaku dengan React.&lt;/p&gt;
+    &lt;/div&gt;
+  );
+}
+
+export default App;</code></pre>
+
+      <div class="callout warning">
+        <div class="callout-title">Kenapa Ada <code>node_modules</code> yang Besar Sekali?</div>
+        Folder itu berisi semua library yang dibutuhkan project. Ukurannya bisa ratusan MB, tapi
+        <strong>tidak perlu di-commit ke Git</strong> &mdash; cukup file <code>package.json</code>.
+        Orang lain tinggal menjalankan <code>npm install</code> untuk membuat ulang folder itu.
+        Pastikan <code>node_modules</code> ada di <code>.gitignore</code>.
+      </div>
+
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil</div>
+        Setelah <code>npm run dev</code>, buka <code>http://localhost:5173</code>. Ubah tulisan di
+        <code>App.jsx</code> lalu simpan &mdash; teks di browser harus berubah otomatis tanpa kamu
+        me-refresh. Kalau itu terjadi, lingkungan React-mu sudah berjalan sempurna.
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- ============ BAGIAN 2 ============ -->
+    <div class="section" id="jsx">
+      <h2>JSX &mdash; Menulis HTML di Dalam JavaScript</h2>
+      <p>
+        <strong>JSX</strong> adalah sintaks yang membuatmu bisa menulis tampilan mirip HTML
+        <em>langsung di dalam</em> JavaScript. Inilah ciri khas React yang di awal terasa asing,
+        tapi cepat jadi terbiasa.
+      </p>
+      <div class="pre-label">JSX</div>
+      <pre><code>function Salam() {
+  const nama = "Rahmat";
+  return &lt;h1&gt;Halo, {nama}!&lt;/h1&gt;;
+}</code></pre>
+      <p>
+        Kurung kurawal <code>{ }</code> adalah "jendela" untuk menyisipkan nilai JavaScript ke
+        dalam tampilan &mdash; bisa variabel, hasil perhitungan, atau pemanggilan fungsi.
+      </p>
+
+      <h3>Beda JSX dari HTML Biasa</h3>
+      <table>
+        <thead><tr><th>HTML</th><th>JSX</th><th>Alasan</th></tr></thead>
+        <tbody>
+          <tr><td><code>class="..."</code></td><td><code>className="..."</code></td><td><code>class</code> kata khusus di JavaScript</td></tr>
+          <tr><td><code>onclick="..."</code></td><td><code>onClick={...}</code></td><td>penulisan camelCase &amp; pakai fungsi</td></tr>
+          <tr><td><code>&lt;br&gt;</code></td><td><code>&lt;br /&gt;</code></td><td>semua tag harus ditutup</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout">
+        <div class="callout-title">Aturan: Satu Elemen Pembungkus</div>
+        Sebuah component harus mengembalikan <strong>satu</strong> elemen induk. Kalau butuh
+        beberapa elemen sejajar tanpa menambah <code>&lt;div&gt;</code>, bungkus dengan
+        <em>Fragment</em> kosong: <code>&lt;&gt; ... &lt;/&gt;</code>.
+      </div>
+    </div>
+
+    <div class="section" id="component-props">
+      <h2>Component &amp; Props</h2>
+      <p>
+        <strong>Component</strong> adalah fungsi JavaScript yang mengembalikan JSX. Namanya
+        <strong>wajib diawali huruf besar</strong> (<code>KartuProduk</code>, bukan <code>kartuProduk</code>).
+      </p>
+      <p>
+        <strong>Props</strong> adalah cara mengoper data dari component induk ke component anak
+        &mdash; mirip "atribut" pada tag HTML. Ini membuat satu component bisa dipakai ulang
+        dengan isi berbeda.
+      </p>
+      <div class="pre-label">src/components/KartuProduk.jsx</div>
+      <pre><code>function KartuProduk({ nama, harga }) {
+  return (
+    &lt;div className="kartu"&gt;
+      &lt;h3&gt;{nama}&lt;/h3&gt;
+      &lt;p&gt;Rp{harga}&lt;/p&gt;
+    &lt;/div&gt;
+  );
+}
+
+export default KartuProduk;</code></pre>
+
+      <p>Memakainya di component lain &mdash; setiap pemanggilan mengoper props berbeda:</p>
+      <div class="pre-label">src/App.jsx</div>
+      <pre><code>import KartuProduk from "./components/KartuProduk";
+
+function App() {
+  return (
+    &lt;div&gt;
+      &lt;KartuProduk nama="Sepatu Lari" harga={250000} /&gt;
+      &lt;KartuProduk nama="Tas Ransel" harga={180000} /&gt;
+    &lt;/div&gt;
+  );
+}</code></pre>
+
+      <div class="callout warning">
+        <div class="callout-title">Props Bersifat Read-Only</div>
+        Component anak <strong>tidak boleh mengubah</strong> props yang diterimanya. Props itu
+        "milik" induk &mdash; anak hanya membacanya. Kalau anak butuh data yang bisa berubah,
+        itulah gunanya <em>state</em> (bagian berikutnya).
+      </div>
+    </div>
+
+    <div class="section" id="list-conditional">
+      <h2>Rendering List &amp; Conditional</h2>
+      <h3>Menampilkan Daftar dengan <code>.map()</code></h3>
+      <p>
+        Untuk menampilkan banyak item dari sebuah array, gunakan <code>.map()</code> &mdash;
+        method JavaScript yang sudah kamu kenal. Tiap item wajib punya prop <code>key</code> yang
+        unik supaya React efisien melacak perubahan.
+      </p>
+      <div class="pre-label">JSX</div>
+      <pre><code>const produk = [
+  { id: 1, nama: "Sepatu" },
+  { id: 2, nama: "Tas" },
+  { id: 3, nama: "Topi" },
+];
+
+function DaftarProduk() {
+  return (
+    &lt;ul&gt;
+      {produk.map((p) =&gt; (
+        &lt;li key={p.id}&gt;{p.nama}&lt;/li&gt;
+      ))}
+    &lt;/ul&gt;
+  );
+}</code></pre>
+
+      <h3>Conditional Rendering</h3>
+      <p>Menampilkan sesuatu hanya jika kondisi terpenuhi:</p>
+      <div class="pre-label">JSX</div>
+      <pre><code>{isLogin ? &lt;p&gt;Selamat datang&lt;/p&gt; : &lt;p&gt;Silakan login&lt;/p&gt;}
+
+{stok &gt; 0 &amp;&amp; &lt;span&gt;Stok tersedia&lt;/span&gt;}</code></pre>
+      <p>
+        Operator <code>? :</code> untuk memilih antara dua tampilan; operator <code>&amp;&amp;</code>
+        untuk menampilkan sesuatu <em>hanya kalau</em> kondisinya benar.
+      </p>
+
+      <div class="callout danger">
+        <div class="callout-title">Jangan Pakai Index Array sebagai <code>key</code></div>
+        Menulis <code>key={index}</code> tampak gampang, tapi bikin bug saat daftar diurutkan atau
+        item dihapus. Gunakan <strong>id unik</strong> dari data (mis. <code>p.id</code>).
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- ============ BAGIAN 3 ============ -->
+    <div class="section" id="state-event">
+      <h2>State (useState) &amp; Event</h2>
+      <p>
+        <strong>State</strong> adalah data yang bisa berubah dari dalam component dan membuat
+        tampilan ikut diperbarui. Kita mengaksesnya lewat <em>hook</em> bernama
+        <code>useState</code>.
+      </p>
+      <div class="pre-label">src/components/Counter.jsx</div>
+      <pre><code>import { useState } from "react";
+
+function Counter() {
+  const [jumlah, setJumlah] = useState(0);
+
+  return (
+    &lt;button onClick={() =&gt; setJumlah(jumlah + 1)}&gt;
+      Klik saya: {jumlah}
+    &lt;/button&gt;
+  );
+}</code></pre>
+      <p>
+        <code>useState(0)</code> membuat state dengan nilai awal <code>0</code>, dan mengembalikan
+        dua hal: <strong>nilai sekarang</strong> (<code>jumlah</code>) dan <strong>fungsi untuk
+        mengubahnya</strong> (<code>setJumlah</code>). Setiap kali <code>setJumlah</code> dipanggil,
+        React me-render ulang component dengan nilai baru.
+      </p>
+
+      <div class="callout danger">
+        <div class="callout-title">Jangan Ubah State Secara Langsung</div>
+        Menulis <code>jumlah = jumlah + 1</code> <strong>tidak akan</strong> memperbarui tampilan.
+        Perubahan state <em>harus</em> lewat fungsi setter (<code>setJumlah</code>) supaya React tahu
+        ada yang berubah dan perlu me-render ulang.
+      </div>
+
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil</div>
+        Tampilkan <code>&lt;Counter /&gt;</code> di <code>App.jsx</code>, jalankan, lalu klik tombolnya.
+        Angka harus bertambah setiap klik tanpa halaman ter-refresh. Itu bukti state &amp; re-render
+        bekerja.
+      </div>
+    </div>
+
+    <div class="section" id="form">
+      <h2>Form &amp; Lifting State Up</h2>
+      <h3>Controlled Component</h3>
+      <p>
+        Di React, nilai input form biasanya "dikendalikan" oleh state &mdash; disebut
+        <strong>controlled component</strong>. Nilai input datang dari state, dan setiap ketikan
+        memperbarui state itu.
+      </p>
+      <div class="pre-label">JSX</div>
+      <pre><code>import { useState } from "react";
+
+function FormNama() {
+  const [nama, setNama] = useState("");
+
+  return (
+    &lt;div&gt;
+      &lt;input
+        value={nama}
+        onChange={(e) =&gt; setNama(e.target.value)}
+        placeholder="Ketik nama"
+      /&gt;
+      &lt;p&gt;Halo, {nama}&lt;/p&gt;
+    &lt;/div&gt;
+  );
+}</code></pre>
+
+      <h3>Lifting State Up</h3>
+      <p>
+        Kalau dua component bersaudara perlu berbagi data yang sama, <strong>angkat state-nya
+        ke induk terdekat</strong>, lalu turunkan lewat props. Prinsipnya: state hidup di tempat
+        tertinggi yang membutuhkannya, lalu mengalir ke bawah.
+      </p>
+
+      <div class="callout">
+        <div class="callout-title">Data Mengalir Satu Arah (One-Way Data Flow)</div>
+        Di React, data selalu mengalir <strong>dari induk ke anak</strong> lewat props. Kalau anak
+        perlu memberitahu induk, induk mengoper sebuah <em>fungsi</em> lewat props yang dipanggil
+        anak &mdash; bukan anak yang mengubah data induk langsung.
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- ============ BAGIAN 4 ============ -->
+    <div class="section" id="useeffect">
+      <h2>useEffect &mdash; Efek Samping</h2>
+      <p>
+        <code>useEffect</code> dipakai untuk menjalankan kode "efek samping" &mdash; hal yang
+        terjadi di luar sekadar menampilkan UI: mengambil data dari server, memasang timer, atau
+        menyimpan ke <code>localStorage</code>.
+      </p>
+      <div class="pre-label">JSX</div>
+      <pre><code>import { useEffect, useState } from "react";
+
+function Jam() {
+  const [waktu, setWaktu] = useState(new Date());
+
+  useEffect(() =&gt; {
+    const timer = setInterval(() =&gt; setWaktu(new Date()), 1000);
+    // fungsi cleanup: dijalankan saat component dilepas
+    return () =&gt; clearInterval(timer);
+  }, []); // [] = jalankan sekali saat pertama muncul
+
+  return &lt;p&gt;{waktu.toLocaleTimeString()}&lt;/p&gt;;
+}</code></pre>
+
+      <div class="callout warning">
+        <div class="callout-title">Arti Array Dependency <code>[]</code></div>
+        Argumen kedua <code>useEffect</code> menentukan <em>kapan</em> efek dijalankan ulang:
+        <ul style="margin-top:8px;margin-bottom:0">
+          <li><code>[]</code> kosong &rarr; sekali saja saat component pertama muncul.</li>
+          <li><code>[nilai]</code> &rarr; setiap kali <code>nilai</code> berubah.</li>
+          <li>tanpa argumen &rarr; setiap render (jarang dibutuhkan, sering bikin bug).</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="section" id="fetch-api">
+      <h2>Ambil Data dari API</h2>
+      <p>
+        Inilah jembatan React ke backend Laravel-mu: React memanggil REST API, lalu menampilkan
+        hasilnya. Pola paling dasar memakai <code>fetch</code> di dalam <code>useEffect</code>,
+        dengan state terpisah untuk <em>data</em>, <em>loading</em>, dan <em>error</em>.
+      </p>
+      <div class="pre-label">src/components/DaftarProduk.jsx</div>
+      <pre><code>import { useEffect, useState } from "react";
+
+function DaftarProduk() {
+  const [produk, setProduk] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() =&gt; {
+    fetch("http://localhost:8000/api/produk")
+      .then((res) =&gt; {
+        if (!res.ok) throw new Error("Gagal memuat");
+        return res.json();
+      })
+      .then((data) =&gt; setProduk(data))
+      .catch((err) =&gt; setError(err.message))
+      .finally(() =&gt; setLoading(false));
+  }, []);
+
+  if (loading) return &lt;p&gt;Memuat...&lt;/p&gt;;
+  if (error) return &lt;p&gt;Error: {error}&lt;/p&gt;;
+
+  return (
+    &lt;ul&gt;
+      {produk.map((p) =&gt; (
+        &lt;li key={p.id}&gt;{p.nama} &mdash; Rp{p.harga}&lt;/li&gt;
+      ))}
+    &lt;/ul&gt;
+  );
+}</code></pre>
+
+      <h3>Alternatif: axios</h3>
+      <p>
+        <strong>axios</strong> adalah library populer yang membuat pemanggilan API lebih ringkas
+        (otomatis mengubah JSON, penanganan error lebih rapi). Pasang dulu: <code>npm install axios</code>.
+      </p>
+      <div class="pre-label">JSX</div>
+      <pre><code>import axios from "axios";
+
+const res = await axios.get("http://localhost:8000/api/produk");
+console.log(res.data); // langsung berupa data, tanpa .json()</code></pre>
+
+      <div class="callout danger">
+        <div class="callout-title">Siapkan CORS di Laravel</div>
+        Kalau React (port 5173) memanggil Laravel (port 8000), browser akan memblokir karena beda
+        <em>origin</em>. Aktifkan <strong>CORS</strong> di sisi Laravel (file
+        <code>config/cors.php</code>) agar mengizinkan asal <code>http://localhost:5173</code>.
+      </div>
+
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil</div>
+        Jalankan API Laravel (<code>php artisan serve</code>) dan React bersamaan. Halaman React
+        harus menampilkan "Memuat..." sesaat, lalu berganti jadi daftar produk asli dari database.
+        Cek juga tab <em>Network</em> di DevTools browser: harus ada request ke
+        <code>/api/produk</code> berstatus <code>200</code>.
+      </div>
+    </div>
+
+    <div class="section" id="tanstack">
+      <h2>TanStack Query (Sekilas)</h2>
+      <p>
+        Pola <code>useEffect</code> + tiga state di atas berulang terus dan cepat berantakan.
+        <strong>TanStack Query</strong> (dulu React Query) mengurus loading, error, caching, dan
+        refetch secara otomatis &mdash; ini cara profesional mengambil data. Pasang:
+        <code>npm install @tanstack/react-query</code>.
+      </p>
+      <div class="pre-label">JSX</div>
+      <pre><code>import { useQuery } from "@tanstack/react-query";
+
+function DaftarProduk() {
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["produk"],
+    queryFn: () =&gt;
+      fetch("http://localhost:8000/api/produk").then((r) =&gt; r.json()),
+  });
+
+  if (isLoading) return &lt;p&gt;Memuat...&lt;/p&gt;;
+  if (error) return &lt;p&gt;Error memuat data&lt;/p&gt;;
+
+  return (
+    &lt;ul&gt;
+      {data.map((p) =&gt; (
+        &lt;li key={p.id}&gt;{p.nama}&lt;/li&gt;
+      ))}
+    &lt;/ul&gt;
+  );
+}</code></pre>
+      <p>
+        Bandingkan: tidak ada lagi tiga <code>useState</code> dan <code>useEffect</code> manual.
+        Kamu cukup mendeklarasikan "data apa" dan "cara mengambilnya".
+      </p>
+      <div class="callout">
+        <div class="callout-title">Belajar Bertahap</div>
+        Untuk pemula, pahami dulu cara manual (<code>fetch</code> + <code>useEffect</code>) supaya
+        mengerti apa yang sebenarnya terjadi. Setelah itu barulah beralih ke TanStack Query untuk
+        proyek nyata &mdash; termasuk project e-commerce nanti.
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- ============ BAGIAN 5 ============ -->
+    <div class="section" id="router">
+      <h2>React Router &mdash; Navigasi Antar Halaman</h2>
+      <p>
+        React membuat <em>Single Page Application</em> (SPA): satu halaman HTML, tapi terasa
+        seperti banyak halaman. <strong>React Router</strong> mengatur halaman mana yang tampil
+        berdasarkan URL, tanpa reload. Pasang: <code>npm install react-router-dom</code>.
+      </p>
+      <div class="pre-label">src/App.jsx</div>
+      <pre><code>import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
+
+function App() {
+  return (
+    &lt;BrowserRouter&gt;
+      &lt;nav&gt;
+        &lt;Link to="/"&gt;Beranda&lt;/Link&gt;
+        &lt;Link to="/produk"&gt;Produk&lt;/Link&gt;
+      &lt;/nav&gt;
+
+      &lt;Routes&gt;
+        &lt;Route path="/" element={&lt;Beranda /&gt;} /&gt;
+        &lt;Route path="/produk" element={&lt;DaftarProduk /&gt;} /&gt;
+        &lt;Route path="/produk/:id" element={&lt;DetailProduk /&gt;} /&gt;
+      &lt;/Routes&gt;
+    &lt;/BrowserRouter&gt;
+  );
+}</code></pre>
+      <p>
+        Gunakan <code>&lt;Link&gt;</code> (bukan <code>&lt;a&gt;</code>) supaya perpindahan halaman
+        tidak me-reload seluruh aplikasi.
+      </p>
+
+      <h3>Membaca Parameter URL</h3>
+      <p>Untuk <code>/produk/:id</code>, ambil <code>id</code> lewat hook <code>useParams</code>:</p>
+      <div class="pre-label">src/pages/DetailProduk.jsx</div>
+      <pre><code>import { useParams } from "react-router-dom";
+
+function DetailProduk() {
+  const { id } = useParams();
+  // gunakan id untuk fetch /api/produk/{id}
+  return &lt;h2&gt;Detail produk #{id}&lt;/h2&gt;;
+}</code></pre>
+
+      <h3>Protected Route (Halaman Butuh Login)</h3>
+      <p>Halaman tertentu hanya boleh diakses kalau sudah login. Polanya:</p>
+      <div class="pre-label">src/components/ProtectedRoute.jsx</div>
+      <pre><code>import { Navigate } from "react-router-dom";
+
+function ProtectedRoute({ children }) {
+  const token = localStorage.getItem("token");
+  return token ? children : &lt;Navigate to="/login" /&gt;;
+}
+
+// dipakai membungkus route:
+// &lt;Route path="/dashboard" element={
+//   &lt;ProtectedRoute&gt;&lt;Dashboard /&gt;&lt;/ProtectedRoute&gt;
+// } /&gt;</code></pre>
+
+      <div class="callout warning">
+        <div class="callout-title">Keamanan Sebenarnya Ada di Backend</div>
+        Protected route di frontend hanya <em>menyembunyikan tampilan</em> &mdash; bukan pengaman
+        sungguhan. Pengamanan data tetap wajib di Laravel (mis. middleware <code>auth</code>),
+        karena siapa pun bisa mengakali JavaScript di browser.
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- ============ BAGIAN 6 ============ -->
+    <div class="section" id="context">
+      <h2>Context API &mdash; State Global Sederhana</h2>
+      <p>
+        Mengoper props berlapis-lapis (induk &rarr; anak &rarr; cucu) melelahkan &mdash; disebut
+        <em>prop drilling</em>. <strong>Context API</strong> menyediakan data yang bisa diakses
+        component mana pun tanpa dioper manual. Cocok untuk data global seperti info user login
+        atau isi keranjang.
+      </p>
+      <div class="pre-label">src/context/AuthContext.jsx</div>
+      <pre><code>import { createContext, useContext, useState } from "react";
+
+const AuthContext = createContext();
+
+export function AuthProvider({ children }) {
+  const [user, setUser] = useState(null);
+  return (
+    &lt;AuthContext.Provider value={{ user, setUser }}&gt;
+      {children}
+    &lt;/AuthContext.Provider&gt;
+  );
+}
+
+// hook agar pemakaian ringkas
+export function useAuth() {
+  return useContext(AuthContext);
+}</code></pre>
+      <p>Bungkus aplikasi dengan provider, lalu akses di component mana pun:</p>
+      <div class="pre-label">JSX</div>
+      <pre><code>// main.jsx: &lt;AuthProvider&gt;&lt;App /&gt;&lt;/AuthProvider&gt;
+
+// di component mana pun:
+const { user, setUser } = useAuth();</code></pre>
+    </div>
+
+    <div class="section" id="custom-hooks">
+      <h2>Custom Hooks &amp; Zustand</h2>
+      <h3>Custom Hook</h3>
+      <p>
+        <strong>Custom hook</strong> adalah fungsi biasa yang diawali kata <code>use</code> dan
+        membungkus logika reusable (mis. mengambil data). Tujuannya: component jadi bersih, logika
+        bisa dipakai ulang.
+      </p>
+      <div class="pre-label">src/hooks/useProduk.js</div>
+      <pre><code>import { useState, useEffect } from "react";
+
+export function useProduk() {
+  const [produk, setProduk] = useState([]);
+
+  useEffect(() =&gt; {
+    fetch("http://localhost:8000/api/produk")
+      .then((r) =&gt; r.json())
+      .then(setProduk);
+  }, []);
+
+  return produk;
+}
+
+// di component: const produk = useProduk();</code></pre>
+
+      <h3>Zustand (Sekilas)</h3>
+      <p>
+        Untuk state global yang lebih kompleks, <strong>Zustand</strong> lebih ringkas daripada
+        Context/Redux. Contoh keranjang belanja:
+      </p>
+      <div class="pre-label">src/store/cart.js</div>
+      <pre><code>import { create } from "zustand";
+
+export const useCart = create((set) =&gt; ({
+  items: [],
+  tambah: (produk) =&gt;
+    set((state) =&gt; ({ items: [...state.items, produk] })),
+}));
+
+// di component: const { items, tambah } = useCart();</code></pre>
+
+      <div class="callout">
+        <div class="callout-title">Kapan Butuh State Management Global?</div>
+        Jangan buru-buru. Untuk aplikasi kecil, <code>useState</code> + Context sudah cukup. Zustand
+        atau Redux baru berguna saat banyak component jauh berbagi state yang sering berubah (mis.
+        keranjang, notifikasi, tema). Pakai yang paling sederhana yang menyelesaikan masalahmu.
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- ============ BAGIAN 7 ============ -->
+    <div class="section" id="styling">
+      <h2>Styling: CSS Module &amp; Tailwind</h2>
+      <h3>1. CSS Biasa &amp; CSS Module</h3>
+      <p>
+        Cara paling dasar: buat file <code>.css</code> lalu <code>import</code>. Masalahnya, nama
+        kelas bisa bentrok antar file. <strong>CSS Module</strong> menyelesaikan ini &mdash; nama
+        kelas otomatis dibuat unik per component. Namai file <code>Nama.module.css</code>.
+      </p>
+      <div class="pre-label">KartuProduk.module.css</div>
+      <pre><code>.kartu {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 16px;
+}</code></pre>
+      <div class="pre-label">KartuProduk.jsx</div>
+      <pre><code>import styles from "./KartuProduk.module.css";
+
+function KartuProduk() {
+  return &lt;div className={styles.kartu}&gt;...&lt;/div&gt;;
+}</code></pre>
+
+      <h3>2. Tailwind CSS</h3>
+      <p>
+        <strong>Tailwind</strong> membuatmu menata gaya lewat kelas siap pakai langsung di JSX
+        &mdash; sangat populer di ekosistem React. Pasang di project Vite:
+      </p>
+      <div class="pre-label">Terminal</div>
+      <pre><code>npm install -D tailwindcss postcss autoprefixer
+npx tailwindcss init -p</code></pre>
+      <p>Setelah dikonfigurasi, kamu menata gaya dengan kelas utilitas:</p>
+      <div class="pre-label">JSX</div>
+      <pre><code>&lt;button className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"&gt;
+  Beli Sekarang
+&lt;/button&gt;</code></pre>
+
+      <div class="callout">
+        <div class="callout-title">Pilih Satu, Konsisten</div>
+        Tidak perlu memakai semua metode. Untuk project e-commerce nanti, <strong>Tailwind</strong>
+        adalah pilihan yang praktis &amp; cepat. Yang penting: konsisten satu pendekatan di seluruh
+        project agar rapi.
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- ============ BAGIAN 8 ============ -->
+    <div class="section" id="struktur-pro">
+      <h2>Struktur Folder &amp; Best Practice</h2>
+      <p>
+        Saat project membesar, struktur folder yang rapi bikin kamu (dan tim) tidak tersesat.
+        Susunan umum yang dipakai profesional:
+      </p>
+      <div class="pre-label">src/</div>
+      <pre><code>src/
+  components/    komponen UI reusable (Button, KartuProduk, Navbar)
+  pages/         halaman per route (Beranda, DetailProduk, Dashboard)
+  hooks/         custom hooks (useAuth, useProduk)
+  services/      fungsi pemanggilan API (api.js, produkService.js)
+  context/       state global (AuthContext)
+  store/         state management (zustand) bila dipakai
+  App.jsx        susunan route
+  main.jsx       titik masuk aplikasi</code></pre>
+
+      <h3>Prinsip Component yang Baik</h3>
+      <ul>
+        <li><strong>Satu tanggung jawab</strong> &mdash; satu component fokus satu hal.</li>
+        <li><strong>Kecil &amp; bisa dipakai ulang</strong> &mdash; pecah UI besar jadi bagian kecil.</li>
+        <li><strong>Pisahkan logika dari tampilan</strong> &mdash; taruh logika API di
+          <code>services/</code> atau custom hook, bukan menumpuk di dalam JSX.</li>
+        <li><strong>Penamaan jelas</strong> &mdash; <code>TombolCheckout</code> lebih baik daripada <code>Btn2</code>.</li>
+      </ul>
+
+      <h3>Pusatkan Konfigurasi API</h3>
+      <div class="pre-label">src/services/api.js</div>
+      <pre><code>import axios from "axios";
+
+const api = axios.create({
+  baseURL: import.meta.env.VITE_API_URL,
+});
+
+// sisipkan token otomatis di setiap request
+api.interceptors.request.use((config) =&gt; {
+  const token = localStorage.getItem("token");
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
+});
+
+export default api;</code></pre>
+    </div>
+
+    <div class="section" id="performa">
+      <h2>Performa</h2>
+      <p>
+        React sudah cepat secara default. Optimasi di bawah ini baru dipakai <em>kalau memang ada
+        masalah performa yang terukur</em> &mdash; bukan dipasang di mana-mana sejak awal.
+      </p>
+      <table>
+        <thead><tr><th>Alat</th><th>Gunanya</th></tr></thead>
+        <tbody>
+          <tr><td><code>memo()</code></td><td>Mencegah component me-render ulang jika props-nya tidak berubah</td></tr>
+          <tr><td><code>useMemo()</code></td><td>Menyimpan hasil perhitungan berat agar tidak dihitung ulang tiap render</td></tr>
+          <tr><td><code>useCallback()</code></td><td>Menyimpan referensi fungsi agar stabil antar render</td></tr>
+        </tbody>
+      </table>
+      <div class="pre-label">JSX</div>
+      <pre><code>import { memo, useMemo } from "react";
+
+const KartuProduk = memo(function KartuProduk({ produk }) {
+  return &lt;div&gt;{produk.nama}&lt;/div&gt;;
+});
+
+// perhitungan berat hanya diulang saat `items` berubah:
+const total = useMemo(() =&gt; hitungTotal(items), [items]);</code></pre>
+
+      <h3>Error Boundary</h3>
+      <p>
+        Agar satu error tidak membuat seluruh aplikasi blank, bungkus bagian penting dengan
+        <em>Error Boundary</em>. Cara termudah pakai library <code>react-error-boundary</code>.
+      </p>
+
+      <div class="callout warning">
+        <div class="callout-title">Jangan Optimasi Terlalu Dini</div>
+        Menaburkan <code>memo</code>/<code>useMemo</code> di semua tempat justru menambah kerumitan
+        tanpa manfaat nyata. Ukur dulu dengan React DevTools Profiler, baru optimasi bagian yang
+        benar-benar lambat.
+      </div>
+    </div>
+
+    <div class="section" id="env-ts">
+      <h2>Environment Variable &amp; Pengenalan TypeScript</h2>
+      <h3>Environment Variable</h3>
+      <p>
+        Jangan menulis alamat API secara hard-code di banyak tempat. Simpan di file
+        <code>.env</code> &mdash; di Vite, nama variabel wajib diawali <code>VITE_</code>.
+      </p>
+      <div class="pre-label">.env</div>
+      <pre><code>VITE_API_URL=http://localhost:8000/api</code></pre>
+      <div class="pre-label">Memakainya</div>
+      <pre><code>const url = import.meta.env.VITE_API_URL;</code></pre>
+      <p>Saat deploy ke server produksi, cukup ganti nilainya tanpa mengubah kode.</p>
+
+      <h3>Pengenalan TypeScript</h3>
+      <p>
+        <strong>TypeScript</strong> adalah JavaScript dengan <em>tipe data</em>. Ia menangkap
+        kesalahan (mis. salah nama properti) sebelum kode dijalankan. Industri makin banyak
+        memakainya. Contoh mendefinisikan bentuk data produk:
+      </p>
+      <div class="pre-label">TSX</div>
+      <pre><code>type Produk = {
+  id: number;
+  nama: string;
+  harga: number;
+};
+
+function KartuProduk({ produk }: { produk: Produk }) {
+  return &lt;h3&gt;{produk.nama}&lt;/h3&gt;;
+}</code></pre>
+      <div class="callout">
+        <div class="callout-title">Langkah Selanjutnya, Bukan Sekarang</div>
+        Kuasai dulu React dengan JavaScript. Setelah nyaman, coba project baru dengan template
+        <code>react-ts</code> di Vite. Karena kamu sudah paham React, menambahkan TypeScript nanti
+        terasa jauh lebih ringan.
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- ============ BAGIAN 9 ============ -->
+    <div class="section" id="build-deploy">
+      <h2>Build &amp; Deploy</h2>
+      <h3>Build untuk Produksi</h3>
+      <p>
+        Selama ini kamu memakai <em>dev server</em>. Untuk mengunggah ke internet, buat versi
+        produksi yang sudah dioptimasi:
+      </p>
+      <div class="pre-label">Terminal</div>
+      <pre><code>npm run build     # hasil ada di folder dist/
+npm run preview   # coba dulu hasil build secara lokal</code></pre>
+      <p>
+        Folder <code>dist/</code> berisi file statis (HTML, CSS, JS) yang siap di-hosting di mana saja.
+      </p>
+
+      <h3>Deploy</h3>
+      <table>
+        <thead><tr><th>Layanan</th><th>Cara singkat</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Vercel</strong></td><td>Hubungkan repo GitHub &rarr; deploy otomatis tiap push</td></tr>
+          <tr><td><strong>Netlify</strong></td><td>Seret folder <code>dist/</code>, atau hubungkan repo</td></tr>
+          <tr><td><strong>GitHub Pages</strong></td><td>Hosting gratis file statis (perlu sedikit konfigurasi base path)</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout danger">
+        <div class="callout-title">Ganti Alamat API saat Produksi</div>
+        Di server, <code>localhost:8000</code> tidak ada. Set <code>VITE_API_URL</code> ke alamat
+        API Laravel yang sudah online, dan pastikan CORS di backend mengizinkan domain frontend
+        produksimu.
+      </div>
+
+      <div class="callout success">
+        <div class="callout-title">Cara Membuktikan Tahap Ini Berhasil</div>
+        Jalankan <code>npm run build</code> lalu <code>npm run preview</code>. Buka alamat preview
+        &mdash; aplikasi harus berjalan sama seperti mode dev, tapi kini dari file di folder
+        <code>dist/</code>. Itu bukti aplikasimu siap di-deploy.
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- ============ BAGIAN 10 ============ -->
+    <div class="section" id="checklist">
+      <h2>Checklist Skill &amp; Roadmap Lanjutan</h2>
+      <p>Setelah menyelesaikan modul ini, kamu semestinya sudah bisa:</p>
+      <table>
+        <thead><tr><th>Skill</th><th>Bukti kamu menguasainya</th></tr></thead>
+        <tbody>
+          <tr><td>Setup &amp; menjalankan project</td><td>Membuat project Vite baru &amp; menjalankan dev server</td></tr>
+          <tr><td>Component &amp; Props</td><td>Memecah UI jadi component reusable yang menerima data</td></tr>
+          <tr><td>State &amp; Event</td><td>Membuat UI interaktif dengan <code>useState</code></td></tr>
+          <tr><td>Data dari API</td><td>Menampilkan data asli dari API Laravel (loading &amp; error ditangani)</td></tr>
+          <tr><td>Routing</td><td>Aplikasi multi-halaman dengan React Router &amp; protected route</td></tr>
+          <tr><td>State global</td><td>Berbagi data (user/cart) via Context atau Zustand</td></tr>
+          <tr><td>Styling</td><td>Menata tampilan dengan Tailwind/CSS Module</td></tr>
+          <tr><td>Build &amp; deploy</td><td>Menghasilkan folder <code>dist/</code> &amp; men-deploy-nya</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Roadmap Lanjutan</h3>
+      <ul>
+        <li><strong>Next.js</strong> &mdash; framework di atas React (SSR, routing otomatis). Pelajari setelah React dasar mantap.</li>
+        <li><strong>Testing</strong> &mdash; Vitest &amp; React Testing Library untuk menguji component.</li>
+        <li><strong>TypeScript</strong> &mdash; tingkatkan keandalan kode dengan tipe data.</li>
+      </ul>
+
+      <div class="callout success">
+        <div class="callout-title">Menyambung ke Project E-Commerce</div>
+        Skill di modul ini adalah bekal langsung untuk lapisan <strong>Frontend</strong> pada
+        project <em>E-Commerce Multi-Vendor</em>: katalog produk (fetch API), keranjang (state
+        global), checkout (form &amp; routing), sampai dashboard vendor. Modul ini fondasinya &mdash;
+        project itu tempat mempraktikkannya.
+      </div>
+
+      <div class="callout">
+        <div class="callout-title">Kembali ke Daftar Modul</div>
+        Buka menu <strong>Programming</strong> di atas untuk berpindah antar modul, atau kembali ke
+        <a href="../index.html">halaman utama</a> untuk melihat seluruh roadmap.
+      </div>
+    </div>
+
+   </div>
+  </main>
+
+  <!-- RIGHT TOC -->
+  <aside class="toc">
+    <div class="toc-title">Daftar Isi</div>
+
+    <a href="#intro">1 · Pengenalan &amp; Persiapan</a>
+    <a class="sub" href="#intro">Apa Itu React</a>
+    <a class="sub" href="#persiapan">Persiapan Tools</a>
+    <a class="sub" href="#project-pertama">Project Pertama (Vite)</a>
+
+    <a href="#jsx" style="margin-top:12px;display:block">2 · Fondasi</a>
+    <a class="sub" href="#jsx">JSX</a>
+    <a class="sub" href="#component-props">Component &amp; Props</a>
+    <a class="sub" href="#list-conditional">List &amp; Conditional</a>
+
+    <a href="#state-event" style="margin-top:12px;display:block">3 · State &amp; Event</a>
+    <a class="sub" href="#state-event">useState &amp; Event</a>
+    <a class="sub" href="#form">Form &amp; Lifting State</a>
+
+    <a href="#useeffect" style="margin-top:12px;display:block">4 · Efek &amp; API</a>
+    <a class="sub" href="#useeffect">useEffect</a>
+    <a class="sub" href="#fetch-api">Ambil Data API</a>
+    <a class="sub" href="#tanstack">TanStack Query</a>
+
+    <a href="#router" style="margin-top:12px;display:block">5 · Navigasi</a>
+    <a class="sub" href="#router">React Router</a>
+
+    <a href="#context" style="margin-top:12px;display:block">6 · State Global</a>
+    <a class="sub" href="#context">Context API</a>
+    <a class="sub" href="#custom-hooks">Custom Hooks &amp; Zustand</a>
+
+    <a href="#styling" style="margin-top:12px;display:block">7 · Styling</a>
+    <a class="sub" href="#styling">CSS Module &amp; Tailwind</a>
+
+    <a href="#struktur-pro" style="margin-top:12px;display:block">8 · Profesional</a>
+    <a class="sub" href="#struktur-pro">Struktur &amp; Best Practice</a>
+    <a class="sub" href="#performa">Performa</a>
+    <a class="sub" href="#env-ts">Env &amp; TypeScript</a>
+
+    <a href="#build-deploy" style="margin-top:12px;display:block">9 · Build &amp; Deploy</a>
+    <a class="sub" href="#build-deploy">Build &amp; Deploy</a>
+
+    <a href="#checklist" style="margin-top:12px;display:block">10 · Penutup</a>
+    <a class="sub" href="#checklist">Checklist &amp; Roadmap</a>
+  </aside>
+
+</div>
+
+<script>
+  // Sidebar accordion
+  document.querySelectorAll('.nav-group-title').forEach(title => {
+    title.addEventListener('click', () => {
+      title.parentElement.classList.toggle('open');
+    });
+  });
+
+  // Nav bar — sub navbar (dropdown) toggle
+  document.querySelectorAll('.laravel-nav-trigger').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      btn.closest('.laravel-nav').classList.toggle('open');
+    });
+  });
+  document.addEventListener('click', (e) => {
+    document.querySelectorAll('.laravel-nav.open').forEach(nav => {
+      if (!nav.contains(e.target)) nav.classList.remove('open');
+    });
+  });
+
+  // Mobile sidebar toggle
+  const sidebarEl = document.querySelector('.sidebar');
+  const overlayEl = document.getElementById('sidebarOverlay');
+  const menuToggleBtn = document.getElementById('menuToggle');
+  function closeSidebar() {
+    sidebarEl.classList.remove('open');
+    overlayEl.classList.remove('show');
+  }
+  if (menuToggleBtn) {
+    menuToggleBtn.addEventListener('click', () => {
+      sidebarEl.classList.toggle('open');
+      overlayEl.classList.toggle('show');
+    });
+  }
+  if (overlayEl) overlayEl.addEventListener('click', closeSidebar);
+  document.querySelectorAll('.sidebar a').forEach(a => a.addEventListener('click', closeSidebar));
+
+  // Wrap tables so they scroll horizontally instead of breaking layout on small screens
+  document.querySelectorAll('.main table').forEach(t => {
+    if (t.closest('.table-scroll')) return;
+    const wrap = document.createElement('div');
+    wrap.className = 'table-scroll';
+    t.parentNode.insertBefore(wrap, t);
+    wrap.appendChild(t);
+  });
+
+  // Copy button on every code block
+  function copyText(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+      return navigator.clipboard.writeText(text);
+    }
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); } catch (err) {}
+    document.body.removeChild(ta);
+    return Promise.resolve();
+  }
+  document.querySelectorAll('pre').forEach(pre => {
+    const codeEl = pre.querySelector('code');
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'copy-btn';
+    btn.textContent = 'Copy';
+    btn.setAttribute('aria-label', 'Salin kode');
+    btn.addEventListener('click', () => {
+      const text = (codeEl ? codeEl.textContent : pre.textContent).trim();
+      copyText(text).then(() => {
+        btn.textContent = 'Copied!';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = 'Copy';
+          btn.classList.remove('copied');
+        }, 1500);
+      });
+    });
+    pre.appendChild(btn);
+  });
+
+  // Scroll spy for sidebar + TOC
+  const sections = document.querySelectorAll('.section[id]');
+  const navLinks = document.querySelectorAll('.nav-link');
+  const tocLinks = document.querySelectorAll('.toc a');
+
+  function setActive(links, id) {
+    links.forEach(l => {
+      l.classList.toggle('active', l.getAttribute('href') === '#' + id);
+    });
+  }
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        setActive(navLinks, entry.target.id);
+        setActive(tocLinks, entry.target.id);
+        const activeLink = document.querySelector('.nav-link.active');
+        if (activeLink) {
+          const group = activeLink.closest('.nav-group');
+          if (group) group.classList.add('open');
+        }
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+
+  sections.forEach(s => observer.observe(s));
+</script>
+
+<script src="../search-index.js"></script>
+<script>
+(function() {
+  var SEARCH_PREFIX = '../';
+  var input = document.getElementById('searchInput');
+  var resultsBox = document.getElementById('searchResults');
+  if (!input || !resultsBox || typeof SEARCH_INDEX === 'undefined') return;
+
+  function escapeHtml(s) {
+    return s.replace(/[&<>"']/g, function (c) {
+      return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c];
+    });
+  }
+  function highlight(text, q) {
+    if (!q) return escapeHtml(text);
+    var idx = text.toLowerCase().indexOf(q.toLowerCase());
+    if (idx === -1) return escapeHtml(text);
+    return escapeHtml(text.slice(0, idx)) + '<mark>' + escapeHtml(text.slice(idx, idx + q.length)) + '</mark>' + escapeHtml(text.slice(idx + q.length));
+  }
+
+  function search(query) {
+    var q = query.trim().toLowerCase();
+    if (!q) return [];
+    return SEARCH_INDEX
+      .map(function (entry) {
+        var hay = (entry.title + ' ' + entry.category + ' ' + entry.keywords + ' ' + entry.snippet).toLowerCase();
+        if (hay.indexOf(q) === -1) return null;
+        var score = 3;
+        if (entry.title.toLowerCase().indexOf(q) !== -1) score = 0;
+        else if (entry.category.toLowerCase().indexOf(q) !== -1) score = 1;
+        else if (entry.keywords.toLowerCase().indexOf(q) !== -1) score = 2;
+        return { entry: entry, score: score };
+      })
+      .filter(function (x) { return x; })
+      .sort(function (a, b) { return a.score - b.score; })
+      .slice(0, 20)
+      .map(function (x) { return x.entry; });
+  }
+
+  function render(query) {
+    var results = search(query);
+    if (!query.trim()) {
+      resultsBox.classList.remove('show');
+      resultsBox.innerHTML = '';
+      return;
+    }
+    if (results.length === 0) {
+      resultsBox.innerHTML = '<div class="site-search-empty">Tidak ada hasil untuk &quot;' + escapeHtml(query) + '&quot;</div>';
+      resultsBox.classList.add('show');
+      return;
+    }
+    resultsBox.innerHTML = results.map(function (r) {
+      return '<a class="site-search-item" href="' + SEARCH_PREFIX + r.url + '">' +
+        '<div class="ssi-title">' + highlight(r.title, query) + '</div>' +
+        '<div class="ssi-meta">' + escapeHtml(r.category) + '</div>' +
+        (r.snippet ? '<div class="ssi-snippet">' + escapeHtml(r.snippet) + '</div>' : '') +
+        '</a>';
+    }).join('');
+    resultsBox.classList.add('show');
+  }
+
+  input.addEventListener('input', function () { render(input.value); });
+  input.addEventListener('focus', function () { if (input.value.trim()) render(input.value); });
+  document.addEventListener('click', function (e) {
+    if (!e.target.closest('.site-search')) resultsBox.classList.remove('show');
+  });
+  input.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') { resultsBox.classList.remove('show'); input.blur(); }
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === '/' && document.activeElement !== input &&
+        document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+      e.preventDefault();
+      input.focus();
+    }
+  });
+})();
+</script>
+
+</body>
+</html>
