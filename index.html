@@ -116,6 +116,12 @@
       flex-shrink: 0; font-size: 10px; font-weight: 700; text-transform: uppercase;
       background: #e9ecef; color: #495057; padding: 2px 6px; border-radius: 20px;
     }
+    .lnm-subject {
+      padding: 8px 12px 6px;
+      font-size: 11px; font-weight: 800; text-transform: uppercase;
+      letter-spacing: .06em; color: var(--muted);
+    }
+    .lnm-subject:not(:first-child) { margin-top: 6px; border-top: 1px solid var(--border); padding-top: 12px; }
 
     /* LAYOUT */
     .layout {
@@ -137,6 +143,15 @@
     }
     .sidebar::-webkit-scrollbar { width: 4px; }
     .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    .sidebar-category {
+      padding: 16px 20px 8px;
+      font-size: 11px; font-weight: 800; text-transform: uppercase;
+      letter-spacing: .08em; color: var(--muted);
+      border-top: 1px solid var(--border);
+      margin-top: 10px;
+    }
+    .sidebar-category:first-child { border-top: none; margin-top: 0; padding-top: 4px; }
 
     .nav-group { margin-bottom: 4px; }
     .nav-group-title {
@@ -360,9 +375,10 @@
   <button class="menu-toggle" id="menuToggle" aria-label="Buka menu">&#9776;</button>
   <a class="topbar-brand" href="index.html">Laravel Docs</a>
   <span class="topbar-version">Roadmap</span>
-  <div class="laravel-nav" id="laravelNav">
-    <button class="laravel-nav-trigger" type="button">Laravel <span class="caret">&#9662;</span></button>
+  <div class="laravel-nav" id="programmingNav">
+    <button class="laravel-nav-trigger" type="button">Programming <span class="caret">&#9662;</span></button>
     <div class="laravel-nav-menu">
+      <div class="lnm-subject">Laravel</div>
       <a class="laravel-nav-item" href="#minggu-1"><span class="lni-week">M1</span><span class="lni-title">Core Laravel &amp; Database</span></a>
       <a class="laravel-nav-item" href="laravel/modul-arsitektur-otorisasi.html"><span class="lni-week">M2</span><span class="lni-title">Arsitektur Kode &amp; Otorisasi</span></a>
       <a class="laravel-nav-item" href="#minggu-3"><span class="lni-week">M3</span><span class="lni-title">Testing &amp; Optimasi</span></a>
@@ -376,40 +392,10 @@
       <a class="laravel-nav-item" href="laravel/modul-system-design.html"><span class="lni-week">M11</span><span class="lni-title">System Design</span></a>
     </div>
   </div>
-  <div class="laravel-nav" id="gitNav">
-    <button class="laravel-nav-trigger" type="button">GIT <span class="caret">&#9662;</span></button>
+  <div class="laravel-nav" id="databaseNav">
+    <button class="laravel-nav-trigger" type="button">Database <span class="caret">&#9662;</span></button>
     <div class="laravel-nav-menu">
-      <a class="laravel-nav-item" href="git/modul-git.html#git-intro"><span class="lni-week">G1</span><span class="lni-title">Pengenalan Git</span></a>
-      <a class="laravel-nav-item" href="git/modul-git.html#git-konsep"><span class="lni-week">G2</span><span class="lni-title">Konsep &amp; Alur Kerja</span></a>
-      <a class="laravel-nav-item" href="git/modul-git.html#git-dasar"><span class="lni-week">G3</span><span class="lni-title">Perintah Dasar</span></a>
-      <a class="laravel-nav-item" href="git/modul-git.html#git-branch"><span class="lni-week">G4</span><span class="lni-title">Branching &amp; Merging</span></a>
-      <a class="laravel-nav-item" href="git/modul-git.html#git-remote"><span class="lni-week">G5</span><span class="lni-title">Remote &amp; Kolaborasi</span></a>
-      <a class="laravel-nav-item" href="git/modul-git.html#git-strategi"><span class="lni-week">G6</span><span class="lni-title">Strategi Branching</span></a>
-      <a class="laravel-nav-item" href="git/modul-git.html#git-rebase"><span class="lni-week">G7</span><span class="lni-title">Teknik Lanjutan</span></a>
-      <a class="laravel-nav-item" href="git/modul-git.html#git-best-practice"><span class="lni-week">G8</span><span class="lni-title">Best Practice</span></a>
-      <a class="laravel-nav-item" href="git/modul-git.html#git-ringkasan"><span class="lni-week">G9</span><span class="lni-title">Ringkasan</span></a>
-    </div>
-  </div>
-  <div class="laravel-nav" id="restApiNav">
-    <button class="laravel-nav-trigger" type="button">REST API <span class="caret">&#9662;</span></button>
-    <div class="laravel-nav-menu">
-      <a class="laravel-nav-item" href="rest-api-tps/modul-rest-api-tps.html#tps-intro"><span class="lni-week">R1</span><span class="lni-title">Ringkasan &amp; Arsitektur</span></a>
-      <a class="laravel-nav-item" href="rest-api-tps/modul-rest-api-tps.html#tps-setup"><span class="lni-week">R2</span><span class="lni-title">Setup Project (Laravel, JWT, Swagger)</span></a>
-      <a class="laravel-nav-item" href="rest-api-tps/modul-rest-api-tps.html#tps-database"><span class="lni-week">R3</span><span class="lni-title">Database &amp; Migrasi</span></a>
-      <a class="laravel-nav-item" href="rest-api-tps/modul-rest-api-tps.html#tps-auth"><span class="lni-week">R4</span><span class="lni-title">Autentikasi JWT &amp; RBAC</span></a>
-      <a class="laravel-nav-item" href="rest-api-tps/modul-rest-api-tps.html#tps-wajibpajak"><span class="lni-week">R5</span><span class="lni-title">Wajib Pajak &amp; Validasi</span></a>
-      <a class="laravel-nav-item" href="rest-api-tps/modul-rest-api-tps.html#tps-kewajiban"><span class="lni-week">R6</span><span class="lni-title">Kewajiban Pajak &amp; Denda Otomatis</span></a>
-      <a class="laravel-nav-item" href="rest-api-tps/modul-rest-api-tps.html#tps-pembayaran"><span class="lni-week">R7</span><span class="lni-title">Pembayaran Cicilan</span></a>
-      <a class="laravel-nav-item" href="rest-api-tps/modul-rest-api-tps.html#tps-laporan"><span class="lni-week">R8</span><span class="lni-title">Laporan &amp; Filter</span></a>
-      <a class="laravel-nav-item" href="rest-api-tps/modul-rest-api-tps.html#tps-audit"><span class="lni-week">R9</span><span class="lni-title">Audit Trail</span></a>
-      <a class="laravel-nav-item" href="rest-api-tps/modul-rest-api-tps.html#tps-swagger"><span class="lni-week">R10</span><span class="lni-title">Dokumentasi API (Swagger)</span></a>
-      <a class="laravel-nav-item" href="rest-api-tps/modul-rest-api-tps.html#tps-testing"><span class="lni-week">R11</span><span class="lni-title">Testing</span></a>
-      <a class="laravel-nav-item" href="rest-api-tps/modul-rest-api-tps.html#tps-ringkasan"><span class="lni-week">R12</span><span class="lni-title">Ringkasan Alur Iteratif</span></a>
-    </div>
-  </div>
-  <div class="laravel-nav" id="postgresNav">
-    <button class="laravel-nav-trigger" type="button">POSTGRESQL <span class="caret">&#9662;</span></button>
-    <div class="laravel-nav-menu">
+      <div class="lnm-subject">PostgreSQL</div>
       <a class="laravel-nav-item" href="postgresql/modul-postgresql.html#pg-intro"><span class="lni-week">P1</span><span class="lni-title">Pengenalan &amp; Instalasi</span></a>
       <a class="laravel-nav-item" href="postgresql/modul-postgresql.html#pg-crud"><span class="lni-week">P2</span><span class="lni-title">SQL Dasar &amp; Tipe Data</span></a>
       <a class="laravel-nav-item" href="postgresql/modul-postgresql.html#pg-relasi"><span class="lni-week">P3</span><span class="lni-title">Relasi, Constraint &amp; Index Dasar</span></a>
@@ -425,6 +411,39 @@
       <a class="laravel-nav-item" href="postgresql/modul-postgresql.html#pg-ringkasan"><span class="lni-week">P13</span><span class="lni-title">Best Practice &amp; Ringkasan</span></a>
     </div>
   </div>
+  <div class="laravel-nav" id="toolsNav">
+    <button class="laravel-nav-trigger" type="button">Tools <span class="caret">&#9662;</span></button>
+    <div class="laravel-nav-menu">
+      <div class="lnm-subject">Git</div>
+      <a class="laravel-nav-item" href="git/modul-git.html#git-intro"><span class="lni-week">G1</span><span class="lni-title">Pengenalan Git</span></a>
+      <a class="laravel-nav-item" href="git/modul-git.html#git-konsep"><span class="lni-week">G2</span><span class="lni-title">Konsep &amp; Alur Kerja</span></a>
+      <a class="laravel-nav-item" href="git/modul-git.html#git-dasar"><span class="lni-week">G3</span><span class="lni-title">Perintah Dasar</span></a>
+      <a class="laravel-nav-item" href="git/modul-git.html#git-branch"><span class="lni-week">G4</span><span class="lni-title">Branching &amp; Merging</span></a>
+      <a class="laravel-nav-item" href="git/modul-git.html#git-remote"><span class="lni-week">G5</span><span class="lni-title">Remote &amp; Kolaborasi</span></a>
+      <a class="laravel-nav-item" href="git/modul-git.html#git-strategi"><span class="lni-week">G6</span><span class="lni-title">Strategi Branching</span></a>
+      <a class="laravel-nav-item" href="git/modul-git.html#git-rebase"><span class="lni-week">G7</span><span class="lni-title">Teknik Lanjutan</span></a>
+      <a class="laravel-nav-item" href="git/modul-git.html#git-best-practice"><span class="lni-week">G8</span><span class="lni-title">Best Practice</span></a>
+      <a class="laravel-nav-item" href="git/modul-git.html#git-ringkasan"><span class="lni-week">G9</span><span class="lni-title">Ringkasan</span></a>
+    </div>
+  </div>
+  <div class="laravel-nav" id="projectNav">
+    <button class="laravel-nav-trigger" type="button">Project <span class="caret">&#9662;</span></button>
+    <div class="laravel-nav-menu">
+      <div class="lnm-subject">REST API &mdash; Studi Kasus TPS</div>
+      <a class="laravel-nav-item" href="rest-api-tps/modul-rest-api-tps.html#tps-intro"><span class="lni-week">R1</span><span class="lni-title">Ringkasan &amp; Arsitektur</span></a>
+      <a class="laravel-nav-item" href="rest-api-tps/modul-rest-api-tps.html#tps-setup"><span class="lni-week">R2</span><span class="lni-title">Setup Project (Laravel, JWT, Swagger)</span></a>
+      <a class="laravel-nav-item" href="rest-api-tps/modul-rest-api-tps.html#tps-database"><span class="lni-week">R3</span><span class="lni-title">Database &amp; Migrasi</span></a>
+      <a class="laravel-nav-item" href="rest-api-tps/modul-rest-api-tps.html#tps-auth"><span class="lni-week">R4</span><span class="lni-title">Autentikasi JWT &amp; RBAC</span></a>
+      <a class="laravel-nav-item" href="rest-api-tps/modul-rest-api-tps.html#tps-wajibpajak"><span class="lni-week">R5</span><span class="lni-title">Wajib Pajak &amp; Validasi</span></a>
+      <a class="laravel-nav-item" href="rest-api-tps/modul-rest-api-tps.html#tps-kewajiban"><span class="lni-week">R6</span><span class="lni-title">Kewajiban Pajak &amp; Denda Otomatis</span></a>
+      <a class="laravel-nav-item" href="rest-api-tps/modul-rest-api-tps.html#tps-pembayaran"><span class="lni-week">R7</span><span class="lni-title">Pembayaran Cicilan</span></a>
+      <a class="laravel-nav-item" href="rest-api-tps/modul-rest-api-tps.html#tps-laporan"><span class="lni-week">R8</span><span class="lni-title">Laporan &amp; Filter</span></a>
+      <a class="laravel-nav-item" href="rest-api-tps/modul-rest-api-tps.html#tps-audit"><span class="lni-week">R9</span><span class="lni-title">Audit Trail</span></a>
+      <a class="laravel-nav-item" href="rest-api-tps/modul-rest-api-tps.html#tps-swagger"><span class="lni-week">R10</span><span class="lni-title">Dokumentasi API (Swagger)</span></a>
+      <a class="laravel-nav-item" href="rest-api-tps/modul-rest-api-tps.html#tps-testing"><span class="lni-week">R11</span><span class="lni-title">Testing</span></a>
+      <a class="laravel-nav-item" href="rest-api-tps/modul-rest-api-tps.html#tps-ringkasan"><span class="lni-week">R12</span><span class="lni-title">Ringkasan Alur Iteratif</span></a>
+    </div>
+  </div>
     <div class="site-search" id="siteSearch">
     <input type="text" id="searchInput" class="site-search-input" placeholder="Cari modul... ( tekan / )" autocomplete="off" />
     <div class="site-search-results" id="searchResults"></div>
@@ -437,6 +456,7 @@
   <!-- LEFT SIDEBAR -->
   <nav class="sidebar">
 
+    <div class="sidebar-category">Programming</div>
     <div class="nav-group open">
       <div class="nav-group-title"><span class="arrow">&#9654;</span> Laravel</div>
       <div class="nav-group-items">
@@ -454,6 +474,15 @@
       </div>
     </div>
 
+    <div class="sidebar-category">Database</div>
+    <div class="nav-group open">
+      <div class="nav-group-title"><span class="arrow">&#9654;</span> PostgreSQL</div>
+      <div class="nav-group-items">
+        <a class="nav-link done" href="#modul-postgresql"><span class="dot"></span> Dasar sampai Lanjutan</a>
+      </div>
+    </div>
+
+    <div class="sidebar-category">Tools</div>
     <div class="nav-group open">
       <div class="nav-group-title"><span class="arrow">&#9654;</span> Git</div>
       <div class="nav-group-items">
@@ -461,17 +490,11 @@
       </div>
     </div>
 
+    <div class="sidebar-category">Project</div>
     <div class="nav-group open">
       <div class="nav-group-title"><span class="arrow">&#9654;</span> REST API</div>
       <div class="nav-group-items">
         <a class="nav-link done" href="#modul-rest-api-tps"><span class="dot"></span> Studi Kasus Tax Processing System</a>
-      </div>
-    </div>
-
-    <div class="nav-group open">
-      <div class="nav-group-title"><span class="arrow">&#9654;</span> PostgreSQL</div>
-      <div class="nav-group-items">
-        <a class="nav-link done" href="#modul-postgresql"><span class="dot"></span> Dasar sampai Lanjutan</a>
       </div>
     </div>
 
